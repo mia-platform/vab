@@ -1,33 +1,31 @@
 # vab Modules
 
-A `vab` module is a valid `kustomize` bundle of files that can be used as is or customized via additional resources
-and patches applied to it.  
-To allow `vab` to use it the cli is expecting a well defined structure of its files. Every module must be contain all
-its files inside the same folder, in that folder you can have one or more subfolder that represents
-flavours of the module. You can use the flavours for appling different configuration for specific cloud vendor or for
-alternative installation of the module.  
-Sharing files between modules is forbidden for avoiding problems of circular dependencies, the only sharing permitted
-are between flavours of the module and for this reason a valid installation can have only one flavour of a module.
+A `vab` module is a valid `kustomize` bundle of files, that can be used as-is or customized by applying additional resources
+and patches.  
+To allow `vab` to use it, the CLI expects a well-defined structure of its files. Every module must contain all
+its files inside the same folder, in which you can have one or more sub-folders representing the various flavors of the module. You can use the flavors to apply different configurations for specific cloud vendors, or as
+alternative installations of the module.  
+The sharing of files between modules is forbidden to avoid problems of circular dependencies. The only sharing permitted
+is between flavors of the same module. For this reason, a valid installation can have only one flavor of a single module.
 
-With the previous rules in mind we envisioned the following folder structure inside the repository:
+With the previous rules in mind, we envisioned the following folder structure inside the repository:
 
 ```txt
 ./modules
 |   ├── module-1
-|   |   ├── flavour-1
+|   |   ├── flavor-1
 |   |   |..
-|   |   └── flavour-n
+|   |   └── flavor-n
 |   └── module-2
-|       ├── flavour-1
+|       ├── flavor-1
 |       |..
-|       └── flavour-n
+|       └── flavor-n
 └── README.md
 ```
 
 ## Versioning
 
-The cli will pull modules that are versioned via git tags inside the repository, but because inside a repository you
-can have multiple modules the tags must be in the form of `module-<module-name>-<semver-version>`.  
-The cli will match the `module-name` with the folder name contained inside the `modules` one. and will pull all
-the files contained in it, so you will have all the different flavour contained in it to ease the cross dependencies
+The CLI will pull modules versioned via git tags inside the repository. However, since you can have multiple modules inside a repository, the tags must be in the form of `module-<module-name>-<semver-version>`.  
+The CLI will match the `module-name` with the folder name included in the `modules` directory. and will pull all
+the files contained in it, so you will have all the different flavors contained in it to ease the cross dependencies
 between them.

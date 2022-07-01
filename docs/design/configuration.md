@@ -38,14 +38,14 @@ spec:
 In the sample configuration file above:
 
 - A `ClusterConfiguration` named `my-clusters` is created.
-- The `modules` field is a dictionary that will include the modules to install by default on every cluster, unless otherwise specified. In this case, the configuration will download the modules `ingress/traefik` and `cni/cilium` with version `1.20.1` and weights to define the order of installation (the order is **ascending**). The `version` of the core modules will follow the release schedule and version of Kubernetes for majors and minors, while patches will be released asynchronously.
-- The `addons` field is a dictionary that will include the add-ons to install by default on every cluster, unless otherwise specified. In this case, the configuration will download the add-on `ingress-monitoring` with version `1.20.1`.
+- The `modules` field is a dictionary that will include the modules to install by default on every cluster unless otherwise specified. In this case, the configuration will download the modules `ingress/traefik` and `cni/cilium` with version `1.20.1` and weights to define the order of installation (the order is **ascending**). The `version` of the core modules will follow the release schedule and version of Kubernetes for majors and minors, while patches will be released asynchronously.
+- The `addons` field is a dictionary that will include the add-ons to install by default on every cluster unless otherwise specified. In this case, the configuration will download the add-on `ingress-monitoring` with version `1.20.1`.
 - The `groups` field is an array that will list all the cluster groups to which the default configuration will be applied. Each group will contain a list of clusters with their customizations. In this case, we have a cluster group named `group-1` that will include:
-  - A cluster named `cluster-1` with context named `context-1`, that overrides the add-on `ingress-monitoring` with a different version (`1.20.100`). This directive will download the new version in the corresponding vendor folder.
-  - A cluster named `cluster-2` with context named `context-2`, that disables the `cni/cilium` module and installs the `cni/calico` module. The latter directive will download the `cni/calico` module in the corresponding vendor folder.
+  - A cluster named `cluster-1` with context named `context-1`, overrides the add-on `ingress-monitoring` with a different version (`1.20.100`). This directive will download the new version in the corresponding vendor folder.
+  - A cluster named `cluster-2` with context named `context-2`, disables the `cni/cilium` module and installs the `cni/calico` module. The latter directive will download the `cni/calico` module in the corresponding vendor folder.
   - A cluster named `cluster-3` with context named `context-3`, without any customization. Therefore, `cluster-3` will be configured with all the modules and add-ons specified by default.
 
-The `sync` command will be in charge of updating the vendors to the latest configuration, and create the appropriate directory structure. According to the example above, `overrides` will include the following directories:
+The `sync` command will be in charge of updating the vendors to the latest configuration and creating the appropriate directory structure. According to the example above, `overrides` will include the following directories:
 
 - **`all-clusters`:** containing patches of the modules (`ingress/traefik v1.20.1`, `cni/cilium v1.20.1`) and add-ons (`ingress-monitoring v1.20.1`) that will be applied to all the clusters;
 - **`cluster-1`:** containing patches of the modules (`ingress/traefik v1.20.1`, `cni/cilium v1.20.1`) and add-ons (`ingress-monitoring v1.20.100`) that will be applied to Cluster 1;
