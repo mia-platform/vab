@@ -2,7 +2,9 @@
 
 ## `init <project-name>`
 
-Creates the folder `project-name` with a preliminary directory structure:
+Create the folder `project-name` with a preliminary directory structure, together with the skeleton of the `config.yaml` file. 
+
+The project directory will include the `vendors` folder (either empty or containing the `modules`/`add-ons` folders), the `overrides` directory (either empty or including a folder with a minimal default configuration), and the configuration file.
 
     ./project-name
     ├── vendors
@@ -15,7 +17,7 @@ Creates the folder `project-name` with a preliminary directory structure:
     |       └── kustomization.yaml
     └── config.yaml
 
-And the skeleton of the `config.yaml` file:
+`config.yaml`:
 
 ```yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -50,11 +52,15 @@ spec:
 
 ## `validate <config-file-path>`
 
-Validates the configuration
+Validate the configuration. 
+
+It returns an error if the `config.yaml` is malformed or includes resources that do not exist in our catalogue.
 
 ## `sync`
 
 Fetch new vendors and update the configuration after editing the `config.yaml` file.
+
+After the execution, the `vendors` folder will include the new modules/add-ons (if not already present), and the directory structure inside the `overrides` folder will be updated according to the current configuration.
 
 Example:
 
@@ -84,7 +90,7 @@ spec:
         - cluster2-name: context2-name
 ```
 
-Results in the project root:
+The command execution will build the following directory structure:
 
     ./project-name
     ├── vendors
@@ -118,7 +124,12 @@ Results in the project root:
     |           └── kustomization.yaml 
     └── config.yaml
 
+## `build <group-name> <cluster-name>`
+
+Run `kustomize build` for the specified cluster.
+
+It returns the full configuration locally without applying it to the cluster, allowing the user to check it beforehand.
+
 ## `apply <group-name> <cluster-name>`
 
-Builds and applies the local configuration to the specified cluster.
-
+Build and apply the local configuration to the specified cluster.
