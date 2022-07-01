@@ -1,3 +1,8 @@
+# Custom gitignore rules
+bin/
+
+# End of Custom gitignore rules
+
 # Created by https://www.toptal.com/developers/gitignore/api/visualstudiocode,linux,windows,macos,go
 # Edit at https://www.toptal.com/developers/gitignore?templates=visualstudiocode,linux,windows,macos,go
 
