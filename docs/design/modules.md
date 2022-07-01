@@ -17,7 +17,6 @@ With the previous rules in mind we envisioned the following folder structure ins
 |   |   ├── flavour-1
 |   |   |..
 |   |   └── flavour-n
-|   |   
 |   └── module-2
 |       ├── flavour-1
 |       |..
