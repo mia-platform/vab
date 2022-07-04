@@ -14,13 +14,15 @@ endif
 .DEFAULT_GOAL = build
 
 .PHONY: build build-linux-amd64 build-linux-arm64 build-all
-build: bin/${GOOS}/${GOARCH}/vab
-build-linux-amd64: bin/linux/amd64/vab
-build-linux-arm64: bin/linux/arm64/vab
+build: build.${GOOS}.${GOARCH}
+build-linux-amd64: build.linux.amd64
+build-linux-arm64: build.linux.arm64
 build-all: build-linux-amd64 build-linux-arm64
 
-bin/%/vab:
-	CGO_ENABLED=0 GOOS=$(word 1,$(subst /, ,$*)) GOARCH=$(word 2,$(subst /, ,$*)) go build -o $@ ./cmd/vab
+build.%:
+	$(eval OS := $(word 1,$(subst ., ,$*)))
+	$(eval ARCH := $(word 2,$(subst ., ,$*)))
+	CGO_ENABLED=0 GOOS=$(OS) GOARCH=$(ARCH) go build -o bin/$(OS)/$(ARCH)/vab ./cmd/vab
 
 .PHONY: test
 test:
