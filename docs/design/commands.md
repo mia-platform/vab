@@ -45,7 +45,7 @@ spec:
     #       context: context2-name
     #       modules:
     #         example-module: --- DISABLE MODULE
-    #           enabled: false
+    #           disable: true
     #         other-module: --- ADD NEW MODULE
     #           version: 1.20.20 
     #           weight: 1
@@ -87,7 +87,7 @@ spec:
         - cluster1-name: context1-name
           modules:
             cni/cilium:
-              enabled: false
+              disable: true
             cni/calico:
               version: 1.20.20 
               weight: 1

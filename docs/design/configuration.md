@@ -30,7 +30,7 @@ spec:
           context: context-2
           modules:
             cni/cilium:
-              enabled: false
+              disable: true
             cni/calico:
               version: 1.20.20
               weight: 1
