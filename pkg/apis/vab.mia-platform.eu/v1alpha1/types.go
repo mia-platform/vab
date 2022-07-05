@@ -16,8 +16,8 @@ package v1alpha1
 
 // TypeMeta partially copies apimachinery/pkg/apis/meta/v1.TypeMeta
 type TypeMeta struct {
-	Kind       string `json:"kind,omitempty" yaml:"kind,omitempty"`
-	APIVersion string `json:"apiVersion,omitempty" yaml:"apiVersion,omitempty"`
+	Kind       string `yaml:"kind,omitempty"`
+	APIVersion string `yaml:"apiVersion,omitempty"`
 }
 
 // ClustersConfiguration contains the schema for vab's configuration
