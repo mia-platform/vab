@@ -1,5 +1,6 @@
 # Custom gitignore rules
 bin/
+coverage.xml
 
 # End of Custom gitignore rules
 
