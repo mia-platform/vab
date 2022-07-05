@@ -15,11 +15,12 @@
 # General variables
 
 # Set Output Directory Path
+PROJECT_DIR := $(shell pwd -P)
 ifeq ($(origin OUTPUT_DIR),undefined)
-OUTPUT_DIR := $(shell pwd -P)/bin
+OUTPUT_DIR := $(PROJECT_DIR)/bin
 endif
 CMDNAME := vab
-TOOLS_DIR := $(shell pwd -P)/tools
+TOOLS_DIR := $(PROJECT_DIR)/tools
 TOOLS_BIN := $(TOOLS_DIR)/bin
 
 # Golang variables
@@ -43,7 +44,8 @@ build-all: build-linux-amd64 build-linux-arm64
 build.%:
 	$(eval OS := $(word 1,$(subst ., ,$*)))
 	$(eval ARCH := $(word 2,$(subst ., ,$*)))
-	CGO_ENABLED=0 GOOS=$(OS) GOARCH=$(ARCH) go build -o $(OUTPUT_DIR)/$(OS)/$(ARCH)/$(CMDNAME) ./cmd/$(CMDNAME)
+	CGO_ENABLED=0 GOOS=$(OS) GOARCH=$(ARCH) go build \
+		-o $(OUTPUT_DIR)/$(OS)/$(ARCH)/$(CMDNAME) $(PROJECT_DIR)/cmd/$(CMDNAME)
 
 ##@ Test
 
@@ -76,7 +78,8 @@ clean-all: clean clean-go
 .PHONY: generate
 generate: generate-dep
 	@echo "Generating deepcopy code..."
-	@$(TOOLS_BIN)/deepcopy-gen -i ./pkg/apis/vab.mia-platform.eu/v1alpha1 -o "$(shell pwd -P)" -O zz_generated.deepcopy --go-header-file $(TOOLS_DIR)/boilerplate.go.txt
+	@$(TOOLS_BIN)/deepcopy-gen -i ./pkg/apis/vab.mia-platform.eu/v1alpha1 \
+		-o "$(PROJECT_DIR)" -O zz_generated.deepcopy --go-header-file $(TOOLS_DIR)/boilerplate.go.txt
 
 generate-dep:
 	@GOBIN=$(TOOLS_BIN) go install k8s.io/code-generator/cmd/deepcopy-gen@v0.24.2
