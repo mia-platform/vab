@@ -70,8 +70,13 @@ clean-go:
 	@echo "Clean golang cache..."
 	@go clean -cache
 
+.PHONY: clean-tools
+clean-tools:
+	@echo "Clean tools folder..."
+	rm -fr .tools/bin
+
 .PHONY: clean-all
-clean-all: clean clean-go
+clean-all: clean clean-go clean-tools
 
 ##@ Code generation
 
