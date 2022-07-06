@@ -13,11 +13,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: ./.github/workflows/golang.yaml
       - run: make lint MODE="github-actions"
 
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: ./.github/workflows/golang.yaml
       - run: make build-all
       - run: make test-coverage
