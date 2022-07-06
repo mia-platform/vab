@@ -16,8 +16,15 @@ package main
 
 import (
 	"fmt"
+	"os"
+
+	"github.com/mia-platform/vab/internal/cmd"
 )
 
 func main() {
-	fmt.Println("Hello from vab")
+	if err := cmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
 }
