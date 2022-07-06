@@ -47,7 +47,7 @@ type ConfigSpec struct {
 	// These add-ons will be installed on every cluster
 	// unless otherwise specified
 	// AddOns in the dictionary are referenced by their name
-	AddOns map[string]AddOn `yaml:"addons,omitempty"`
+	AddOns map[string]AddOn `yaml:"addOns,omitempty"`
 
 	// Groups contains the list of cluster groups
 	Groups []Group `yaml:"groups,omitempty"`
@@ -87,7 +87,7 @@ type Cluster struct {
 	// This field can be used to add a new add-on
 	// or patch/disable a default add-on
 	// AddOns in the dictionary are referenced by their name
-	AddOns map[string]AddOn `yaml:"addons,omitempty"`
+	AddOns map[string]AddOn `yaml:"addOns,omitempty"`
 }
 
 // Module contains the module's version and priority

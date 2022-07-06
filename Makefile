@@ -4,7 +4,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 
-# 	http://www.apache.org/licenses/LICENSE-2.0
+#    http://www.apache.org/licenses/LICENSE-2.0
 
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -88,3 +88,19 @@ generate: generate-dep
 
 generate-dep:
 	@GOBIN=$(TOOLS_BIN) go install k8s.io/code-generator/cmd/deepcopy-gen@v0.24.2
+
+
+##@ Lint
+
+.PHONY: lint
+lint: lintgo-dep
+	@echo "Linting go files..."
+	@$(TOOLS_BIN)/golangci-lint run --config=$(TOOLS_DIR)/.golangci.yml
+	@echo "Run go mod tidy"
+	@go mod tidy -compat=1.18
+## ensure all changes have been committed
+	git diff --exit-code -- go.mod
+	git diff --exit-code -- go.sum
+
+lintgo-dep:
+	@GOBIN=$(TOOLS_BIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.46.2
