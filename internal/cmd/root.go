@@ -6,6 +6,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type FlagPole struct {
+	Name   string
+	Config string
+}
+
 var rootCmd = &cobra.Command{
 	Use:   "vab",
 	Short: "A tool for installing the Mia-Platform distro on your clusters",
@@ -25,7 +30,6 @@ func Execute() error {
 }
 
 func init() {
-
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(InitCmd)
 	rootCmd.AddCommand(ValidateCmd)
