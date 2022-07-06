@@ -92,10 +92,12 @@ generate-dep:
 
 ##@ Lint
 
+MODE ?= "colored-line-number"
+
 .PHONY: lint
 lint: lintgo-dep
 	@echo "Linting go files..."
-	@$(TOOLS_BIN)/golangci-lint run --config=$(TOOLS_DIR)/.golangci.yml
+	$(TOOLS_BIN)/golangci-lint run --out-format=$(MODE) --config=$(TOOLS_DIR)/.golangci.yml
 	@echo "Run go mod tidy"
 	@go mod tidy -compat=1.18
 ## ensure all changes have been committed
