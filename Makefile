@@ -49,9 +49,14 @@ build.%:
 
 ##@ Test
 
+TEST_VERBOSE ?= "false"
 .PHONY: test
 test:
+ifneq ($(TEST_VERBOSE), "false")
+	go test -test.v ./...
+else
 	go test ./...
+endif
 
 .PHONY: test-coverage
 test-coverage:
@@ -89,15 +94,18 @@ generate: generate-dep
 generate-dep:
 	@GOBIN=$(TOOLS_BIN) go install k8s.io/code-generator/cmd/deepcopy-gen@v0.24.2
 
-
 ##@ Lint
 
 MODE ?= "colored-line-number"
 
 .PHONY: lint
-lint: lintgo-dep
+lint: lintgo-dep lint-mod lint-ci
+
+lint-ci:
 	@echo "Linting go files..."
 	$(TOOLS_BIN)/golangci-lint run --out-format=$(MODE) --config=$(TOOLS_DIR)/.golangci.yml
+
+lint-mod:
 	@echo "Run go mod tidy"
 	@go mod tidy -compat=1.18
 ## ensure all changes have been committed
