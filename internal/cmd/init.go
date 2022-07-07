@@ -1,23 +1,16 @@
 package cmd
 
 import (
-	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
+	vabUtils "github.com/mia-platform/vab/internal/utils"
 	vabConfig "github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
 )
 
-type flagpole struct {
-	Name string
-}
-
 var flags = &FlagPole{}
-
 var initConfig = &vabConfig.ClustersConfiguration{
 
 	TypeMeta: vabConfig.TypeMeta{
@@ -31,6 +24,8 @@ var initConfig = &vabConfig.ClustersConfiguration{
 		Groups:  make([]vabConfig.Group, 0),
 	},
 }
+var kustomization = `apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization`
 
 var InitCmd = &cobra.Command{
 
@@ -46,20 +41,19 @@ kustomize configuration), and the configuration file.`,
 
 		fmt.Println("Initializing...")
 
-		var b bytes.Buffer
-		yamlEncoder := yaml.NewEncoder(&b)
-		yamlEncoder.SetIndent(2)
-
 		if flags.Name != "" {
-			prjName := flags.Name
-			initConfig.Name = prjName
-			os.Mkdir(prjName, os.ModePerm)
-			os.Chdir(prjName)
+			os.Mkdir(flags.Name, os.ModePerm)
+			os.Chdir(flags.Name)
 		}
 
-		yamlEncoder.Encode(&initConfig)
+		configPath, _ := os.Getwd()
+		initConfig.Name = filepath.Base(configPath)
+		vabUtils.WriteConfig(*initConfig, configPath)
 
-		if writeErr := ioutil.WriteFile("config.yaml", b.Bytes(), 0666); writeErr != nil {
+		os.Mkdir("clusters", os.ModePerm)
+		os.Mkdir("clusters/all-clusters", os.ModePerm)
+
+		if writeErr := os.WriteFile("clusters/all-clusters/kustomization.yaml", []byte(kustomization), 0644); writeErr != nil {
 			fmt.Println(writeErr)
 			os.Exit(1)
 		}
@@ -67,13 +61,5 @@ kustomize configuration), and the configuration file.`,
 }
 
 func init() {
-
-	dir, err := os.Getwd()
-
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	InitCmd.Flags().StringVarP(&flags.Name, "name", "n", filepath.Base(dir), "project name, defaults to current directory name")
+	InitCmd.Flags().StringVarP(&flags.Name, "name", "n", "", "project name, defaults to current directory name")
 }
