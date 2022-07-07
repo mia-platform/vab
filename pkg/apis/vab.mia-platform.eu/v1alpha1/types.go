@@ -30,7 +30,7 @@ type ClustersConfiguration struct {
 	// ConfigSpec contains the configuration of the clusters
 	// It includes the modules and add-ons installed by default
 	// as well as the list of cluster groups
-	Spec ConfigSpec `yaml:"spec,omitempty"`
+	Spec ConfigSpec `yaml:"spec"`
 }
 
 // ConfigSpec contains the configuration of the clusters
@@ -41,16 +41,16 @@ type ConfigSpec struct {
 	// unless otherwise specified
 	// Modules in the dictionary are referenced by module-name/flavor-name
 	// For example: ingress/traefik, cni/cilium, etc.
-	Modules map[string]Module `yaml:"modules,omitempty"`
+	Modules map[string]Module `yaml:"modules"`
 
 	// Dictionary of AddOns
 	// These add-ons will be installed on every cluster
 	// unless otherwise specified
 	// AddOns in the dictionary are referenced by their name
-	AddOns map[string]AddOn `yaml:"addOns,omitempty"`
+	AddOns map[string]AddOn `yaml:"addOns"`
 
 	// Groups contains the list of cluster groups
-	Groups []Group `yaml:"groups,omitempty"`
+	Groups []Group `yaml:"groups"`
 }
 
 // Group contains the configuration of a cluster group
