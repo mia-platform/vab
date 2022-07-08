@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
@@ -11,29 +9,22 @@ type FlagPole struct {
 	Config string
 }
 
-var rootCmd = &cobra.Command{
-	Use:   "vab",
-	Short: "A tool for installing the Mia-Platform distro on your clusters",
-}
+func NewRootCommand() *cobra.Command {
+	rootCmd := &cobra.Command{
+		Use:     "vab",
+		Version: "vab-v0.0",
+		Short:   "A tool for installing the Mia-Platform distro on your clusters",
+	}
 
-var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "Print the version number of vab",
-	Long:  `All software has versions. This is vab's`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("vab-v0.0")
-	},
+	rootCmd.AddCommand(NewInitCommand())
+	rootCmd.AddCommand(NewValidateCommand())
+	rootCmd.AddCommand(NewSyncCommand())
+	rootCmd.AddCommand(NewBuildCommand())
+	rootCmd.AddCommand(NewApplyCommand())
+
+	return rootCmd
 }
 
 func Execute() error {
-	return rootCmd.Execute()
-}
-
-func init() {
-	rootCmd.AddCommand(versionCmd)
-	rootCmd.AddCommand(InitCmd)
-	rootCmd.AddCommand(ValidateCmd)
-	rootCmd.AddCommand(SyncCmd)
-	rootCmd.AddCommand(BuildCmd)
-	rootCmd.AddCommand(ApplyCmd)
+	return NewRootCommand().Execute()
 }
