@@ -3,29 +3,33 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 
 	vabUtils "github.com/mia-platform/vab/internal/utils"
 	vabConfig "github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"github.com/spf13/cobra"
+	kustomizeTypes "sigs.k8s.io/kustomize/api/types"
 )
 
 var flags = &FlagPole{}
-var initConfig = &vabConfig.ClustersConfiguration{
-
+var emptyConfig = &vabConfig.ClustersConfiguration{
 	TypeMeta: vabConfig.TypeMeta{
 		Kind:       "ClustersConfiguration",
 		APIVersion: "vab.mia-platform.eu/v1alpha1",
 	},
-
 	Spec: vabConfig.ConfigSpec{
 		Modules: make(map[string]vabConfig.Module),
 		AddOns:  make(map[string]vabConfig.AddOn),
 		Groups:  make([]vabConfig.Group, 0),
 	},
 }
-var kustomization = `apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization`
+var emptyKustomization = &kustomizeTypes.Kustomization{
+	TypeMeta: kustomizeTypes.TypeMeta{
+		Kind:       "Kustomization",
+		APIVersion: "kustomize.config.k8s.io/v1beta1",
+	},
+}
 
 var InitCmd = &cobra.Command{
 
@@ -41,20 +45,25 @@ kustomize configuration), and the configuration file.`,
 
 		fmt.Println("Initializing...")
 
-		if flags.Name != "" {
-			os.Mkdir(flags.Name, os.ModePerm)
-			os.Chdir(flags.Name)
+		configPath, err := vabUtils.GetProjectRelativePath(".", flags.Name)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
 		}
 
-		configPath, _ := os.Getwd()
-		initConfig.Name = filepath.Base(configPath)
-		vabUtils.WriteConfig(*initConfig, configPath)
+		emptyConfig.Name = filepath.Base(configPath)
+		if err := vabUtils.WriteConfig(*emptyConfig, configPath); err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 
-		os.Mkdir("clusters", os.ModePerm)
-		os.Mkdir("clusters/all-clusters", os.ModePerm)
+		if err := os.MkdirAll(path.Join(configPath, "clusters", "all-clusters"), os.ModePerm); err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 
-		if writeErr := os.WriteFile("clusters/all-clusters/kustomization.yaml", []byte(kustomization), 0644); writeErr != nil {
-			fmt.Println(writeErr)
+		if err := vabUtils.WriteKustomization(*emptyKustomization, path.Join(configPath, "clusters", "all-clusters")); err != nil {
+			fmt.Println(err)
 			os.Exit(1)
 		}
 	},

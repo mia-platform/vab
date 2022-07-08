@@ -39,7 +39,7 @@ func TestWriteEmptyConfig(t *testing.T) {
 	expectedFileContent, _ := os.ReadFile(path.Join("..", "test_data", "empty_config.yaml"))
 
 	if !bytes.Equal(testFileContent, expectedFileContent) {
-		t.Fatal("unexpected file content")
+		t.Fatal("Unexpected file content.")
 	}
 }
 
@@ -68,10 +68,10 @@ func TestPathNotExists(t *testing.T) {
 	err := WriteConfig(*emptyConfig, testWrongPath)
 
 	if err == nil {
-		t.Fatalf("should return the following error: %s", fs.ErrNotExist)
+		t.Fatalf("No error was returned. Expected: %s", fs.ErrNotExist)
 	}
 	if !errors.Is(err, fs.ErrNotExist) {
-		t.Fatalf("unexpected error: %s", err)
+		t.Fatalf("Unexpected error. Expected: %s, actual: %s", fs.ErrNotExist, err)
 	}
 }
 
@@ -84,10 +84,10 @@ func TestPartiallyValidPath(t *testing.T) {
 	err := WriteConfig(*emptyConfig, testWrongPath)
 
 	if err == nil {
-		t.Fatalf("should return the following error: %s", fs.ErrNotExist)
+		t.Fatalf("No error was returned. Expected: %s", fs.ErrNotExist)
 	}
 	if !errors.Is(err, fs.ErrNotExist) {
-		t.Fatalf("unexpected error: %s", err)
+		t.Fatalf("Unexpected error. Expected: %s, actual: %s", fs.ErrNotExist, err)
 	}
 }
 
@@ -102,10 +102,10 @@ func TestPathPermError(t *testing.T) {
 	err := WriteConfig(*emptyConfig, testDirPath)
 
 	if err == nil {
-		t.Fatalf("should return the following error: %s", fs.ErrPermission)
+		t.Fatalf("No error was returned. Expected: %s", fs.ErrPermission)
 	}
 	if !errors.Is(err, fs.ErrPermission) {
-		t.Fatalf("unexpected error: %s", err)
+		t.Fatalf("Unexpected error. Expected: %s, actual: %s", fs.ErrPermission, err)
 	}
 }
 
@@ -145,7 +145,7 @@ func TestWriteEmptyKustomization(t *testing.T) {
 	expectedFileContent, _ := os.ReadFile(path.Join("..", "test_data", "empty_kustomization.yaml"))
 
 	if !bytes.Equal(testFileContent, expectedFileContent) {
-		t.Fatal("unexpected file content")
+		t.Fatal("Unexpected file content.")
 	}
 }
 
@@ -154,17 +154,17 @@ func TestWrongKustomizationFileName(t *testing.T) {
 	testDirPath := t.TempDir()
 	file, fileErr := os.Create(path.Join(testDirPath, "notkustomization.yaml"))
 	if fileErr != nil {
-		t.Fatalf("error creating test file: %s", fileErr)
+		t.Fatalf("Error while creating test file: %s", fileErr)
 	}
 	emptyKustomization := &kustomizeTypes.Kustomization{}
 
 	err := WriteKustomization(*emptyKustomization, path.Join(testDirPath, file.Name()))
 
 	if err == nil {
-		t.Fatalf("should return the following error: %s", fs.ErrPermission)
+		t.Fatalf("No error was returned. Expected: %s", errKustomizationTarget)
 	}
 	if !errors.Is(err, errKustomizationTarget) {
-		t.Fatalf("unexpected error: %s", err)
+		t.Fatalf("Unexpected error. Expected: %s, actual: %s", errKustomizationTarget, err)
 	}
 }
 
@@ -176,10 +176,10 @@ func TestKustomizationPathNotExists(t *testing.T) {
 	err := WriteKustomization(*emptyKustomization, testWrongPath)
 
 	if err == nil {
-		t.Fatalf("should return the following error: %s", fs.ErrNotExist)
+		t.Fatalf("No error was returned. Expected: %s", fs.ErrNotExist)
 	}
 	if !errors.Is(err, fs.ErrNotExist) {
-		t.Fatalf("unexpected error: %s", err)
+		t.Fatalf("Unexpected error. Expected: %s, actual: %s", fs.ErrNotExist, err)
 	}
 }
 
@@ -192,10 +192,10 @@ func TestPartiallyValidKustomizationPath(t *testing.T) {
 	err := WriteKustomization(*emptyKustomization, testWrongPath)
 
 	if err == nil {
-		t.Fatalf("should return the following error: %s", fs.ErrNotExist)
+		t.Fatalf("No error was returned. Expected: %s", fs.ErrNotExist)
 	}
 	if !errors.Is(err, fs.ErrNotExist) {
-		t.Fatalf("unexpected error: %s", err)
+		t.Fatalf("Unexpected error. Expected: %s, actual: %s", fs.ErrNotExist, err)
 	}
 }
 
@@ -210,10 +210,10 @@ func TestKustomizationPathPermError(t *testing.T) {
 	err := WriteKustomization(*emptyKustomization, testDirPath)
 
 	if err == nil {
-		t.Fatalf("should return the following error: %s", fs.ErrPermission)
+		t.Fatalf("No error was returned. Expected: %s", fs.ErrPermission)
 	}
 	if !errors.Is(err, fs.ErrPermission) {
-		t.Fatalf("unexpected error: %s", err)
+		t.Fatalf("Unexpected error. Expected: %s, actual: %s", fs.ErrPermission, err)
 	}
 }
 
