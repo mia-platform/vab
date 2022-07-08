@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	testName    = "foo"
 	invalidPath = "/invalid/path"
+	testName    = "foo"
 )
 
 // Return current path if the name arg is the empty string
@@ -104,5 +104,69 @@ func TestNewExistingPath(t *testing.T) {
 	}
 	if dstPath != expectedPath {
 		t.Fatalf("Unexpected relative path. Expected: %s, actual: %s", expectedPath, dstPath)
+	}
+}
+
+// Test that the directory for the new cluster is created correctly with its empty kustomization.yaml
+func TestNewClusterOverride(t *testing.T) {
+	testDirPath := t.TempDir()
+	if err := os.Mkdir(path.Join(testDirPath, clustersDirName), fs.ModePerm); err != nil {
+		t.Fatal(err)
+	}
+	if err := CreateClusterOverride(testDirPath, testName); err != nil {
+		t.Fatal(err)
+	}
+	kustomizationPath := path.Join(testDirPath, clustersDirName, testName, kustomizationFileName)
+	if _, err := os.Stat(kustomizationPath); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// Test that the clusters directory is created if missing
+func TestMissingClustersDirectory(t *testing.T) {
+	testDirPath := t.TempDir()
+	if err := CreateClusterOverride(testDirPath, testName); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// Return ErrNotExists if the path parameter is invalid (empty name)
+func TestNewClusterInvalidPath(t *testing.T) {
+	err := CreateClusterOverride(invalidPath, testName)
+	if err == nil {
+		t.Fatalf("No error was returned. Expected: %s", fs.ErrNotExist)
+	}
+	if !errors.Is(err, fs.ErrNotExist) {
+		t.Fatalf("Unexpected error. Expected: %s, actual: %s", fs.ErrNotExist, err)
+	}
+}
+
+// Return ErrPermission if if access to the path is denied
+func TestNewClusterErrPermission(t *testing.T) {
+	testDirPath := t.TempDir()
+	if err := os.Mkdir(path.Join(testDirPath, clustersDirName), 0); err != nil {
+		t.Fatal(err)
+	}
+	err := CreateClusterOverride(testDirPath, testName)
+	if err == nil {
+		t.Fatalf("No error was returned. Expected: %s", fs.ErrPermission)
+	}
+	if !errors.Is(err, fs.ErrPermission) {
+		t.Fatalf("Unexpected error. Expected: %s, actual: %s", fs.ErrPermission, err)
+	}
+}
+
+// Return ErrPermission if if access to the path is denied
+func TestMissingClustersDirErrPermission(t *testing.T) {
+	testDirPath := t.TempDir()
+	if err := os.Chmod(testDirPath, 0); err != nil {
+		t.Fatal(err)
+	}
+	err := CreateClusterOverride(testDirPath, testName)
+	if err == nil {
+		t.Fatalf("No error was returned. Expected: %s", fs.ErrPermission)
+	}
+	if !errors.Is(err, fs.ErrPermission) {
+		t.Fatalf("Unexpected error. Expected: %s, actual: %s", fs.ErrPermission, err)
 	}
 }

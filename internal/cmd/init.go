@@ -3,13 +3,11 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 
 	vabUtils "github.com/mia-platform/vab/internal/utils"
 	vabConfig "github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"github.com/spf13/cobra"
-	kustomizeTypes "sigs.k8s.io/kustomize/api/types"
 )
 
 var flags = &FlagPole{}
@@ -22,12 +20,6 @@ var emptyConfig = &vabConfig.ClustersConfiguration{
 		Modules: make(map[string]vabConfig.Module),
 		AddOns:  make(map[string]vabConfig.AddOn),
 		Groups:  make([]vabConfig.Group, 0),
-	},
-}
-var emptyKustomization = &kustomizeTypes.Kustomization{
-	TypeMeta: kustomizeTypes.TypeMeta{
-		Kind:       "Kustomization",
-		APIVersion: "kustomize.config.k8s.io/v1beta1",
 	},
 }
 
@@ -57,12 +49,7 @@ kustomize configuration), and the configuration file.`,
 			os.Exit(1)
 		}
 
-		if err := os.MkdirAll(path.Join(configPath, "clusters", "all-clusters"), os.ModePerm); err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
-		if err := vabUtils.WriteKustomization(*emptyKustomization, path.Join(configPath, "clusters", "all-clusters")); err != nil {
+		if err := vabUtils.CreateClusterOverride(configPath, "all-clusters"); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
