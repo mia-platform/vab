@@ -16,8 +16,8 @@ const (
 
 var emptyKustomization = &kustomizeTypes.Kustomization{
 	TypeMeta: kustomizeTypes.TypeMeta{
-		Kind:       "Kustomization",
-		APIVersion: "kustomize.config.k8s.io/v1beta1",
+		Kind:       kustomizeTypes.KustomizationKind,
+		APIVersion: kustomizeTypes.KustomizationVersion,
 	},
 }
 
