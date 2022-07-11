@@ -76,13 +76,13 @@ func TestCurrentPathErrPermission(t *testing.T) {
 	}
 }
 
-// Return ErrPermission if access to the path is denied (empty name)
+// Return ErrPermission if access to the path is denied (non-empty name)
 func TestNewPathErrPermission(t *testing.T) {
 	testDirPath := t.TempDir()
 	if err := os.Chmod(testDirPath, 0); err != nil {
 		t.Fatal(err)
 	}
-	_, err := GetProjectRelativePath(testDirPath, "")
+	_, err := GetProjectRelativePath(testDirPath, testName)
 	if err == nil {
 		t.Fatalf("No error was returned. Expected: %s", fs.ErrPermission)
 	}
@@ -91,7 +91,7 @@ func TestNewPathErrPermission(t *testing.T) {
 	}
 }
 
-// Return updated path if the "foo" directory already exists
+// If a directory with the specified name already exists, return the path to that directory
 func TestNewExistingPath(t *testing.T) {
 	testDirPath := t.TempDir()
 	expectedPath := path.Join(testDirPath, testName)

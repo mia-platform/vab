@@ -67,22 +67,6 @@ func TestPathNotExists(t *testing.T) {
 	}
 }
 
-// Test that the correct error is returned if the path is only partially valid
-func TestPartiallyValidPath(t *testing.T) {
-	testDirPath := t.TempDir()
-	testWrongPath := path.Join(testDirPath, "missing-foo", "config.yaml")
-
-	emptyConfig := &v1alpha1.ClustersConfiguration{}
-	err := WriteConfig(*emptyConfig, testWrongPath)
-
-	if err == nil {
-		t.Fatalf("No error was returned. Expected: %s", fs.ErrNotExist)
-	}
-	if !errors.Is(err, fs.ErrNotExist) {
-		t.Fatalf("Unexpected error. Expected: %s, actual: %s", fs.ErrNotExist, err)
-	}
-}
-
 // Test that the correct error is returned if vab does not have permissions to access config path
 func TestPathPermError(t *testing.T) {
 	testDirPath := t.TempDir()
@@ -163,22 +147,6 @@ func TestWrongKustomizationFileName(t *testing.T) {
 // Test that the correct error is returned if the path to the Kustomization file is invalid
 func TestKustomizationPathNotExists(t *testing.T) {
 	testWrongPath := "/wrong/path/to/kustomization.yaml"
-
-	emptyKustomization := &kustomizeTypes.Kustomization{}
-	err := WriteKustomization(*emptyKustomization, testWrongPath)
-
-	if err == nil {
-		t.Fatalf("No error was returned. Expected: %s", fs.ErrNotExist)
-	}
-	if !errors.Is(err, fs.ErrNotExist) {
-		t.Fatalf("Unexpected error. Expected: %s, actual: %s", fs.ErrNotExist, err)
-	}
-}
-
-// Test that the correct error is returned if the path is only partially valid
-func TestPartiallyValidKustomizationPath(t *testing.T) {
-	testDirPath := t.TempDir()
-	testWrongPath := path.Join(testDirPath, "missing-foo", "kustomization.yaml")
 
 	emptyKustomization := &kustomizeTypes.Kustomization{}
 	err := WriteKustomization(*emptyKustomization, testWrongPath)
