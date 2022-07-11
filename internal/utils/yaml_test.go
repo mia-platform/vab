@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
-	kustomizeTypes "sigs.k8s.io/kustomize/api/types"
 )
 
 const (
@@ -41,9 +40,9 @@ func TestCustomConfigName(t *testing.T) {
 	fileName := "custom_config.yaml"
 	filePath := path.Join(testDirPath, fileName)
 
-	emptyConfig := &v1alpha1.ClustersConfiguration{}
+	emptyConfig := v1alpha1.EmptyConfig(testConfigName)
 
-	if err := WriteConfig(*emptyConfig, filePath); err != nil {
+	if err := WriteConfig(emptyConfig, filePath); err != nil {
 		t.Fatal(err)
 	}
 
@@ -56,8 +55,8 @@ func TestCustomConfigName(t *testing.T) {
 func TestPathNotExists(t *testing.T) {
 	testWrongPath := "/wrong/path/to/config.yaml"
 
-	emptyConfig := &v1alpha1.ClustersConfiguration{}
-	err := WriteConfig(*emptyConfig, testWrongPath)
+	emptyConfig := v1alpha1.EmptyConfig(testConfigName)
+	err := WriteConfig(emptyConfig, testWrongPath)
 
 	if err == nil {
 		t.Fatalf("No error was returned. Expected: %s", fs.ErrNotExist)
@@ -74,8 +73,8 @@ func TestPathPermError(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	emptyConfig := &v1alpha1.ClustersConfiguration{}
-	err := WriteConfig(*emptyConfig, testDirPath)
+	emptyConfig := v1alpha1.EmptyConfig(testConfigName)
+	err := WriteConfig(emptyConfig, testDirPath)
 
 	if err == nil {
 		t.Fatalf("No error was returned. Expected: %s", fs.ErrPermission)
@@ -93,8 +92,8 @@ func TestEmptyExistingConfig(t *testing.T) {
 		t.Fatal(writeErr)
 	}
 
-	emptyConfig := &v1alpha1.ClustersConfiguration{}
-	err := WriteConfig(*emptyConfig, testDirPath)
+	emptyConfig := v1alpha1.EmptyConfig(testConfigName)
+	err := WriteConfig(emptyConfig, testDirPath)
 
 	if err != nil {
 		t.Fatal(err)
@@ -105,13 +104,6 @@ func TestEmptyExistingConfig(t *testing.T) {
 func TestWriteEmptyKustomization(t *testing.T) {
 	testDirPath := t.TempDir()
 	t.Log(testDirPath)
-
-	emptyKustomization := &kustomizeTypes.Kustomization{
-		TypeMeta: kustomizeTypes.TypeMeta{
-			Kind:       "Kustomization",
-			APIVersion: "kustomize.config.k8s.io/v1beta1",
-		},
-	}
 
 	if err := WriteKustomization(*emptyKustomization, testDirPath); err != nil {
 		t.Fatal(err)
@@ -132,7 +124,6 @@ func TestWrongKustomizationFileName(t *testing.T) {
 	if fileErr != nil {
 		t.Fatalf("Error while creating test file: %s", fileErr)
 	}
-	emptyKustomization := &kustomizeTypes.Kustomization{}
 
 	err := WriteKustomization(*emptyKustomization, path.Join(testDirPath, file.Name()))
 
@@ -148,7 +139,6 @@ func TestWrongKustomizationFileName(t *testing.T) {
 func TestKustomizationPathNotExists(t *testing.T) {
 	testWrongPath := "/wrong/path/to/kustomization.yaml"
 
-	emptyKustomization := &kustomizeTypes.Kustomization{}
 	err := WriteKustomization(*emptyKustomization, testWrongPath)
 
 	if err == nil {
@@ -166,7 +156,6 @@ func TestKustomizationPathPermError(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	emptyKustomization := &kustomizeTypes.Kustomization{}
 	err := WriteKustomization(*emptyKustomization, testDirPath)
 
 	if err == nil {
@@ -184,7 +173,6 @@ func TestEmptyExistingKustomization(t *testing.T) {
 		t.Fatal(writeErr)
 	}
 
-	emptyKustomization := &kustomizeTypes.Kustomization{}
 	err := WriteKustomization(*emptyKustomization, testDirPath)
 
 	if err != nil {
