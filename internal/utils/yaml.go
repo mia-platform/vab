@@ -1,3 +1,17 @@
+// Copyright 2022 Mia-Platform
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+
+// 	http://www.apache.org/licenses/LICENSE-2.0
+
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package utils
 
 import (
@@ -22,6 +36,8 @@ const (
 
 var errKustomizationTarget = errors.New("The target file must be a kustomization.yaml")
 
+// writeYamlFile marshals the interface passed as argument, and writes it to a
+// YAML file
 func writeYamlFile(file interface{}, dstPath string) error {
 	var b bytes.Buffer
 	yamlEncoder := yaml.NewEncoder(&b)
@@ -38,6 +54,7 @@ func writeYamlFile(file interface{}, dstPath string) error {
 	return nil
 }
 
+// WriteConfig creates and writes an empty vab configuration file
 func WriteConfig(config v1alpha1.ClustersConfiguration, dirOrFilePath string) error {
 	dirOrFile, err := os.Stat(dirOrFilePath)
 
@@ -55,6 +72,7 @@ func WriteConfig(config v1alpha1.ClustersConfiguration, dirOrFilePath string) er
 	return writeYamlFile(config, dstPath)
 }
 
+// WriteKustomization creates and writes an empty kustomization file
 func WriteKustomization(kustomization kustomizeTypes.Kustomization, dirOrFilePath string) error {
 	dirOrFile, err := os.Stat(dirOrFilePath)
 

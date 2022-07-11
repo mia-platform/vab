@@ -1,3 +1,17 @@
+// Copyright 2022 Mia-Platform
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+
+// 	http://www.apache.org/licenses/LICENSE-2.0
+
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package utils
 
 import (
@@ -16,32 +30,32 @@ const (
 // Return current path if the name arg is the empty string
 func TestCurrentPath(t *testing.T) {
 	testDirPath := t.TempDir()
-	dstPath, err := GetProjectRelativePath(testDirPath, "")
+	dstPath, err := GetProjectPath(testDirPath, "")
 
 	if err != nil {
 		t.Fatal(err)
 	}
 	if dstPath != testDirPath {
-		t.Fatalf("Unexpected relative path. Expected: %s, actual: %s", testDirPath, dstPath)
+		t.Fatalf("Unexpected path. Expected: %s, actual: %s", testDirPath, dstPath)
 	}
 }
 
-// Return relative path of a new project directory named "foo"
+// Return path of a new project directory named "foo"
 func TestNewProjectPath(t *testing.T) {
 	testDirPath := t.TempDir()
 	expectedPath := path.Join(testDirPath, testName)
-	dstPath, err := GetProjectRelativePath(testDirPath, testName)
+	dstPath, err := GetProjectPath(testDirPath, testName)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if dstPath != expectedPath {
-		t.Fatalf("Unexpected relative path. Expected: %s, actual: %s", expectedPath, dstPath)
+		t.Fatalf("Unexpected path. Expected: %s, actual: %s", expectedPath, dstPath)
 	}
 }
 
 // Return ErrNotExists if the path parameter is invalid (empty name)
 func TestCurrentInvalidPath(t *testing.T) {
-	_, err := GetProjectRelativePath(invalidPath, "")
+	_, err := GetProjectPath(invalidPath, "")
 	if err == nil {
 		t.Fatalf("No error was returned. Expected: %s", fs.ErrNotExist)
 	}
@@ -52,7 +66,7 @@ func TestCurrentInvalidPath(t *testing.T) {
 
 // Return ErrNotExists if the path parameter is invalid (non-empty name)
 func TestNewInvalidPath(t *testing.T) {
-	_, err := GetProjectRelativePath(invalidPath, testName)
+	_, err := GetProjectPath(invalidPath, testName)
 	if err == nil {
 		t.Fatalf("No error was returned. Expected: %s", fs.ErrNotExist)
 	}
@@ -67,7 +81,7 @@ func TestCurrentPathErrPermission(t *testing.T) {
 	if err := os.Chmod(testDirPath, 0); err != nil {
 		t.Fatal(err)
 	}
-	_, err := GetProjectRelativePath(testDirPath, "")
+	_, err := GetProjectPath(testDirPath, "")
 	if err == nil {
 		t.Fatalf("No error was returned. Expected: %s", fs.ErrPermission)
 	}
@@ -82,7 +96,7 @@ func TestNewPathErrPermission(t *testing.T) {
 	if err := os.Chmod(testDirPath, 0); err != nil {
 		t.Fatal(err)
 	}
-	_, err := GetProjectRelativePath(testDirPath, testName)
+	_, err := GetProjectPath(testDirPath, testName)
 	if err == nil {
 		t.Fatalf("No error was returned. Expected: %s", fs.ErrPermission)
 	}
@@ -98,12 +112,12 @@ func TestNewExistingPath(t *testing.T) {
 	if err := os.Mkdir(expectedPath, fs.ModePerm); err != nil {
 		t.Fatal(err)
 	}
-	dstPath, err := GetProjectRelativePath(testDirPath, testName)
+	dstPath, err := GetProjectPath(testDirPath, testName)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if dstPath != expectedPath {
-		t.Fatalf("Unexpected relative path. Expected: %s, actual: %s", expectedPath, dstPath)
+		t.Fatalf("Unexpected path. Expected: %s, actual: %s", expectedPath, dstPath)
 	}
 }
 

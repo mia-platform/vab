@@ -5,6 +5,7 @@ const (
 	version = "vab.mia-platform.eu/v1alpha1"
 )
 
+// EmptyConfig generates an empty ClustersConfiguration
 func EmptyConfig(name string) ClustersConfiguration {
 	return ClustersConfiguration{
 		TypeMeta: TypeMeta{
