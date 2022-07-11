@@ -37,20 +37,11 @@ func GetProjectRelativePath(currentPath string, name string) (string, error) {
 }
 
 func CreateClusterOverride(configPath string, clusterName string) error {
-	clustersDir := path.Join(configPath, clustersDirName)
-	if _, statErr := os.Stat(clustersDir); statErr != nil {
-		if errors.Is(statErr, fs.ErrNotExist) {
-			if mkdirErr := os.Mkdir(path.Join(configPath, clustersDirName), os.ModePerm); mkdirErr != nil {
-				return mkdirErr
-			}
-		} else {
-			return statErr
-		}
-	}
-	if err := os.Mkdir(path.Join(clustersDir, clusterName), os.ModePerm); err != nil {
+	clusterDir := path.Join(configPath, clustersDirName, clusterName)
+	if err := os.MkdirAll(clusterDir, os.ModePerm); err != nil {
 		return err
 	}
-	if err := WriteKustomization(*emptyKustomization, path.Join(clustersDir, clusterName)); err != nil {
+	if err := WriteKustomization(*emptyKustomization, clusterDir); err != nil {
 		return err
 	}
 	return nil

@@ -130,17 +130,6 @@ func TestMissingClustersDirectory(t *testing.T) {
 	}
 }
 
-// Return ErrNotExists if the path parameter is invalid (empty name)
-func TestNewClusterInvalidPath(t *testing.T) {
-	err := CreateClusterOverride(invalidPath, testName)
-	if err == nil {
-		t.Fatalf("No error was returned. Expected: %s", fs.ErrNotExist)
-	}
-	if !errors.Is(err, fs.ErrNotExist) {
-		t.Fatalf("Unexpected error. Expected: %s, actual: %s", fs.ErrNotExist, err)
-	}
-}
-
 // Return ErrPermission if if access to the path is denied
 func TestNewClusterErrPermission(t *testing.T) {
 	testDirPath := t.TempDir()
