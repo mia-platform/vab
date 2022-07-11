@@ -24,7 +24,3 @@ func NewRootCommand() *cobra.Command {
 
 	return rootCmd
 }
-
-func Execute() error {
-	return NewRootCommand().Execute()
-}
