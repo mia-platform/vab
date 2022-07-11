@@ -12,26 +12,18 @@ import (
 	kustomizeTypes "sigs.k8s.io/kustomize/api/types"
 )
 
+const (
+	testConfigName = "empty-test"
+)
+
 // Test marshalling of config struct
 func TestWriteEmptyConfig(t *testing.T) {
 	testDirPath := t.TempDir()
 	t.Log(testDirPath)
 
-	emptyConfig := &v1alpha1.ClustersConfiguration{
+	emptyConfig := v1alpha1.EmptyConfig(testConfigName)
 
-		TypeMeta: v1alpha1.TypeMeta{
-			Kind:       "ClustersConfiguration",
-			APIVersion: "vab.mia-platform.eu/v1alpha1",
-		},
-		Name: "empty-test",
-		Spec: v1alpha1.ConfigSpec{
-			Modules: make(map[string]v1alpha1.Module),
-			AddOns:  make(map[string]v1alpha1.AddOn),
-			Groups:  make([]v1alpha1.Group, 0),
-		},
-	}
-
-	if err := WriteConfig(*emptyConfig, testDirPath); err != nil {
+	if err := WriteConfig(emptyConfig, testDirPath); err != nil {
 		t.Fatal(err)
 	}
 

@@ -21,24 +21,28 @@ func NewInitCommand() *cobra.Command {
 The project directory will contain the clusters directory (including the all-clusters folder with a minimal kustomize
 configuration), and the configuration file.`,
 
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			fmt.Println("Initializing...")
 
-			configPath, err := vabUtils.GetProjectRelativePath(".", flags.Name)
+			currentPath, err := os.Getwd()
 			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+				return err
+			}
+
+			configPath, err := vabUtils.GetProjectRelativePath(currentPath, flags.Name)
+			if err != nil {
+				return err
 			}
 
 			if err := vabUtils.WriteConfig(vabConfig.EmptyConfig(filepath.Base(configPath)), configPath); err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+				return err
 			}
 
 			if err := vabUtils.CreateClusterOverride(configPath, "all-clusters"); err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+				return err
 			}
+
+			return nil
 		},
 	}
 	initCmd.Flags().StringVarP(&flags.Name, "name", "n", "", "project name, defaults to current directory name")
