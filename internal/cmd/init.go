@@ -11,17 +11,6 @@ import (
 )
 
 var flags = &FlagPole{}
-var emptyConfig = &vabConfig.ClustersConfiguration{
-	TypeMeta: vabConfig.TypeMeta{
-		Kind:       "ClustersConfiguration",
-		APIVersion: "vab.mia-platform.eu/v1alpha1",
-	},
-	Spec: vabConfig.ConfigSpec{
-		Modules: make(map[string]vabConfig.Module),
-		AddOns:  make(map[string]vabConfig.AddOn),
-		Groups:  make([]vabConfig.Group, 0),
-	},
-}
 
 func NewInitCommand() *cobra.Command {
 	initCmd := &cobra.Command{
@@ -41,8 +30,7 @@ configuration), and the configuration file.`,
 				os.Exit(1)
 			}
 
-			emptyConfig.Name = filepath.Base(configPath)
-			if err := vabUtils.WriteConfig(*emptyConfig, configPath); err != nil {
+			if err := vabUtils.WriteConfig(vabConfig.EmptyConfig(filepath.Base(configPath)), configPath); err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
