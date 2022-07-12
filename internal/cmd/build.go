@@ -17,6 +17,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/mia-platform/vab/internal/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -30,8 +31,21 @@ func NewBuildCommand() *cobra.Command {
 the cluster, allowing the user to check if all the resources are generated correctly for the target cluster.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fmt.Println("Building the configuration...")
+			targetPath, err := utils.GetBuildPath(args, defaultConfigPath)
+			if err != nil {
+				return err
+			}
+			fmt.Println(targetPath)
 			return nil
 		},
 	}
+
 	return buildCmd
 }
+
+// func todo() error {
+// 	b := NewBuildCommand()
+// 	a := []string{"asd", "asd"}
+// 	b.SetArgs(a)
+// 	return b.Execute()
+// }
