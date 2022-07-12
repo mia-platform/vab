@@ -8,8 +8,12 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+// GetBuildPath returns the target path for the kustomize build command
 func GetBuildPath(args []string, configPath string) (string, error) {
 
+	if configPath == "" {
+		configPath = defaultConfigFileName
+	}
 	config, err := ReadConfig(configPath)
 	if err != nil {
 		return "", err
