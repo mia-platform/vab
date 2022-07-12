@@ -18,10 +18,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	defaultConfigPath = "./config.yaml"
-)
-
 type FlagPole struct {
 	Name   string
 	Config string

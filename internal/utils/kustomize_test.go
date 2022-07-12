@@ -62,7 +62,6 @@ spec:
 )
 
 func TestRunKustomizeBuild(t *testing.T) {
-
 	testDirPath := t.TempDir()
 
 	if err := writeYamlFile(testConfig, path.Join(testDirPath, defaultConfigFileName)); err != nil {
@@ -93,5 +92,4 @@ func TestRunKustomizeBuild(t *testing.T) {
 	if !bytes.Equal(buffer.Bytes(), []byte(expectedResult)) {
 		t.Fatal("Unexpected Kustomize result.")
 	}
-
 }

@@ -44,7 +44,7 @@ func TestGetGroupPath(t *testing.T) {
 func TestGetBuildPathWrongGroup(t *testing.T) {
 	args := []string{wrongResource}
 	configPath := path.Join("..", "test_data", "test_groups.yaml")
-	configPath, err := GetBuildPath(args, configPath)
+	_, err := GetBuildPath(args, configPath)
 	if err == nil {
 		t.Fatal("No error was returned. Expected: Group " + args[0] + " not found in configuration")
 	}
@@ -57,7 +57,7 @@ func TestGetBuildPathWrongGroup(t *testing.T) {
 func TestGetBuildPathWrongCluster(t *testing.T) {
 	args := []string{wrongResource, wrongResource}
 	configPath := path.Join("..", "test_data", "test_groups.yaml")
-	configPath, err := GetBuildPath(args, configPath)
+	_, err := GetBuildPath(args, configPath)
 	if err == nil {
 		t.Fatal("No error was returned. Expected: Cluster " + args[0] + " not found in configuration")
 	}
@@ -70,7 +70,7 @@ func TestGetBuildPathWrongCluster(t *testing.T) {
 func TestGetBuildPathNoArgs(t *testing.T) {
 	args := []string{}
 	configPath := path.Join("..", "test_data", "test_groups.yaml")
-	configPath, err := GetBuildPath(args, configPath)
+	_, err := GetBuildPath(args, configPath)
 	if err == nil {
 		t.Fatal("No error was returned. Expected: at least the cluster group is required")
 	}
@@ -83,7 +83,7 @@ func TestGetBuildPathNoArgs(t *testing.T) {
 func TestGetBuildPathTooManyArgs(t *testing.T) {
 	args := []string{testGroup, testCluster, wrongResource}
 	configPath := path.Join("..", "test_data", "test_groups.yaml")
-	configPath, err := GetBuildPath(args, configPath)
+	_, err := GetBuildPath(args, configPath)
 	if err == nil {
 		t.Fatal("No error was returned. Expected: too many args")
 	}

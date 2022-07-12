@@ -38,7 +38,6 @@ var errKustomizationTarget = errors.New("The target file must be a kustomization
 
 // ReadConfig reads a configuration file into a ClustersConfiguration struct
 func ReadConfig(configPath string) (*v1alpha1.ClustersConfiguration, error) {
-
 	configFile, readErr := os.ReadFile(configPath)
 	if readErr != nil {
 		return nil, readErr
