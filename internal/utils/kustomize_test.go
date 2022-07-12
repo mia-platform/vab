@@ -2,6 +2,8 @@ package utils
 
 import (
 	"bytes"
+	"errors"
+	"io/fs"
 	"os"
 	"path"
 	"testing"
@@ -61,6 +63,7 @@ spec:
 `
 )
 
+// Test that the function returns the correct kustomized configuration
 func TestRunKustomizeBuild(t *testing.T) {
 	testDirPath := t.TempDir()
 
@@ -91,5 +94,17 @@ func TestRunKustomizeBuild(t *testing.T) {
 	t.Log(buffer.String())
 	if !bytes.Equal(buffer.Bytes(), []byte(expectedResult)) {
 		t.Fatal("Unexpected Kustomize result.")
+	}
+}
+
+// Returns an error if the path is invalid
+func TestInvalidKustomizeBuildPath(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	err := RunKustomizeBuild(invalidPath, buffer)
+	if err == nil {
+		t.Fatalf("No error was returned. Expected: %s", fs.ErrNotExist)
+	}
+	if !errors.Is(err, fs.ErrNotExist) {
+		t.Fatalf("Unexpected error. Expected: %s, actual: %s", fs.ErrNotExist, err)
 	}
 }
