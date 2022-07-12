@@ -50,7 +50,7 @@ configuration), and the configuration file.`,
 			}
 
 			name := filepath.Base(configPath)
-			if err := vabUtils.WriteConfig(vabConfig.EmptyConfig(name), configPath); err != nil {
+			if err := vabUtils.WriteConfig(*vabConfig.EmptyConfig(name), configPath); err != nil {
 				return err
 			}
 

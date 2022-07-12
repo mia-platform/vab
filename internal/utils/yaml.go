@@ -36,6 +36,23 @@ const (
 
 var errKustomizationTarget = errors.New("The target file must be a kustomization.yaml")
 
+// ReadConfig reads a configuration file into a ClustersConfiguration struct
+func ReadConfig(configPath string) (*v1alpha1.ClustersConfiguration, error) {
+
+	configFile, readErr := os.ReadFile(configPath)
+	if readErr != nil {
+		return nil, readErr
+	}
+
+	output := &v1alpha1.ClustersConfiguration{}
+	yamlErr := yaml.Unmarshal(configFile, output)
+	if yamlErr != nil {
+		return nil, yamlErr
+	}
+
+	return output, nil
+}
+
 // writeYamlFile marshals the interface passed as argument, and writes it to a
 // YAML file
 func writeYamlFile(file interface{}, dstPath string) error {
