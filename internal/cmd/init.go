@@ -24,8 +24,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var flags = &FlagPole{}
-
 // NewInitCommand returns a new cobra.Command for initializing the project
 func NewInitCommand() *cobra.Command {
 	initCmd := &cobra.Command{
@@ -33,7 +31,7 @@ func NewInitCommand() *cobra.Command {
 		Use:   "init",
 		Short: "Initialize the vab project",
 		Long: `Creates the project folder with a preliminary directory structure, together with the skeleton of the configuration file.
-The project directory will contain the clusters directory (including the all-clusters folder with a minimal kustomize
+The project directory will contain the clusters directory (including the all-groups folder with a minimal kustomize
 configuration), and the configuration file.`,
 
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -54,7 +52,7 @@ configuration), and the configuration file.`,
 				return err
 			}
 
-			if err := vabUtils.CreateClusterOverride(configPath, "all-clusters"); err != nil {
+			if err := vabUtils.CreateClusterOverride(configPath, "all-groups"); err != nil {
 				return err
 			}
 

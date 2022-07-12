@@ -27,6 +27,8 @@ type FlagPole struct {
 	Config string
 }
 
+var flags = &FlagPole{}
+
 // NewRootCommand returns a new cobra.Command for vab's root command
 func NewRootCommand() *cobra.Command {
 	rootCmd := &cobra.Command{
