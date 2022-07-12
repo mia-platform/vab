@@ -17,6 +17,7 @@ package utils
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io/fs"
 	"os"
 	"path"
@@ -34,7 +35,7 @@ const (
 	yamlDefaultIndent      = 2
 )
 
-var errKustomizationTarget = errors.New("The target file must be a kustomization.yaml")
+var errKustomizationTarget = fmt.Errorf("the target file must be a kustomization.yaml")
 
 // writeYamlFile marshals the interface passed as argument, and writes it to a
 // YAML file
