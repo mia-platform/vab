@@ -31,21 +31,17 @@ func NewBuildCommand() *cobra.Command {
 the cluster, allowing the user to check if all the resources are generated correctly for the target cluster.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fmt.Println("Building the configuration...")
-			targetPath, err := utils.GetBuildPath(args, defaultConfigPath)
+			targetPath, err := utils.GetBuildPath(args, flags.Config)
 			if err != nil {
 				return err
 			}
-			fmt.Println(targetPath)
+			if err := utils.RunKustomizeBuild(targetPath, nil); err != nil {
+				return err
+			}
 			return nil
 		},
 	}
 
+	buildCmd.Flags().StringVarP(&flags.Config, "config", "c", "", "specify a different path for the configuration file")
 	return buildCmd
 }
-
-// func todo() error {
-// 	b := NewBuildCommand()
-// 	a := []string{"asd", "asd"}
-// 	b.SetArgs(a)
-// 	return b.Execute()
-// }
