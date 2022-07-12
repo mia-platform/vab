@@ -23,6 +23,20 @@ CMDNAME := vab
 TOOLS_DIR := $(PROJECT_DIR)/tools
 TOOLS_BIN := $(TOOLS_DIR)/bin
 
+# Set the version number.
+VERSION ?= $(shell git describe --tags 2>/dev/null || git rev-parse --short HEAD)
+DATE_FMT = +%Y-%m-%d
+ifdef SOURCE_DATE_EPOCH
+    BUILD_DATE ?= $(shell date -u -d "@$(SOURCE_DATE_EPOCH)" "$(DATE_FMT)" 2>/dev/null || date -u -r "$(SOURCE_DATE_EPOCH)" "$(DATE_FMT)" 2>/dev/null || date -u "$(DATE_FMT)")
+else
+    BUILD_DATE ?= $(shell date "$(DATE_FMT)")
+endif
+
+GO_LDFLAGS := -X github.com/mia-platform/vab/internal/cmd.Version=$(VERSION) $(GO_LDFLAGS)
+GO_LDFLAGS := -X github.com/mia-platform/vab/internal/cmd.BuildDate=$(BUILD_DATE) $(GO_LDFLAGS)
+# REV is the short git sha of latest commit.
+REV=$(shell git rev-parse --short HEAD)
+
 # Golang variables
 GOOS := $(shell go env GOOS)
 GOARCH := $(shell go env GOARCH)
@@ -35,16 +49,18 @@ endif
 
 ##@ Build
 
-.PHONY: build build-linux-amd64 build-linux-arm64 build-all
+.PHONY: build build-all
 build: build.${GOOS}.${GOARCH}
 build-linux-amd64: build.linux.amd64
 build-linux-arm64: build.linux.arm64
-build-all: build-linux-amd64 build-linux-arm64
+build-darwin-amd64: build.darwin.amd64
+build-darwin-arm64: build.darwin.arm64
+build-all: build-linux-amd64 build-linux-arm64 build.darwin.amd64 build.darwin.arm64
 
 build.%:
 	$(eval OS := $(word 1,$(subst ., ,$*)))
 	$(eval ARCH := $(word 2,$(subst ., ,$*)))
-	CGO_ENABLED=0 GOOS=$(OS) GOARCH=$(ARCH) go build \
+	CGO_ENABLED=0 GOOS=$(OS) GOARCH=$(ARCH) go build -ldflags "$(GO_LDFLAGS)" \
 		-o $(OUTPUT_DIR)/$(OS)/$(ARCH)/$(CMDNAME) $(PROJECT_DIR)/cmd/$(CMDNAME)
 
 ##@ Test

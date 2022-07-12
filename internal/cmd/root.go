@@ -15,6 +15,10 @@
 package cmd
 
 import (
+	"flag"
+	"fmt"
+	"runtime"
+
 	"github.com/spf13/cobra"
 )
 
@@ -27,7 +31,7 @@ type FlagPole struct {
 func NewRootCommand() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:     "vab",
-		Version: "vab-v0.0",
+		Version: versionString(),
 		Short:   "A tool for installing the Mia-Platform distro on your clusters",
 	}
 
@@ -38,4 +42,25 @@ func NewRootCommand() *cobra.Command {
 	rootCmd.AddCommand(NewApplyCommand())
 
 	return rootCmd
+}
+
+// Version is dynamically set by the ci or overridden by the Makefile.
+var Version = "DEV"
+
+// BuildDate is dynamically set at build time by the cli or overridden in the Makefile.
+var BuildDate = "" // YYYY-MM-DD
+
+func versionString() string {
+	version := Version
+
+	if BuildDate != "" {
+		version = fmt.Sprintf("%s (%s)", version, BuildDate)
+	}
+
+	// don't return GoVersion during a test run for consistent test output
+	if flag.Lookup("test.v") != nil {
+		return version
+	}
+
+	return fmt.Sprintf("%s, Go Version: %s", version, runtime.Version())
 }
