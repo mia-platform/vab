@@ -10,7 +10,7 @@ on:
       - "docs/**"
 env:
   GO_VERSION: 1.18.3
-  GO_CACHE: false
+  GO_CACHE: true
 jobs:
   lint:
     runs-on: ubuntu-latest
