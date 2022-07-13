@@ -6,8 +6,8 @@ const (
 )
 
 // EmptyConfig generates an empty ClustersConfiguration
-func EmptyConfig(name string) ClustersConfiguration {
-	return ClustersConfiguration{
+func EmptyConfig(name string) *ClustersConfiguration {
+	return &ClustersConfiguration{
 		TypeMeta: TypeMeta{
 			Kind:       kind,
 			APIVersion: version,

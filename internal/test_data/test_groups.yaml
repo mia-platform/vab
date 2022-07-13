@@ -1,0 +1,12 @@
+kind: ClustersConfiguration
+apiVersion: vab.mia-platform.eu/v1alpha1
+name: empty-test
+spec:
+  modules: {}
+  addOns: {}
+  groups:
+  - name: test-group
+    clusters:
+    - name: test-cluster
+    - name: another-cluster
+  - name: another-group

@@ -5,7 +5,7 @@
 Creates the folder `project-name` with a preliminary directory structure,
 together with the skeleton of the configuration file.
 
-The project directory will include the `clusters` directory (including the `all-clusters` folder with a minimal
+The project directory will include the `clusters` directory (including the `all-group` folder with a minimal
 kustomize configuration), and the configuration file.
 
 ### Directory structure
@@ -13,7 +13,7 @@ kustomize configuration), and the configuration file.
 ```txt
 ./project-name
 ├── clusters
-|   └── all-clusters
+|   └── all-groups
 |       └── kustomization.yaml
 └── config.yaml
 ```
@@ -114,6 +114,9 @@ The command execution will build the following directory structure:
 |   └── add-ons
 |       └── ..
 ├── clusters
+|   ├── all-groups
+|   |   ├── [...]
+|   |   └── kustomization.yaml
 |   └── group-name
 |       ├── all-clusters
 |       |   ├── ingress

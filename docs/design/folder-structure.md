@@ -46,9 +46,10 @@ For example:
 The structure of the folder `clusters` depends on the cluster configuration provided by the user.
 Customizations will be grouped by cluster, which will be collected in their respective cluster group.
 Consequently, at the first level, there will be as many folders as the number of cluster groups, each of which
-will contain both the default (applied to all the clusters, included in the `all-clusters` directory)
+will contain both the default (applied to all the clusters in the group, included in the `all-clusters` directory)
 and the individual cluster customizations. Since Kustomize is managing the configurations, the overrides of the clusters
 will be structured as Kustomize patches, hence including their own `kustomization.yaml`.
+The `all-groups` directory will eventually contain customizations common to all groups.
 
 Assuming that modules and add-ons will not have the same names, there will be no need to create a further nesting levels
 to distinguish modules and add-ons.
@@ -61,6 +62,9 @@ For example:
 ├── vendors
 |   └── [...]
 └── clusters
+    ├── all-groups
+    |   ├── [...]
+    |   └── kustomization.yaml
     ├── group-1
     |   ├── all-clusters
     |   |   ├── traefik

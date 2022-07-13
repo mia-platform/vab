@@ -20,8 +20,10 @@ import (
 	"io/fs"
 	"os"
 	"path"
+	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 )
 
@@ -36,7 +38,7 @@ func TestWriteEmptyConfig(t *testing.T) {
 
 	emptyConfig := v1alpha1.EmptyConfig(testConfigName)
 
-	if err := WriteConfig(emptyConfig, testDirPath); err != nil {
+	if err := WriteConfig(*emptyConfig, testDirPath); err != nil {
 		t.Fatal(err)
 	}
 
@@ -56,7 +58,7 @@ func TestCustomConfigName(t *testing.T) {
 
 	emptyConfig := v1alpha1.EmptyConfig(testConfigName)
 
-	if err := WriteConfig(emptyConfig, filePath); err != nil {
+	if err := WriteConfig(*emptyConfig, filePath); err != nil {
 		t.Fatal(err)
 	}
 
@@ -70,7 +72,7 @@ func TestPathNotExists(t *testing.T) {
 	testWrongPath := "/wrong/path/to/config.yaml"
 
 	emptyConfig := v1alpha1.EmptyConfig(testConfigName)
-	err := WriteConfig(emptyConfig, testWrongPath)
+	err := WriteConfig(*emptyConfig, testWrongPath)
 
 	if err == nil {
 		t.Fatalf("No error was returned. Expected: %s", fs.ErrNotExist)
@@ -88,7 +90,7 @@ func TestPathPermError(t *testing.T) {
 	}
 
 	emptyConfig := v1alpha1.EmptyConfig(testConfigName)
-	err := WriteConfig(emptyConfig, testDirPath)
+	err := WriteConfig(*emptyConfig, testDirPath)
 
 	if err == nil {
 		t.Fatalf("No error was returned. Expected: %s", fs.ErrPermission)
@@ -107,7 +109,7 @@ func TestEmptyExistingConfig(t *testing.T) {
 	}
 
 	emptyConfig := v1alpha1.EmptyConfig(testConfigName)
-	err := WriteConfig(emptyConfig, testDirPath)
+	err := WriteConfig(*emptyConfig, testDirPath)
 
 	if err != nil {
 		t.Fatal(err)
@@ -191,5 +193,56 @@ func TestEmptyExistingKustomization(t *testing.T) {
 
 	if err != nil {
 		t.Fatal(err)
+	}
+}
+
+// ReadConfig reads the configuration correctly
+func TestReadEmptyConfig(t *testing.T) {
+	config, err := ReadConfig(path.Join("..", "test_data", "empty_config.yaml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	expectedConfig := v1alpha1.EmptyConfig(testConfigName)
+	if !cmp.Equal(config, expectedConfig) {
+		t.Fatal("Unexpected configuration.")
+	}
+}
+
+// ReadConfig returns ErrNotExist if the path is invalid
+func TestReadConfigInvalidPath(t *testing.T) {
+	_, err := ReadConfig(invalidPath)
+	if err == nil {
+		t.Fatalf("No error was returned. Expected: %s", fs.ErrNotExist)
+	}
+	if !errors.Is(err, fs.ErrNotExist) {
+		t.Fatalf("Unexpected error. Expected: %s, actual: %s", fs.ErrNotExist, err)
+	}
+}
+
+// ReadConfig returns ErrPermission if the path is not accessible
+func TestReadConfigErrPermission(t *testing.T) {
+	testDirPath := t.TempDir()
+	dstPath := path.Join(testDirPath, testName)
+	if err := os.Mkdir(dstPath, 0); err != nil {
+		t.Fatal(err)
+	}
+	_, err := ReadConfig(dstPath)
+	if err == nil {
+		t.Fatalf("No error was returned. Expected: %s", fs.ErrPermission)
+	}
+	if !errors.Is(err, fs.ErrPermission) {
+		t.Fatalf("Unexpected error. Expected: %s, actual: %s", fs.ErrPermission, err)
+	}
+}
+
+// ReadConfig returns an error if the YAML is not invalid
+func TestReadConfigUnmarshalErr(t *testing.T) {
+	invalidConfigPath := path.Join("..", "test_data", "invalid_config.yaml")
+	_, err := ReadConfig(invalidConfigPath)
+	if err == nil {
+		t.Fatalf("No error was returned. Expected: %s", fs.ErrNotExist)
+	}
+	if !strings.Contains(err.Error(), "yaml") {
+		t.Fatalf("Unexpected error: %s", err)
 	}
 }

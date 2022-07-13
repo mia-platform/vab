@@ -62,7 +62,7 @@ In the sample configuration file above:
     Therefore, `cluster-3` will be configured with all the modules and add-ons specified by default.
 
 The `sync` command will be in charge of updating the vendors to the latest configuration and creating the appropriate
-directory structure. According to the example above, `clusters` will include the following directories:
+directory structure. According to the example above, `clusters/group-1` will include the following directories:
 
 - **`all-clusters`:** containing patches of the modules (`ingress/traefik v1.20.1`, `cni/cilium v1.20.1`)
   and add-ons (`ingress-monitoring v1.20.1`) that will be applied to all the clusters;
