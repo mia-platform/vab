@@ -34,8 +34,16 @@ func NewInitCommand() *cobra.Command {
 The project directory will contain the clusters directory (including the all-groups folder with a minimal kustomize
 configuration), and the configuration file.`,
 
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return nil
+			}
+			return fmt.Errorf("no argument %s expected here", args[0])
+		},
+
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Println("Initializing...")
+			cmd.SilenceUsage = true
+			cmd.Println("Initializing...")
 
 			currentPath, err := os.Getwd()
 			if err != nil {
