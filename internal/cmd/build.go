@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"fmt"
+	"path"
 
 	"github.com/mia-platform/vab/internal/utils"
 	"github.com/spf13/cobra"
@@ -25,6 +26,7 @@ const (
 	minArgs           = 1
 	maxArgs           = 2
 	defaultConfigPath = "./config.yaml"
+	clustersDirName   = "clusters"
 )
 
 // NewBuildCommand returns a new cobra.Command for building the clusters
@@ -46,7 +48,6 @@ the cluster, allowing the user to check if all the resources are generated corre
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
-			fmt.Println("Building the configuration...")
 
 			targetPath, err := utils.GetBuildPath(args, flags.Config)
 			if err != nil {
@@ -54,9 +55,12 @@ the cluster, allowing the user to check if all the resources are generated corre
 			}
 
 			for _, clusterPath := range targetPath {
-				if err := utils.RunKustomizeBuild(clusterPath, nil); err != nil {
+				fmt.Println("### BUILD RESULTS FOR: " + clusterPath + " ###")
+				targetPath := path.Join(clustersDirName, clusterPath)
+				if err := utils.RunKustomizeBuild(targetPath, nil); err != nil {
 					return err
 				}
+				fmt.Println("---")
 			}
 
 			return nil

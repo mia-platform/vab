@@ -23,7 +23,7 @@ func TestGetClusterPath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expectedPath := path.Join(clustersDirName, testGroup, testCluster1)
+	expectedPath := path.Join(testGroup, testCluster1)
 	if buildPath[0] != expectedPath {
 		t.Fatalf("Unexpected path. Expected: %s, actual: %s", expectedPath, buildPath[0])
 	}
@@ -37,8 +37,8 @@ func TestGetGroupPath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	clusterPath1 := path.Join(clustersDirName, testGroup, testCluster1)
-	clusterPath2 := path.Join(clustersDirName, testGroup, testCluster2)
+	clusterPath1 := path.Join(testGroup, testCluster1)
+	clusterPath2 := path.Join(testGroup, testCluster2)
 	expectedPaths := []string{clusterPath1, clusterPath2}
 	if !cmp.Equal(buildPaths, expectedPaths) {
 		t.Fatalf("Unexpected paths. Expected: %v, actual: %v", expectedPaths, buildPaths)

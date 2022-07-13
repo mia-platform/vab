@@ -32,7 +32,6 @@ func GetBuildPath(args []string, configPath string) ([]string, error) {
 		return []string{}, errors.New("Group " + groupName + " not found in configuration")
 	}
 	group := config.Spec.Groups[groupIdx]
-	groupPath := path.Join(clustersDirName, groupName)
 	// The second arg, if present, contains the name of the cluster to build.
 	// The usage of IndexFunc for clusters is similar to that mentioned above.
 	if len(args) == maxArgs {
@@ -41,12 +40,12 @@ func GetBuildPath(args []string, configPath string) ([]string, error) {
 		if clusterIdx == -1 {
 			return []string{}, errors.New("Cluster " + clusterName + " not found in configuration")
 		}
-		targetPaths = append(targetPaths, path.Join(groupPath, clusterName))
+		targetPaths = append(targetPaths, path.Join(groupName, clusterName))
 	} else {
 		// If no cluster is specified and the group exists, return all the paths to
 		// the clusters in the group.
 		for _, cluster := range group.Clusters {
-			targetPaths = append(targetPaths, path.Join(groupPath, cluster.Name))
+			targetPaths = append(targetPaths, path.Join(groupName, cluster.Name))
 		}
 	}
 
