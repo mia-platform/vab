@@ -34,7 +34,7 @@ const (
 	yamlDefaultIndent      = 2
 )
 
-var errKustomizationTarget = errors.New("The target file must be a kustomization.yaml")
+var errKustomizationTarget = errors.New("the target file must be a kustomization.yaml")
 
 // ReadConfig reads a configuration file into a ClustersConfiguration struct
 func ReadConfig(configPath string) (*v1alpha1.ClustersConfiguration, error) {

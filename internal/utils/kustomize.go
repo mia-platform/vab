@@ -23,9 +23,5 @@ func RunKustomizeBuild(targetPath string, writer io.Writer) error {
 	args := []string{targetPath}
 	kustomizeCmd.SetArgs(args)
 
-	if err := kustomizeCmd.Execute(); err != nil {
-		return err
-	}
-
-	return nil
+	return kustomizeCmd.Execute()
 }

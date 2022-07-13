@@ -71,7 +71,7 @@ func TestRunKustomizeBuild(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	targetPath := path.Join(testDirPath, clustersDirName, testGroup, testCluster)
+	targetPath := path.Join(testDirPath, clustersDirName, testGroup, testCluster1)
 	if err := os.MkdirAll(targetPath, os.ModePerm); err != nil {
 		t.Fatal(err)
 	}
