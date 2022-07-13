@@ -4,39 +4,44 @@ import (
 	"path"
 	"strings"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 const (
 	testGroup     = "test-group"
-	testCluster   = "test-cluster"
+	testCluster1  = "test-cluster"
+	testCluster2  = "another-cluster"
 	wrongResource = "wrong-group"
 )
 
 // Test that the correct path is returned given valid group and cluster
 func TestGetClusterPath(t *testing.T) {
-	args := []string{testGroup, testCluster}
+	args := []string{testGroup, testCluster1}
 	configPath := path.Join("..", "test_data", "test_groups.yaml")
-	configPath, err := GetBuildPath(args, configPath)
+	buildPath, err := GetBuildPath(args, configPath)
 	if err != nil {
 		t.Fatal(err)
 	}
-	expectedPath := path.Join(clustersDirName, testGroup, testCluster)
-	if configPath != expectedPath {
-		t.Fatalf("Unexpected path. Expected: %s, actual: %s", expectedPath, configPath)
+	expectedPath := path.Join(clustersDirName, testGroup, testCluster1)
+	if buildPath[0] != expectedPath {
+		t.Fatalf("Unexpected path. Expected: %s, actual: %s", expectedPath, buildPath[0])
 	}
 }
 
-// Test that the correct path is returned given valid group
+// Test that the correct paths are returned given valid group
 func TestGetGroupPath(t *testing.T) {
 	args := []string{testGroup}
 	configPath := path.Join("..", "test_data", "test_groups.yaml")
-	configPath, err := GetBuildPath(args, configPath)
+	buildPaths, err := GetBuildPath(args, configPath)
 	if err != nil {
 		t.Fatal(err)
 	}
-	expectedPath := path.Join(clustersDirName, testGroup)
-	if configPath != expectedPath {
-		t.Fatalf("Unexpected path. Expected: %s, actual: %s", expectedPath, configPath)
+	clusterPath1 := path.Join(clustersDirName, testGroup, testCluster1)
+	clusterPath2 := path.Join(clustersDirName, testGroup, testCluster2)
+	expectedPaths := []string{clusterPath1, clusterPath2}
+	if !cmp.Equal(buildPaths, expectedPaths) {
+		t.Fatalf("Unexpected paths. Expected: %v, actual: %v", expectedPaths, buildPaths)
 	}
 }
 
@@ -62,32 +67,6 @@ func TestGetBuildPathWrongCluster(t *testing.T) {
 		t.Fatal("No error was returned. Expected: Cluster " + args[0] + " not found in configuration")
 	}
 	if !strings.Contains(err.Error(), "not found in configuration") {
-		t.Fatalf("Unexpected error: %s", err)
-	}
-}
-
-// Returns an error if the args array is empty
-func TestGetBuildPathNoArgs(t *testing.T) {
-	args := []string{}
-	configPath := path.Join("..", "test_data", "test_groups.yaml")
-	_, err := GetBuildPath(args, configPath)
-	if err == nil {
-		t.Fatal("No error was returned. Expected: at least the cluster group is required")
-	}
-	if !strings.Contains(err.Error(), "required") {
-		t.Fatalf("Unexpected error: %s", err)
-	}
-}
-
-// Returns an error if the args are too many (> 2)
-func TestGetBuildPathTooManyArgs(t *testing.T) {
-	args := []string{testGroup, testCluster, wrongResource}
-	configPath := path.Join("..", "test_data", "test_groups.yaml")
-	_, err := GetBuildPath(args, configPath)
-	if err == nil {
-		t.Fatal("No error was returned. Expected: too many args")
-	}
-	if !strings.Contains(err.Error(), "too many") {
 		t.Fatalf("Unexpected error: %s", err)
 	}
 }
