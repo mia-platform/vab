@@ -23,20 +23,6 @@ CMDNAME := vab
 TOOLS_DIR := $(PROJECT_DIR)/tools
 TOOLS_BIN := $(TOOLS_DIR)/bin
 
-# Set the version number.
-VERSION ?= $(shell git describe --tags 2>/dev/null || git rev-parse --short HEAD)
-DATE_FMT = +%Y-%m-%d
-ifdef SOURCE_DATE_EPOCH
-    BUILD_DATE ?= $(shell date -u -d "@$(SOURCE_DATE_EPOCH)" "$(DATE_FMT)" 2>/dev/null || date -u -r "$(SOURCE_DATE_EPOCH)" "$(DATE_FMT)" 2>/dev/null || date -u "$(DATE_FMT)")
-else
-    BUILD_DATE ?= $(shell date "$(DATE_FMT)")
-endif
-
-GO_LDFLAGS := -X github.com/mia-platform/vab/internal/cmd.Version=$(VERSION) $(GO_LDFLAGS)
-GO_LDFLAGS := -X github.com/mia-platform/vab/internal/cmd.BuildDate=$(BUILD_DATE) $(GO_LDFLAGS)
-# REV is the short git sha of latest commit.
-REV=$(shell git rev-parse --short HEAD)
-
 # Golang variables
 GOOS := $(shell go env GOOS)
 GOARCH := $(shell go env GOARCH)
@@ -48,6 +34,18 @@ ifeq ($(origin GOBIN), undefined)
 endif
 
 ##@ Build
+
+# Set the version number.
+VERSION ?= $(shell git describe --tags 2>/dev/null || git rev-parse --short HEAD)
+DATE_FMT = +%Y-%m-%d
+ifdef SOURCE_DATE_EPOCH
+    BUILD_DATE ?= $(shell date -u -d "@$(SOURCE_DATE_EPOCH)" "$(DATE_FMT)" 2>/dev/null || date -u -r "$(SOURCE_DATE_EPOCH)" "$(DATE_FMT)" 2>/dev/null || date -u "$(DATE_FMT)")
+else
+    BUILD_DATE ?= $(shell date "$(DATE_FMT)")
+endif
+
+GO_LDFLAGS := -X github.com/mia-platform/vab/internal/cmd.Version=$(VERSION) $(GO_LDFLAGS)
+GO_LDFLAGS := -X github.com/mia-platform/vab/internal/cmd.BuildDate=$(BUILD_DATE) $(GO_LDFLAGS)
 
 .PHONY: build build-all
 build: build.${GOOS}.${GOARCH}
@@ -135,3 +133,20 @@ lintgo-dep:
 
 generate-dep:
 	@GOBIN=$(TOOLS_BIN) go install k8s.io/code-generator/cmd/deepcopy-gen@v0.24.2
+
+##@ Images
+
+# REGISTRY is the image registry to use for build and push image targets, default to docker hub
+REGISTRY ?= docker.io/miaplatform
+IMAGE = ${REGISTRY}/vab
+
+# TAG is the tag to use for build and push image targets, use git tag or latest
+TAG ?= $(shell git describe --tags 2>/dev/null || echo latest)
+
+# Force to use buildkit as engine
+DOCKER := DOCKER_BUILDKIT=1 docker
+
+build-image: build.linux.${GOARCH}
+	@echo "Building image for ${GOARCH}..."
+# Force linux OS because alpine don't have darwin specific slices
+	DOCKER build --platform linux/${GOARCH} --pull -t $(IMAGE):$(TAG) -f . bin
