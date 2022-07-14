@@ -1,16 +1,16 @@
 package v1alpha1
 
 const (
-	kind    = "ClustersConfiguration"
-	version = "vab.mia-platform.eu/v1alpha1"
+	Kind    = "ClustersConfiguration"
+	Version = "vab.mia-platform.eu/v1alpha1"
 )
 
 // EmptyConfig generates an empty ClustersConfiguration
 func EmptyConfig(name string) *ClustersConfiguration {
 	return &ClustersConfiguration{
 		TypeMeta: TypeMeta{
-			Kind:       kind,
-			APIVersion: version,
+			Kind:       Kind,
+			APIVersion: Version,
 		},
 		Name: name,
 		Spec: ConfigSpec{

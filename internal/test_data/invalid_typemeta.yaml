@@ -1,0 +1,7 @@
+kind: WrongKind
+apiVersion: wrong.version.io/v1
+name: empty-test
+spec:
+  modules: {}
+  addOns: {}
+  groups: []
