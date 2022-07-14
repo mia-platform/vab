@@ -1,0 +1,24 @@
+{
+  "name": "vab",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "args": {
+      "VARIANT": "1.18.3"
+    }
+  },
+  "runArgs": [ "--cap-add=SYS_PTRACE", "--security-opt", "seccomp=unconfined" ],
+  "settings": {
+    "terminal.integrated.profile.linux": "/bin/zsh",
+     "files.eol": "\n",
+     "files.insertFinalNewline": true,
+     "files.trimFinalNewlines": true,
+     "files.trimTrailingWhitespace": false,
+     "editor.formatOnSave": true
+  },
+  "extensions": [
+    "editorconfig.editorconfig",
+    "golang.go",
+    "redhat.vscode-yaml"
+  ],
+  "postCreateCommand": "make install-dep"
+}
