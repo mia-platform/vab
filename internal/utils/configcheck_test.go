@@ -7,39 +7,33 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 )
 
 const (
-	testGroup           = "test-group"
-	testCluster1        = "test-cluster"
-	testCluster2        = "another-cluster"
-	wrongResource       = "wrong-group"
-	testData            = "test_data"
-	testGroupsFile      = "test_groups.yaml"
-	invalidYamlFile     = "invalid_yaml.yaml"
-	invalidTypeMetaFile = "invalid_typemeta.yaml"
-	testValidateFile    = "test_validate.yaml"
-	expectedOutput1     = `Reading the configuration...
+	testGroup        = "test-group"
+	testCluster1     = "test-cluster"
+	testCluster2     = "another-cluster"
+	wrongResource    = "wrong-group"
+	testData         = "test_data"
+	testGroupsFile   = "test_groups.yaml"
+	invalidYamlFile  = "invalid_yaml.yaml"
+	testValidateFile = "test_validate.yaml"
+	expectedOutput1  = `Reading the configuration...
 [warn][default] no module found: check the config file if this behavior is unexpected
 [warn][default] no add-on found: check the config file if this behavior is unexpected
 [warn] no group found: check the config file if this behavior is unexpected
 The configuration is valid!
 `
-	expectedOutput2 = `Reading the configuration...
-[error] wrong kind: WrongKind - expected: ClustersConfiguration
+	expectedOutput2 = `[error] wrong kind: WrongKind - expected: ClustersConfiguration
 [error] wrong version: wrong.version.io/v1 - expected: vab.mia-platform.eu/v1alpha1
-[warn][default] no module found: check the config file if this behavior is unexpected
-[warn][default] no add-on found: check the config file if this behavior is unexpected
-[warn] no group found: check the config file if this behavior is unexpected
-The configuration is invalid.
 `
 	expectedOutput3 = `Reading the configuration...
 [error][default] missing version of module module-1/flavor-1
 [warn][default] missing weight of module module-1/flavor-1: setting default (0)
-[warn][default] disabling module module-2/flavor-2
+[info][default] disabling module module-2/flavor-2
 [error][default] missing version of add-on addon-1
-[error][default] missing version of add-on addon-2
-[warn][default] disabling add-on addon-2
+[info][default] disabling add-on addon-2
 [error] please specify a valid name for each group
 [error][undefined] missing cluster name in group: please specify a valid name for each cluster
 [error][undefined/undefined] missing cluster context: please specify a valid context for each cluster
@@ -135,10 +129,15 @@ func TestValidateEmptySpec(t *testing.T) {
 }
 
 // Test validation of wrong Kind/APIVersion
-func TestValidateInvalidTypeMeta(t *testing.T) {
-	targetPath := path.Join("..", testData, invalidTypeMetaFile)
+func TestCheckTypeMeta(t *testing.T) {
+	invalidTypeMeta := v1alpha1.TypeMeta{
+		Kind:       "WrongKind",
+		APIVersion: "wrong.version.io/v1",
+	}
 	buffer := new(bytes.Buffer)
-	code := ValidateConfig(targetPath, buffer)
+	code := 0
+	checkTypeMeta(&invalidTypeMeta, buffer, &code)
+
 	if code != 1 {
 		t.Fatalf("Unexpected exit code: %d", code)
 	}
@@ -155,7 +154,9 @@ func TestValidateOutput(t *testing.T) {
 	if code != 1 {
 		t.Fatalf("Unexpected exit code: %d", code)
 	}
-	if !bytes.Equal(buffer.Bytes(), []byte(expectedOutput3)) {
+	if !bytes.Equal(buffer.Bytes(), []byte(expectedOutput3)) { // TODO: fix this check, the print order is not deterministic
 		t.Fatalf("Unexpected output: %s", buffer.String())
 	}
 }
+
+// TODO: add smaller tests for validate's helpers

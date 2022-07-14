@@ -109,8 +109,9 @@ func checkModules(modules *map[string]v1alpha1.Module, scope string, writer io.W
 		fmt.Fprintf(writer, "[warn][%s] no module found: check the config file if this behavior is unexpected\n", scope)
 	} else {
 		for m := range *modules {
+			// TODO: add check for modules' uniqueness (only one flavor per module is allowed)
 			if (*modules)[m].Disable {
-				fmt.Fprintf(writer, "[warn][%s] disabling module %s\n", scope, m)
+				fmt.Fprintf(writer, "[info][%s] disabling module %s\n", scope, m)
 			} else {
 				if (*modules)[m].Version == "" {
 					fmt.Fprintf(writer, "[error][%s] missing version of module %s\n", scope, m)
@@ -133,12 +134,11 @@ func checkAddOns(addons *map[string]v1alpha1.AddOn, scope string, writer io.Writ
 		fmt.Fprintf(writer, "[warn][%s] no add-on found: check the config file if this behavior is unexpected\n", scope)
 	} else {
 		for m := range *addons {
-			if (*addons)[m].Version == "" {
+			if (*addons)[m].Disable {
+				fmt.Fprintf(writer, "[info][%s] disabling add-on %s\n", scope, m)
+			} else if (*addons)[m].Version == "" {
 				fmt.Fprintf(writer, "[error][%s] missing version of add-on %s\n", scope, m)
 				*code = 1
-			}
-			if (*addons)[m].Disable {
-				fmt.Fprintf(writer, "[warn][%s] disabling add-on %s\n", scope, m)
 			}
 		}
 	}
