@@ -107,9 +107,6 @@ generate: generate-dep
 	@$(TOOLS_BIN)/deepcopy-gen -i ./pkg/apis/vab.mia-platform.eu/v1alpha1 \
 		-o "$(PROJECT_DIR)" -O zz_generated.deepcopy --go-header-file $(TOOLS_DIR)/boilerplate.go.txt
 
-generate-dep:
-	@GOBIN=$(TOOLS_BIN) go install k8s.io/code-generator/cmd/deepcopy-gen@v0.24.2
-
 ##@ Lint
 
 MODE ?= "colored-line-number"
@@ -128,5 +125,13 @@ lint-mod:
 	git diff --exit-code -- go.mod
 	git diff --exit-code -- go.sum
 
+##@ Dependencies
+
+.PHONY: install-dep
+install-dep: generate-dep lintgo-dep
+
 lintgo-dep:
 	@GOBIN=$(TOOLS_BIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.46.2
+
+generate-dep:
+	@GOBIN=$(TOOLS_BIN) go install k8s.io/code-generator/cmd/deepcopy-gen@v0.24.2
