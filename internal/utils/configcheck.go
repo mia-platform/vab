@@ -16,8 +16,6 @@ const (
 	defaultScope = "default"
 )
 
-var code int
-
 // GetBuildPath returns a list of target paths for the kustomize build command
 func GetBuildPath(args []string, configPath string) ([]string, error) {
 	config, err := ReadConfig(configPath)
@@ -67,17 +65,18 @@ func ValidateConfig(configPath string, writer io.Writer) int {
 	}
 	fmt.Fprint(writer, "Reading the configuration...\n")
 
-	code = 0
+	code := 0
+
 	config, readErr := ReadConfig(configPath)
 	if readErr != nil {
 		fmt.Fprintf(writer, "[error] error while parsing the configuration file: %v\n", readErr)
 		code = 1
 	}
 	if config != nil {
-		checkTypeMeta(&config.TypeMeta, writer)
-		checkModules(&config.Spec.Modules, "", writer)
-		checkAddOns(&config.Spec.AddOns, "", writer)
-		checkGroups(&config.Spec, writer)
+		checkTypeMeta(&config.TypeMeta, writer, &code)
+		checkModules(&config.Spec.Modules, "", writer, &code)
+		checkAddOns(&config.Spec.AddOns, "", writer, &code)
+		checkGroups(&config.Spec.Groups, writer, &code)
 	}
 
 	if code == 0 {
@@ -90,19 +89,19 @@ func ValidateConfig(configPath string, writer io.Writer) int {
 }
 
 // checkTypeMeta checks the file's Kind and APIVersion
-func checkTypeMeta(config *v1alpha1.TypeMeta, writer io.Writer) {
+func checkTypeMeta(config *v1alpha1.TypeMeta, writer io.Writer, code *int) {
 	if config.Kind != v1alpha1.Kind {
 		fmt.Fprintf(writer, "[error] wrong kind: %s - expected: %s\n", config.Kind, v1alpha1.Kind)
-		code = 1
+		*code = 1
 	}
 	if config.APIVersion != v1alpha1.Version {
 		fmt.Fprintf(writer, "[error] wrong version: %s - expected: %s\n", config.APIVersion, v1alpha1.Version)
-		code = 1
+		*code = 1
 	}
 }
 
 // checkModules checks the modules listed in the config file
-func checkModules(modules *map[string]v1alpha1.Module, scope string, writer io.Writer) {
+func checkModules(modules *map[string]v1alpha1.Module, scope string, writer io.Writer, code *int) {
 	if scope == "" {
 		scope = defaultScope
 	}
@@ -115,7 +114,7 @@ func checkModules(modules *map[string]v1alpha1.Module, scope string, writer io.W
 			} else {
 				if (*modules)[m].Version == "" {
 					fmt.Fprintf(writer, "[error][%s] missing version of module %s\n", scope, m)
-					code = 1
+					*code = 1
 				}
 				if (*modules)[m].Weight == 0 {
 					fmt.Fprintf(writer, "[warn][%s] missing weight of module %s: setting default (0)\n", scope, m)
@@ -126,7 +125,7 @@ func checkModules(modules *map[string]v1alpha1.Module, scope string, writer io.W
 }
 
 // checkAddOns checks the add-ons listed in the config file
-func checkAddOns(addons *map[string]v1alpha1.AddOn, scope string, writer io.Writer) {
+func checkAddOns(addons *map[string]v1alpha1.AddOn, scope string, writer io.Writer, code *int) {
 	if scope == "" {
 		scope = defaultScope
 	}
@@ -136,7 +135,7 @@ func checkAddOns(addons *map[string]v1alpha1.AddOn, scope string, writer io.Writ
 		for m := range *addons {
 			if (*addons)[m].Version == "" {
 				fmt.Fprintf(writer, "[error][%s] missing version of add-on %s\n", scope, m)
-				code = 1
+				*code = 1
 			}
 			if (*addons)[m].Disable {
 				fmt.Fprintf(writer, "[warn][%s] disabling add-on %s\n", scope, m)
@@ -146,25 +145,25 @@ func checkAddOns(addons *map[string]v1alpha1.AddOn, scope string, writer io.Writ
 }
 
 // checkGroups checks the cluster groups listed in the config file
-func checkGroups(spec *v1alpha1.ConfigSpec, writer io.Writer) {
-	if len(spec.Groups) == 0 {
+func checkGroups(groups *[]v1alpha1.Group, writer io.Writer, code *int) {
+	if len(*groups) == 0 {
 		fmt.Fprint(writer, "[warn] no group found: check the config file if this behavior is unexpected\n")
 	} else {
-		for _, g := range spec.Groups {
+		for _, g := range *groups {
 			groupName := g.Name
 			if groupName == "" {
 				fmt.Fprint(writer, "[error] please specify a valid name for each group\n")
 				groupName = "undefined"
-				code = 1
+				*code = 1
 			}
 			group := g
-			checkClusters(&group, groupName, writer)
+			checkClusters(&group, groupName, writer, code)
 		}
 	}
 }
 
 // checkClusters checks the clusters of a group
-func checkClusters(group *v1alpha1.Group, groupName string, writer io.Writer) {
+func checkClusters(group *v1alpha1.Group, groupName string, writer io.Writer, code *int) {
 	if len(group.Clusters) == 0 {
 		fmt.Fprintf(writer, "[warn][%s] no cluster found in group: check the config file if this behavior is unexpected\n", groupName)
 	} else {
@@ -172,16 +171,16 @@ func checkClusters(group *v1alpha1.Group, groupName string, writer io.Writer) {
 			clusterName := cluster.Name
 			if clusterName == "" {
 				fmt.Fprintf(writer, "[error][%s] missing cluster name in group: please specify a valid name for each cluster\n", groupName)
-				code = 1
+				*code = 1
 				clusterName = "undefined"
 			}
 			if cluster.Context == "" {
 				fmt.Fprintf(writer, "[error][%s/%s] missing cluster context: please specify a valid context for each cluster\n", groupName, clusterName)
-				code = 1
+				*code = 1
 			}
 			scope := groupName + "/" + clusterName
-			checkModules(&cluster.Modules, scope, writer)
-			checkAddOns(&cluster.AddOns, scope, writer)
+			checkModules(&cluster.Modules, scope, writer, code)
+			checkAddOns(&cluster.AddOns, scope, writer, code)
 		}
 	}
 }
