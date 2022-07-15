@@ -28,6 +28,10 @@ Or run the tests with:
 make test
 ```
 
+If you don’t plan to build a docker image but only to contribute to the code, we provide a devcontainer configuration
+that will setup the correct dependencies and predownload the tools used for linting. Also if you use VSCode it will
+setup three extensions that we recommend.
+
 ### Linting
 
 For linting your files make provide the following command:
