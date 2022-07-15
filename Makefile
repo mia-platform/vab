@@ -48,7 +48,7 @@ GO_LDFLAGS := -X github.com/mia-platform/vab/internal/cmd.Version=$(VERSION) $(G
 GO_LDFLAGS := -X github.com/mia-platform/vab/internal/cmd.BuildDate=$(BUILD_DATE) $(GO_LDFLAGS)
 
 .PHONY: build build-all
-build: build.${GOOS}.${GOARCH}
+build: build.$(GOOS).$(GOARCH)
 build-linux-amd64: build.linux.amd64
 build-linux-arm64: build.linux.arm64
 build-darwin-amd64: build.darwin.amd64
@@ -58,6 +58,7 @@ build-all: build-linux-amd64 build-linux-arm64 build.darwin.amd64 build.darwin.a
 build.%:
 	$(eval OS := $(word 1,$(subst ., ,$*)))
 	$(eval ARCH := $(word 2,$(subst ., ,$*)))
+	@echo "Building cli for ${OS} ${ARCH}..."
 	CGO_ENABLED=0 GOOS=$(OS) GOARCH=$(ARCH) go build -ldflags "$(GO_LDFLAGS)" \
 		-o $(OUTPUT_DIR)/$(OS)/$(ARCH)/$(CMDNAME) $(PROJECT_DIR)/cmd/$(CMDNAME)
 
@@ -138,7 +139,7 @@ generate-dep:
 
 # REGISTRY is the image registry to use for build and push image targets, default to docker hub
 REGISTRY ?= docker.io/miaplatform
-IMAGE = ${REGISTRY}/vab
+IMAGE := $(REGISTRY)/vab
 
 # TAG is the tag to use for build and push image targets, use git tag or latest
 TAG ?= $(shell git describe --tags 2>/dev/null || echo latest)
@@ -146,7 +147,11 @@ TAG ?= $(shell git describe --tags 2>/dev/null || echo latest)
 # Force to use buildkit as engine
 DOCKER := DOCKER_BUILDKIT=1 docker
 
-build-image: build.linux.${GOARCH}
-	@echo "Building image for ${GOARCH}..."
+.PHONY: build-image
 # Force linux OS because alpine don't have darwin specific slices
-	DOCKER build --platform linux/${GOARCH} --pull -t $(IMAGE):$(TAG) -f . bin
+build-image: build-image.linux.$(GOARCH)
+build-image.%: build.%
+	$(eval OS := $(word 1,$(subst ., ,$*)))
+	$(eval ARCH := $(word 2,$(subst ., ,$*)))
+	@echo "Building image for ${OS} ${ARCH}..."
+	DOCKER build --platform $(OS)/$(ARCH) --pull --tag $(IMAGE):$(TAG) --file ./Dockerfile bin
