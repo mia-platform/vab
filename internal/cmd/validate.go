@@ -16,7 +16,9 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
+	"github.com/mia-platform/vab/internal/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -28,10 +30,17 @@ func NewValidateCommand() *cobra.Command {
 		Short: "Validate the configuration contained in the specified path.",
 		Long: `Validate the configuration contained in the specified path. It returns an error if the config file is malformed or
 includes resources that do not exist in our catalogue.`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Println("Validating the config file...")
-			return nil
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return nil
+			}
+			return fmt.Errorf("no argument %s expected here", args[0])
+		},
+		Run: func(cmd *cobra.Command, args []string) { // TODO: consider integrating a logger
+			os.Exit(utils.ValidateConfig(flags.Config, nil))
 		},
 	}
+
+	validateCmd.Flags().StringVarP(&flags.Config, "config", "c", defaultConfigPath, "specify a different path for the configuration file")
 	return validateCmd
 }

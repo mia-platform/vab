@@ -1,0 +1,61 @@
+kind: ClustersConfiguration
+apiVersion: vab.mia-platform.eu/v1alpha1
+name: validate-test
+spec:
+  modules:
+    # Valid module structure
+    module-0/flavor-0:
+      version: 1.0.0
+      weight: 1
+    # Invalid module structure: missing version
+    # Weight set to 0 by default (warning)
+    module-1/flavor-1: {}
+    # Disabled module
+    module-2/flavor-2:
+      disable: true
+  addOns:
+    # Valid add-on structure
+    addon-0:
+      version: 1.0.0
+    # Invalid add-on structure: missing version
+    addon-1: {}
+    # Disabled add-on
+    addon-2:
+      disable: true
+  groups:
+  # Invalid group structure: missing name
+  - clusters:
+    # Invalid cluster structure: missing name and context
+    # Empty modules and add-ons (warning)
+    - modules: {}
+      addons: {}
+    # Valid cluster
+    # Empty modules and add-ons after unmarshal (warning)
+    - name: cluster-1
+      context: context-1
+  # Valid group
+  - name: group-1
+    cluster:
+    # Valid cluster structure
+    - name: cluster-2
+      context: context-2
+      modules:
+        # Valid module structure
+        module-0/flavor-0:
+          version: 1.0.0
+          weight: 1
+        # Invalid module structure: missing version
+        # Weight set to 0 by default (warning)
+        module-1/flavor-1: {}
+        module-2/flavor-2:
+        # Disabled module
+          disable: true
+      addons:
+        # Valid add-on structure
+        addon-0:
+          version: 1.0.0
+        # Invalid add-on structure: missing version
+        addon-1: {}
+        # Disabled add-on
+        addon-2:
+          disable: true
