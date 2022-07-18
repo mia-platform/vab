@@ -15,20 +15,20 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
+
+	"github.com/mia-platform/vab/internal/logger"
 )
 
 // NewApplyCommand returns a new cobra.Command for building and applying the
 // clusters configuration
-func NewApplyCommand() *cobra.Command {
+func NewApplyCommand(logger logger.LogInterface) *cobra.Command {
 	applyCmd := &cobra.Command{
 		Use:   "apply",
 		Short: "Build and apply the local configuration.",
 		Long:  `Builds and applies the local configuration to the specified cluster or group, or to all of them.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Println("Applying the configuration...")
+			logger.V(0).Info("Applying the configuration...")
 			return nil
 		},
 	}

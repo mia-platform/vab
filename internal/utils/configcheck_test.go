@@ -7,7 +7,9 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/mia-platform/vab/internal/logger"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
+	"golang.org/x/exp/slices"
 )
 
 const (
@@ -106,11 +108,14 @@ func TestGetBuildPathWrongCluster(t *testing.T) {
 func TestValidateParseError(t *testing.T) {
 	targetPath := path.Join("..", testData, invalidYamlFile)
 	buffer := new(bytes.Buffer)
-	code := ValidateConfig(targetPath, buffer)
+	errBuffer := new(bytes.Buffer)
+	logger := logger.NewLogger(logger.LogStreams{OutStream: buffer, ErrStream: errBuffer})
+
+	code := ValidateConfig(logger, targetPath)
 	if code != 1 {
 		t.Fatalf("Unexpected exit code: %d", code)
 	}
-	if !strings.Contains(buffer.String(), "yaml") {
+	if !strings.Contains(errBuffer.String(), "yaml") {
 		t.Fatalf("Unexpected output: %s", buffer.String())
 	}
 }
@@ -119,7 +124,9 @@ func TestValidateParseError(t *testing.T) {
 func TestValidateEmptySpec(t *testing.T) {
 	targetPath := path.Join("..", testData, emptyConfigFile)
 	buffer := new(bytes.Buffer)
-	code := ValidateConfig(targetPath, buffer)
+	errBuffer := new(bytes.Buffer)
+	logger := logger.NewLogger(logger.LogStreams{OutStream: buffer, ErrStream: errBuffer})
+	code := ValidateConfig(logger, targetPath)
 	if code != 0 {
 		t.Fatalf("Unexpected exit code: %d", code)
 	}
@@ -135,8 +142,10 @@ func TestCheckTypeMeta(t *testing.T) {
 		APIVersion: "wrong.version.io/v1",
 	}
 	buffer := new(bytes.Buffer)
+	errBuffer := new(bytes.Buffer)
+	logger := logger.NewLogger(logger.LogStreams{OutStream: buffer, ErrStream: errBuffer})
 	code := 0
-	checkTypeMeta(&invalidTypeMeta, buffer, &code)
+	checkTypeMeta(logger, &invalidTypeMeta, &code)
 
 	if code != 1 {
 		t.Fatalf("Unexpected exit code: %d", code)
@@ -150,13 +159,21 @@ func TestCheckTypeMeta(t *testing.T) {
 func TestValidateOutput(t *testing.T) {
 	targetPath := path.Join("..", testData, testValidateFile)
 	buffer := new(bytes.Buffer)
-	code := ValidateConfig(targetPath, buffer)
+	errBuffer := new(bytes.Buffer)
+	logger := logger.NewLogger(logger.LogStreams{OutStream: buffer, ErrStream: errBuffer})
+	code := ValidateConfig(logger, targetPath)
 	if code != 1 {
 		t.Fatalf("Unexpected exit code: %d", code)
 	}
-	if !bytes.Equal(buffer.Bytes(), []byte(expectedOutput3)) { // TODO: fix this check, the print order is not deterministic
-		t.Fatalf("Unexpected output: %s", buffer.String())
+	loggedLines := strings.Split(buffer.String(), "\n")
+	expectedOutput3Array := strings.Split(expectedOutput3, "\n")
+	if len(loggedLines) != len(expectedOutput3Array) {
+		t.Fatalf("Expected %d log lines, %d founded", len(expectedOutput3Array), len(loggedLines))
+	}
+
+	for _, line := range loggedLines {
+		if !slices.Contains(expectedOutput3Array, line) {
+			t.Fatalf("Unexpected logged line %s", line)
+		}
 	}
 }
-
-// TODO: add smaller tests for validate's helpers

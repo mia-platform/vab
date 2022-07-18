@@ -15,17 +15,17 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 
+	"github.com/mia-platform/vab/internal/logger"
 	vabUtils "github.com/mia-platform/vab/internal/utils"
 	vabConfig "github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"github.com/spf13/cobra"
 )
 
 // NewInitCommand returns a new cobra.Command for initializing the project
-func NewInitCommand() *cobra.Command {
+func NewInitCommand(logger logger.LogInterface) *cobra.Command {
 	initCmd := &cobra.Command{
 
 		Use:   "init",
@@ -34,16 +34,10 @@ func NewInitCommand() *cobra.Command {
 The project directory will contain the clusters directory (including the all-groups folder with a minimal kustomize
 configuration), and the configuration file.`,
 
-		Args: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 0 {
-				return nil
-			}
-			return fmt.Errorf("no argument %s expected here", args[0])
-		},
-
+		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
-			cmd.Println("Initializing...")
+			logger.V(0).Infof("Initializing...")
 
 			currentPath, err := os.Getwd()
 			if err != nil {

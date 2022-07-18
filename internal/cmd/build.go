@@ -15,9 +15,9 @@
 package cmd
 
 import (
-	"fmt"
 	"path"
 
+	"github.com/mia-platform/vab/internal/logger"
 	"github.com/mia-platform/vab/internal/utils"
 	"github.com/spf13/cobra"
 )
@@ -31,21 +31,13 @@ const (
 
 // NewBuildCommand returns a new cobra.Command for building the clusters
 // configuration with Kustomize
-func NewBuildCommand() *cobra.Command {
+func NewBuildCommand(logger logger.LogInterface) *cobra.Command {
 	buildCmd := &cobra.Command{
 		Use:   "build GROUP [CLUSTER] [flags]",
 		Short: "Run kustomize build for the specified cluster or group.",
 		Long: `Run kustomize build for the specified cluster or group. It returns the full configuration locally without applying it to
 the cluster, allowing the user to check if all the resources are generated correctly for the target cluster.`,
-		Args: func(cmd *cobra.Command, args []string) error {
-			if len(args) < minArgs {
-				return fmt.Errorf("at least the cluster group is required")
-			}
-			if len(args) > maxArgs {
-				return fmt.Errorf("too many args")
-			}
-			return nil
-		},
+		Args: cobra.RangeArgs(minArgs, maxArgs),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
 
@@ -55,12 +47,12 @@ the cluster, allowing the user to check if all the resources are generated corre
 			}
 
 			for _, clusterPath := range targetPath {
-				fmt.Println("### BUILD RESULTS FOR: " + clusterPath + " ###")
+				logger.V(0).Info("### BUILD RESULTS FOR: " + clusterPath + " ###")
 				targetPath := path.Join(clustersDirName, clusterPath)
 				if err := utils.RunKustomizeBuild(targetPath, nil); err != nil {
 					return err
 				}
-				fmt.Println("---")
+				logger.V(0).Infof("---")
 			}
 
 			return nil

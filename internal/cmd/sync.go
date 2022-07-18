@@ -15,14 +15,13 @@
 package cmd
 
 import (
-	"fmt"
-
+	"github.com/mia-platform/vab/internal/logger"
 	"github.com/spf13/cobra"
 )
 
 // NewSyncCommand returns a new cobra.Command for synchronizing the clusters
 // configuration locally
-func NewSyncCommand() *cobra.Command {
+func NewSyncCommand(logger logger.LogInterface) *cobra.Command {
 	syncCmd := &cobra.Command{
 		Use:   "sync",
 		Short: "Fetches new and updated vendor versions, and updates the clusters configuration locally.",
@@ -31,7 +30,7 @@ configuration file. After the execution, the vendors folder will include the new
 already present), and the directory structure inside the clusters folder will be updated according to the current
 configuration.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Println("Synchronizing...")
+			logger.V(0).Infof("Synchronizing...")
 			return nil
 		},
 	}

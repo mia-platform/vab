@@ -93,7 +93,7 @@ clean-go:
 .PHONY: clean-tools
 clean-tools:
 	@echo "Clean tools folder..."
-	rm -fr .tools/bin
+	@rm -fr .tools/bin
 
 .PHONY: clean-all
 clean-all: clean clean-go clean-tools

@@ -19,29 +19,40 @@ import (
 	"fmt"
 	"runtime"
 
+	log "github.com/mia-platform/vab/internal/logger"
 	"github.com/spf13/cobra"
 )
 
 type FlagPole struct {
-	Name   string
-	Config string
+	Name      string
+	Config    string
+	Verbosity uint8
 }
 
 var flags = &FlagPole{}
 
 // NewRootCommand returns a new cobra.Command for vab's root command
 func NewRootCommand() *cobra.Command {
+	// Setup the logger for all commands with the default out and err streams
+	defaultStreams := log.DefaultStreams()
+	logger := log.NewLogger(defaultStreams)
+
 	rootCmd := &cobra.Command{
 		Use:     "vab",
 		Version: versionString(),
 		Short:   "A tool for installing the Mia-Platform distro on your clusters",
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			logger.SetLogLevel(log.LogLevel(flags.Verbosity))
+		},
 	}
 
-	rootCmd.AddCommand(NewInitCommand())
-	rootCmd.AddCommand(NewValidateCommand())
-	rootCmd.AddCommand(NewSyncCommand())
-	rootCmd.AddCommand(NewBuildCommand())
-	rootCmd.AddCommand(NewApplyCommand())
+	rootCmd.PersistentFlags().Uint8VarP(&flags.Verbosity, "verbosity", "v", 0, "log verbosity, higher value produces more output, max value 10")
+
+	rootCmd.AddCommand(NewInitCommand(logger))
+	rootCmd.AddCommand(NewValidateCommand(logger))
+	rootCmd.AddCommand(NewSyncCommand(logger))
+	rootCmd.AddCommand(NewBuildCommand(logger))
+	rootCmd.AddCommand(NewApplyCommand(logger))
 
 	return rootCmd
 }

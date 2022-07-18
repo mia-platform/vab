@@ -29,6 +29,11 @@ linters-settings:
         yaml: camel
   unparam:
     check-exported: false
+  gomnd:
+    # Values always ignored: "1", "1.0", "0" and "0.0"
+    ignored-numbers:
+      - "5" # used for alternative logger level
+      - "10" # used for alternative logger level
 
 issues:
   exclude-rules:
