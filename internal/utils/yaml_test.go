@@ -24,6 +24,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/mia-platform/vab/internal/testutils"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 )
 
@@ -44,7 +45,7 @@ func TestWriteEmptyConfig(t *testing.T) {
 	}
 
 	testFileContent, _ := os.ReadFile(path.Join(testDirPath, defaultConfigFileName))
-	expectedFileContent, _ := os.ReadFile(path.Join("..", testData, emptyConfigFile))
+	expectedFileContent, _ := os.ReadFile(testutils.GetTestFile("utils", emptyConfigFile))
 
 	if !bytes.Equal(testFileContent, expectedFileContent) {
 		t.Fatal("Unexpected file content.")
@@ -127,7 +128,7 @@ func TestWriteEmptyKustomization(t *testing.T) {
 	}
 
 	testFileContent, _ := os.ReadFile(path.Join(testDirPath, kustomizationFileName))
-	expectedFileContent, _ := os.ReadFile(path.Join("..", testData, "empty_kustomization.yaml"))
+	expectedFileContent, _ := os.ReadFile(testutils.GetTestFile("utils", "empty_kustomization.yaml"))
 
 	if !bytes.Equal(testFileContent, expectedFileContent) {
 		t.Fatal("Unexpected file content.")
@@ -137,7 +138,7 @@ func TestWriteEmptyKustomization(t *testing.T) {
 // Test that the correct error is returned if the file is not named kustomization.yaml
 func TestWrongKustomizationFileName(t *testing.T) {
 	testDirPath := t.TempDir()
-	file, fileErr := os.Create(path.Join(testDirPath, "notkustomization.yaml"))
+	file, fileErr := os.Create(testutils.GetTestFile("utils", "notkustomization.yaml"))
 	if fileErr != nil {
 		t.Fatalf("Error while creating test file: %s", fileErr)
 	}
@@ -199,7 +200,7 @@ func TestEmptyExistingKustomization(t *testing.T) {
 
 // ReadConfig reads the configuration correctly
 func TestReadEmptyConfig(t *testing.T) {
-	config, err := ReadConfig(path.Join("..", testData, emptyConfigFile))
+	config, err := ReadConfig(testutils.GetTestFile("utils", emptyConfigFile))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -238,7 +239,7 @@ func TestReadConfigErrPermission(t *testing.T) {
 
 // ReadConfig returns an error if the YAML is not invalid
 func TestReadConfigUnmarshalErr(t *testing.T) {
-	invalidConfigPath := path.Join("..", testData, "invalid_yaml.yaml")
+	invalidConfigPath := testutils.GetTestFile("utils", "invalid_yaml.yaml")
 	_, err := ReadConfig(invalidConfigPath)
 	if err == nil {
 		t.Fatalf("No error was returned. Expected: %s", fs.ErrNotExist)

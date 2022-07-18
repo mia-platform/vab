@@ -22,6 +22,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/mia-platform/vab/internal/logger"
+	"github.com/mia-platform/vab/internal/testutils"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"golang.org/x/exp/slices"
 )
@@ -31,7 +32,6 @@ const (
 	testCluster1     = "test-cluster"
 	testCluster2     = "another-cluster"
 	wrongResource    = "wrong-group"
-	testData         = "test_data"
 	testGroupsFile   = "test_groups.yaml"
 	invalidYamlFile  = "invalid_yaml.yaml"
 	testValidateFile = "test_validate.yaml"
@@ -65,7 +65,7 @@ The configuration is invalid.
 // Test that the correct path is returned given valid group and cluster
 func TestGetClusterPath(t *testing.T) {
 	args := []string{testGroup, testCluster1}
-	configPath := path.Join("..", testData, testGroupsFile)
+	configPath := testutils.GetTestFile("utils", testGroupsFile)
 	buildPath, err := GetBuildPath(args, configPath)
 	if err != nil {
 		t.Fatal(err)
@@ -79,7 +79,7 @@ func TestGetClusterPath(t *testing.T) {
 // Test that the correct paths are returned given valid group
 func TestGetGroupPath(t *testing.T) {
 	args := []string{testGroup}
-	configPath := path.Join("..", testData, testGroupsFile)
+	configPath := testutils.GetTestFile("utils", testGroupsFile)
 	buildPaths, err := GetBuildPath(args, configPath)
 	if err != nil {
 		t.Fatal(err)
@@ -95,7 +95,7 @@ func TestGetGroupPath(t *testing.T) {
 // Returns an error if the specified group doesn't exist
 func TestGetBuildPathWrongGroup(t *testing.T) {
 	args := []string{wrongResource}
-	configPath := path.Join("..", testData, testGroupsFile)
+	configPath := testutils.GetTestFile("utils", testGroupsFile)
 	_, err := GetBuildPath(args, configPath)
 	if err == nil {
 		t.Fatal("No error was returned. Expected: Group " + args[0] + " not found in configuration")
@@ -108,7 +108,7 @@ func TestGetBuildPathWrongGroup(t *testing.T) {
 // Returns an error if the specified cluster doesn't exist
 func TestGetBuildPathWrongCluster(t *testing.T) {
 	args := []string{wrongResource, wrongResource}
-	configPath := path.Join("..", testData, testGroupsFile)
+	configPath := testutils.GetTestFile("utils", testGroupsFile)
 	_, err := GetBuildPath(args, configPath)
 	if err == nil {
 		t.Fatal("No error was returned. Expected: Cluster " + args[0] + " not found in configuration")
@@ -120,7 +120,7 @@ func TestGetBuildPathWrongCluster(t *testing.T) {
 
 // Test parsing error returned from ReadConfig
 func TestValidateParseError(t *testing.T) {
-	targetPath := path.Join("..", testData, invalidYamlFile)
+	targetPath := testutils.GetTestFile("utils", invalidYamlFile)
 	buffer := new(bytes.Buffer)
 	errBuffer := new(bytes.Buffer)
 	logger := logger.NewLogger(logger.LogStreams{OutStream: buffer, ErrStream: errBuffer})
@@ -136,7 +136,7 @@ func TestValidateParseError(t *testing.T) {
 
 // Test validation of valid empty config
 func TestValidateEmptySpec(t *testing.T) {
-	targetPath := path.Join("..", testData, emptyConfigFile)
+	targetPath := testutils.GetTestFile("utils", emptyConfigFile)
 	buffer := new(bytes.Buffer)
 	errBuffer := new(bytes.Buffer)
 	logger := logger.NewLogger(logger.LogStreams{OutStream: buffer, ErrStream: errBuffer})
@@ -171,7 +171,7 @@ func TestCheckTypeMeta(t *testing.T) {
 
 // Test validate with ad-hoc invalid file for max coverage
 func TestValidateOutput(t *testing.T) {
-	targetPath := path.Join("..", testData, testValidateFile)
+	targetPath := testutils.GetTestFile("utils", testValidateFile)
 	buffer := new(bytes.Buffer)
 	errBuffer := new(bytes.Buffer)
 	logger := logger.NewLogger(logger.LogStreams{OutStream: buffer, ErrStream: errBuffer})
