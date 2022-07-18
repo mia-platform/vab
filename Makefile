@@ -133,10 +133,7 @@ lintgo-dep:
 	@GOBIN=$(TOOLS_BIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.46.2
 
 generate-dep:
-ifeq ("$(wildcard $(TOOLS_BIN)/deepcopy-gen)","")
-	@echo "Download deepcopy-gen..."
 	@GOBIN=$(TOOLS_BIN) go install k8s.io/code-generator/cmd/deepcopy-gen@v0.24.2
-endif
 
 ##@ Images
 
