@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 
-// 	http://www.apache.org/licenses/LICENSE-2.0
+//    http://www.apache.org/licenses/LICENSE-2.0
 
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,7 +19,7 @@ import (
 	"path/filepath"
 
 	"github.com/mia-platform/vab/internal/logger"
-	vabUtils "github.com/mia-platform/vab/internal/utils"
+	"github.com/mia-platform/vab/internal/utils"
 	vabConfig "github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"github.com/spf13/cobra"
 )
@@ -44,17 +44,17 @@ configuration), and the configuration file.`,
 				return err
 			}
 
-			configPath, err := vabUtils.GetProjectPath(currentPath, flags.Name)
+			configPath, err := utils.GetProjectPath(currentPath, flags.Name)
 			if err != nil {
 				return err
 			}
 
 			name := filepath.Base(configPath)
-			if err := vabUtils.WriteConfig(*vabConfig.EmptyConfig(name), configPath); err != nil {
+			if err := utils.WriteConfig(*vabConfig.EmptyConfig(name), configPath); err != nil {
 				return err
 			}
 
-			if err := vabUtils.CreateClusterOverride(configPath, "all-groups"); err != nil {
+			if err := utils.CreateClusterOverride(configPath, "all-groups"); err != nil {
 				return err
 			}
 
