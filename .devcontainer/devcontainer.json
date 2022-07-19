@@ -3,17 +3,23 @@
   "build": {
     "dockerfile": "Dockerfile",
     "args": {
-      "VARIANT": "1.18.3"
+      "VARIANT": "1.18.3",
+      "USERNAME": "vscode"
     }
   },
-  "runArgs": [ "--cap-add=SYS_PTRACE", "--security-opt", "seccomp=unconfined" ],
+  "runArgs": [
+    "--cap-add=SYS_PTRACE",
+    "--security-opt",
+    "seccomp=unconfined"
+  ],
+  "remoteUser": "vscode",
   "settings": {
     "terminal.integrated.profile.linux": "/bin/zsh",
-     "files.eol": "\n",
-     "files.insertFinalNewline": true,
-     "files.trimFinalNewlines": true,
-     "files.trimTrailingWhitespace": false,
-     "editor.formatOnSave": true
+    "files.eol": "\n",
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": true,
+    "files.trimTrailingWhitespace": false,
+    "editor.formatOnSave": true
   },
   "extensions": [
     "editorconfig.editorconfig",
