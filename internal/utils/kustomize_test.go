@@ -81,11 +81,11 @@ spec:
 func TestRunKustomizeBuild(t *testing.T) {
 	testDirPath := t.TempDir()
 
-	if err := writeYamlFile(testConfig, path.Join(testDirPath, defaultConfigFileName)); err != nil {
+	if err := writeYamlFile(testConfig, path.Join(testDirPath, DefaultConfigFilename)); err != nil {
 		t.Fatal(err)
 	}
 
-	targetPath := path.Join(testDirPath, clustersDirName, testGroup, testCluster1)
+	targetPath := path.Join(testDirPath, ClustersDirName, testGroup, testCluster1)
 	if err := os.MkdirAll(targetPath, os.ModePerm); err != nil {
 		t.Fatal(err)
 	}

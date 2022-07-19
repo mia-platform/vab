@@ -29,9 +29,7 @@ import (
 )
 
 const (
-	defaultConfigFileName  = "config.yaml"
 	defaultFilePermissions = 0644
-	kustomizationFileName  = "kustomization.yaml"
 	yamlDefaultIndent      = 2
 )
 
@@ -81,7 +79,7 @@ func WriteConfig(config v1alpha1.ClustersConfiguration, dirOrFilePath string) er
 
 	var dstPath string
 	if err == nil && dirOrFile.IsDir() {
-		dstPath = path.Join(dirOrFilePath, defaultConfigFileName)
+		dstPath = path.Join(dirOrFilePath, DefaultConfigFilename)
 	} else {
 		dstPath = dirOrFilePath
 	}

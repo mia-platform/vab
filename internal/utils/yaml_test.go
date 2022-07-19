@@ -44,7 +44,7 @@ func TestWriteEmptyConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	testFileContent, _ := os.ReadFile(path.Join(testDirPath, defaultConfigFileName))
+	testFileContent, _ := os.ReadFile(path.Join(testDirPath, DefaultConfigFilename))
 	expectedFileContent, _ := os.ReadFile(testutils.GetTestFile("utils", emptyConfigFile))
 
 	if !bytes.Equal(testFileContent, expectedFileContent) {

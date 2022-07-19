@@ -24,7 +24,6 @@ import (
 )
 
 const (
-	clustersDirName        = "clusters"
 	userPermissionBitCheck = 7
 )
 
@@ -55,7 +54,7 @@ func GetProjectPath(currentPath string, name string) (string, error) {
 // CreateClusterOverride creates the directory for clusterName's override at
 // the specified configPath
 func CreateClusterOverride(configPath string, clusterName string) error {
-	clusterDir := path.Join(configPath, clustersDirName, clusterName)
+	clusterDir := path.Join(configPath, ClustersDirName, clusterName)
 	if err := os.MkdirAll(clusterDir, os.ModePerm); err != nil {
 		return err
 	}

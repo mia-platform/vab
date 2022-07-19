@@ -124,13 +124,13 @@ func TestNewExistingPath(t *testing.T) {
 // Test that the directory for the new cluster is created correctly with its empty kustomization.yaml
 func TestNewClusterOverride(t *testing.T) {
 	testDirPath := t.TempDir()
-	if err := os.Mkdir(path.Join(testDirPath, clustersDirName), fs.ModePerm); err != nil {
+	if err := os.Mkdir(path.Join(testDirPath, ClustersDirName), fs.ModePerm); err != nil {
 		t.Fatal(err)
 	}
 	if err := CreateClusterOverride(testDirPath, testName); err != nil {
 		t.Fatal(err)
 	}
-	kustomizationPath := path.Join(testDirPath, clustersDirName, testName, kustomizationFileName)
+	kustomizationPath := path.Join(testDirPath, ClustersDirName, testName, kustomizationFileName)
 	if _, err := os.Stat(kustomizationPath); err != nil {
 		t.Fatal(err)
 	}
@@ -147,7 +147,7 @@ func TestMissingClustersDirectory(t *testing.T) {
 // Return ErrPermission if if access to the path is denied
 func TestNewClusterErrPermission(t *testing.T) {
 	testDirPath := t.TempDir()
-	if err := os.Mkdir(path.Join(testDirPath, clustersDirName), 0); err != nil {
+	if err := os.Mkdir(path.Join(testDirPath, ClustersDirName), 0); err != nil {
 		t.Fatal(err)
 	}
 	err := CreateClusterOverride(testDirPath, testName)

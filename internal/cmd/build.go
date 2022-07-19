@@ -23,10 +23,8 @@ import (
 )
 
 const (
-	minArgs           = 1
-	maxArgs           = 2
-	defaultConfigPath = "./config.yaml"
-	clustersDirName   = "clusters"
+	minArgs = 1
+	maxArgs = 2
 )
 
 // NewBuildCommand returns a new cobra.Command for building the clusters
@@ -48,7 +46,7 @@ the cluster, allowing the user to check if all the resources are generated corre
 
 			for _, clusterPath := range targetPath {
 				logger.V(0).Info("### BUILD RESULTS FOR: " + clusterPath + " ###")
-				targetPath := path.Join(clustersDirName, clusterPath)
+				targetPath := path.Join(utils.ClustersDirName, clusterPath)
 				if err := utils.RunKustomizeBuild(targetPath, nil); err != nil {
 					return err
 				}
@@ -59,6 +57,6 @@ the cluster, allowing the user to check if all the resources are generated corre
 		},
 	}
 
-	buildCmd.Flags().StringVarP(&flags.Config, "config", "c", defaultConfigPath, "specify a different path for the configuration file")
+	buildCmd.Flags().StringVarP(&flags.Config, "config", "c", utils.DefaultConfigFilename, "specify a different path for the configuration file")
 	return buildCmd
 }
