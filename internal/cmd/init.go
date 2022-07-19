@@ -20,7 +20,7 @@ import (
 
 	"github.com/mia-platform/vab/internal/logger"
 	"github.com/mia-platform/vab/internal/utils"
-	vabConfig "github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
+	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"github.com/spf13/cobra"
 )
 
@@ -35,7 +35,7 @@ The project directory will contain the clusters directory (including the all-gro
 configuration), and the configuration file.`,
 
 		Args: cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			cmd.SilenceUsage = true
 			logger.V(0).Infof("Initializing...")
 
@@ -50,7 +50,7 @@ configuration), and the configuration file.`,
 			}
 
 			name := filepath.Base(configPath)
-			if err := utils.WriteConfig(*vabConfig.EmptyConfig(name), configPath); err != nil {
+			if err := utils.WriteConfig(*v1alpha1.EmptyConfig(name), configPath); err != nil {
 				return err
 			}
 
@@ -61,6 +61,7 @@ configuration), and the configuration file.`,
 			return nil
 		},
 	}
+
 	initCmd.Flags().StringVarP(&flags.Name, "name", "n", "", "project name, defaults to current directory name")
 	return initCmd
 }

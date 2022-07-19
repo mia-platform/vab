@@ -20,6 +20,7 @@ import (
 	"runtime"
 
 	log "github.com/mia-platform/vab/internal/logger"
+	"github.com/mia-platform/vab/internal/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -41,12 +42,13 @@ func NewRootCommand() *cobra.Command {
 		Use:     "vab",
 		Version: versionString(),
 		Short:   "A tool for installing the Mia-Platform distro on your clusters",
-		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		PersistentPreRun: func(_ *cobra.Command, _ []string) {
 			logger.SetLogLevel(log.LogLevel(flags.Verbosity))
 		},
 	}
 
 	rootCmd.PersistentFlags().Uint8VarP(&flags.Verbosity, "verbosity", "v", 0, "log verbosity, higher value produces more output, max value 10")
+	rootCmd.PersistentFlags().StringVarP(&flags.Config, "config", "c", utils.DefaultConfigFilename, "specify a different path for the configuration file")
 
 	rootCmd.AddCommand(NewInitCommand(logger))
 	rootCmd.AddCommand(NewValidateCommand(logger))

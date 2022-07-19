@@ -31,11 +31,10 @@ func NewValidateCommand(logger logger.LogInterface) *cobra.Command {
 		Long: `Validate the configuration contained in the specified path. It returns an error if the config file is malformed or
 includes resources that do not exist in our catalogue.`,
 		Args: cobra.NoArgs,
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			os.Exit(utils.ValidateConfig(logger, flags.Config))
 		},
 	}
 
-	validateCmd.Flags().StringVarP(&flags.Config, "config", "c", utils.DefaultConfigFilename, "specify a different path for the configuration file")
 	return validateCmd
 }

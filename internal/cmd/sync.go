@@ -29,7 +29,7 @@ func NewSyncCommand(logger logger.LogInterface) *cobra.Command {
 configuration file. After the execution, the vendors folder will include the new and updated modules/add-ons (if not
 already present), and the directory structure inside the clusters folder will be updated according to the current
 configuration.`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			logger.V(0).Infof("Synchronizing...")
 			return nil
 		},

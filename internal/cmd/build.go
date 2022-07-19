@@ -57,6 +57,5 @@ the cluster, allowing the user to check if all the resources are generated corre
 		},
 	}
 
-	buildCmd.Flags().StringVarP(&flags.Config, "config", "c", utils.DefaultConfigFilename, "specify a different path for the configuration file")
 	return buildCmd
 }
