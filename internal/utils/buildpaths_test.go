@@ -15,6 +15,7 @@
 package utils
 
 import (
+	"os"
 	"path"
 	"testing"
 
@@ -64,5 +65,30 @@ func TestBuildPathsWrongCluster(t *testing.T) {
 	_, err := BuildPaths(configPath, testutils.InvalidGroupName, testutils.InvalidClusterName)
 	if assert.Error(t, err, "Expected: Cluster "+testutils.InvalidGroupName+" not found in configuration") {
 		assert.Contains(t, err.Error(), "not found in configuration", "Unexpected error: %s", err)
+	}
+}
+
+// ValidatePath creates the correct path if missing
+func TestValidateMissingPath(t *testing.T) {
+	testDirPath := t.TempDir()
+	expectedPath := path.Join(testDirPath, "dir", "another_dir")
+	err := ValidatePath(expectedPath)
+	if !assert.NoError(t, err) {
+		return
+	}
+	assert.DirExists(t, expectedPath, "The path does not exist")
+}
+
+// ValidatePath returns no error if the path exists
+func TestValidateExistingPath(t *testing.T) {
+	testDirPath := t.TempDir()
+	expectedPath := path.Join(testDirPath, "dir", "another_dir")
+	if err := os.MkdirAll(expectedPath, os.ModePerm); err != nil {
+		return
+	}
+	assert.DirExists(t, expectedPath, "The path does not exist") // ensure the dir exists before calling ValidatePath
+	err := ValidatePath(expectedPath)
+	if !assert.NoError(t, err) {
+		return
 	}
 }

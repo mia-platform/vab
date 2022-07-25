@@ -15,7 +15,15 @@
 package testutils
 
 import (
+	"io/fs"
 	"path"
+	"testing"
+
+	"github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-billy/v5/memfs"
+	"github.com/go-git/go-billy/v5/osfs"
+	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -43,4 +51,79 @@ func GetTestFile(module string, args ...string) string {
 		args...,
 	)
 	return path.Join(combinedElements...)
+}
+
+func populateWorktree(t *testing.T, fsys billy.Filesystem) {
+	t.Helper()
+	err := fsys.MkdirAll("modules/test-module1/test-flavour1", fs.ModePerm)
+	assert.NoError(t, err)
+	err = fsys.MkdirAll("modules/test-module1/test-flavour2", fs.ModePerm)
+	assert.NoError(t, err)
+	err = fsys.MkdirAll("modules/test-module2/test-flavour1", fs.ModePerm)
+	assert.NoError(t, err)
+	err = fsys.MkdirAll("add-ons/test-addon1/subdir", fs.ModePerm)
+	assert.NoError(t, err)
+	err = fsys.MkdirAll("add-ons/test-addon2/", fs.ModePerm)
+	assert.NoError(t, err)
+	err = fsys.MkdirAll("otherdir", fs.ModePerm)
+	assert.NoError(t, err)
+	_, err = fsys.Create("README.md")
+	assert.NoError(t, err)
+	f, err := fsys.Create("modules/test-module1/test-flavour1/file1.yaml")
+	assert.NoError(t, err)
+	_, err = f.Write([]byte("file1-1-1 content\n"))
+	assert.NoError(t, err)
+	err = f.Close()
+	assert.NoError(t, err)
+	f, err = fsys.Create("modules/test-module1/test-flavour1/file2.yaml")
+	assert.NoError(t, err)
+	_, err = f.Write([]byte("file1-1-2 content\n"))
+	assert.NoError(t, err)
+	err = f.Close()
+	assert.NoError(t, err)
+	f, err = fsys.Create("modules/test-module1/test-flavour2/file1.yaml")
+	assert.NoError(t, err)
+	_, err = f.Write([]byte("file1-2-1 content\n"))
+	assert.NoError(t, err)
+	err = f.Close()
+	assert.NoError(t, err)
+	_, err = fsys.Create("modules/test-module2/test-flavour1/file1.yaml")
+	assert.NoError(t, err)
+	_, err = fsys.Create("add-ons/test-addon1/file1.yaml")
+	assert.NoError(t, err)
+	_, err = fsys.Create("add-ons/test-addon1/subdir/file1.yaml")
+	assert.NoError(t, err)
+	_, err = fsys.Create("add-ons/test-addon2/file1.yaml")
+	assert.NoError(t, err)
+}
+
+func PrepareWorktree(t *testing.T, fsType string) *billy.Filesystem {
+	t.Helper()
+	var worktree billy.Filesystem
+	switch fsType {
+	case "osfs":
+		worktree = osfs.New(t.TempDir())
+	case "memfs":
+		worktree = memfs.New()
+	default:
+		assert.FailNow(t, "fstype not recognized")
+	}
+	populateWorktree(t, worktree)
+	if !assert.NotNil(t, worktree) {
+		t.FailNow()
+	}
+	return &worktree
+}
+
+func PrepareFakeWorktree(t *testing.T) *billy.Filesystem {
+	t.Helper()
+	return PrepareWorktree(t, "memfs")
+}
+
+type FakeFilesGetter struct {
+	Testing *testing.T
+}
+
+func (filesGetter FakeFilesGetter) WorkTreeForPackage(pkgName string, pkg v1alpha1.Package) (*billy.Filesystem, error) {
+	return PrepareFakeWorktree(filesGetter.Testing), nil
 }

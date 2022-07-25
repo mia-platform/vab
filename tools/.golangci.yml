@@ -22,6 +22,8 @@ linters:
 linters-settings:
   gofmt:
     simplify: true
+  goconst:
+    ignore-tests: true
   tagliatelle:
     case:
       use-field-name: true
