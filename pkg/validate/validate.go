@@ -27,7 +27,7 @@ const (
 	defaultScope = "default"
 )
 
-func ValidateConfigurationFile(logger logger.LogInterface, configurationPath string, writer io.Writer) error {
+func ConfigurationFile(logger logger.LogInterface, configurationPath string, writer io.Writer) error {
 	code := 0
 
 	config, readErr := utils.ReadConfig(configurationPath)

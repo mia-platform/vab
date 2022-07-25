@@ -43,7 +43,7 @@ configuration), and the configuration file.`,
 				return err
 			}
 
-			return initProj.InitProject(logger, currentPath, flags.Name)
+			return initProj.NewProject(logger, currentPath, flags.Name)
 		},
 	}
 

@@ -31,7 +31,7 @@ func TestValidateParseError(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	logger := logger.DisabledLogger{}
 
-	err := ValidateConfigurationFile(logger, targetPath, buffer)
+	err := ConfigurationFile(logger, targetPath, buffer)
 	if err == nil {
 		t.Fatal("Expected error")
 	}
@@ -46,7 +46,7 @@ func TestValidateEmptySpec(t *testing.T) {
 	targetPath := testutils.GetTestFile("utils", "empty_config.yaml")
 	buffer := new(bytes.Buffer)
 	logger := logger.DisabledLogger{}
-	err := ValidateConfigurationFile(logger, targetPath, buffer)
+	err := ConfigurationFile(logger, targetPath, buffer)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
@@ -61,7 +61,7 @@ func TestCheckTypeMeta(t *testing.T) {
 	targetPath := testutils.GetTestFile("validate", "invalidkind.yaml")
 	buffer := new(bytes.Buffer)
 	logger := logger.DisabledLogger{}
-	err := ValidateConfigurationFile(logger, targetPath, buffer)
+	err := ConfigurationFile(logger, targetPath, buffer)
 
 	if err == nil {
 		t.Fatal("Expected error")
@@ -77,7 +77,7 @@ func TestValidateOutput(t *testing.T) {
 	targetPath := testutils.GetTestFile("validate", "all-check-config.yaml")
 	buffer := new(bytes.Buffer)
 	logger := logger.DisabledLogger{}
-	err := ValidateConfigurationFile(logger, targetPath, buffer)
+	err := ConfigurationFile(logger, targetPath, buffer)
 	if err == nil {
 		t.Fatal("Expected error")
 	}

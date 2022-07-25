@@ -35,7 +35,7 @@ includes resources that do not exist in our catalogue.`,
 		RunE: func(_ *cobra.Command, _ []string) error {
 			configPath := path.Clean(flags.Config)
 			logger.V(0).Writef("Validating configuration at %s...", configPath)
-			return validate.ValidateConfigurationFile(logger, configPath, os.Stdout)
+			return validate.ConfigurationFile(logger, configPath, os.Stdout)
 		},
 	}
 

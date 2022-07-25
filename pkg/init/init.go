@@ -26,7 +26,7 @@ import (
 	"github.com/mia-platform/vab/pkg/logger"
 )
 
-func InitProject(logger logger.LogInterface, currentPath string, optionalName string) error {
+func NewProject(logger logger.LogInterface, currentPath string, optionalName string) error {
 	logger.V(10).Write("Ensuring that the target path exists...")
 	configPath, err := ensureProjectPath(currentPath, optionalName)
 	if err != nil {

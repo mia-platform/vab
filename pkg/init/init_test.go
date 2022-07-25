@@ -168,7 +168,7 @@ func TestInitProject(t *testing.T) {
 	testProjectName := "foo"
 	expectedProjectPath := path.Join(testDirPath, testProjectName)
 	logger := logger.DisabledLogger{}
-	err := InitProject(logger, testDirPath, testProjectName)
+	err := NewProject(logger, testDirPath, testProjectName)
 
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
