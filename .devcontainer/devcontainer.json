@@ -24,7 +24,8 @@
   "extensions": [
     "editorconfig.editorconfig",
     "golang.go",
-    "redhat.vscode-yaml"
+    "redhat.vscode-yaml",
+    "davidanson.vscode-markdownlint"
   ],
   "postCreateCommand": "make install-dep"
 }
