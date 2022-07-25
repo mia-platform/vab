@@ -30,7 +30,7 @@ configuration file. After the execution, the vendors folder will include the new
 already present), and the directory structure inside the clusters folder will be updated according to the current
 configuration.`,
 		RunE: func(_ *cobra.Command, _ []string) error {
-			logger.V(0).Writef("Synchronizing...")
+			logger.V(0).Writef("Synchronizing configuration at %s...", flags.Config)
 			return nil
 		},
 	}
