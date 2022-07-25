@@ -25,4 +25,9 @@ func TestGetTestFile(t *testing.T) {
 	if filePath != path.Join("..", "..", "tests", "test", "prova.yaml") {
 		t.Fatalf("Unexpected path to file %s", filePath)
 	}
+
+	filePath = GetTestFile("test", "dir", "subdir")
+	if filePath != path.Join("..", "..", "tests", "test", "dir", "subdir") {
+		t.Fatalf("Unexpected path to file %s", filePath)
+	}
 }

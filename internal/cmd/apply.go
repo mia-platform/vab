@@ -17,7 +17,7 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/mia-platform/vab/internal/logger"
+	"github.com/mia-platform/vab/pkg/logger"
 )
 
 // NewApplyCommand returns a new cobra.Command for building and applying the
@@ -28,7 +28,7 @@ func NewApplyCommand(logger logger.LogInterface) *cobra.Command {
 		Short: "Build and apply the local configuration.",
 		Long:  `Builds and applies the local configuration to the specified cluster or group, or to all of them.`,
 		RunE: func(_ *cobra.Command, _ []string) error {
-			logger.V(0).Info("Applying the configuration...")
+			logger.V(0).Write("Applying the configuration...")
 			return nil
 		},
 	}

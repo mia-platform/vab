@@ -1,0 +1,4 @@
+kind: WrongKind
+apiVersion: wrong.version.io/v1
+spec:
+  property: value

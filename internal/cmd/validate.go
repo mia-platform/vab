@@ -16,9 +16,10 @@ package cmd
 
 import (
 	"os"
+	"path"
 
-	"github.com/mia-platform/vab/internal/logger"
-	"github.com/mia-platform/vab/internal/utils"
+	"github.com/mia-platform/vab/pkg/logger"
+	"github.com/mia-platform/vab/pkg/validate"
 	"github.com/spf13/cobra"
 )
 
@@ -31,8 +32,10 @@ func NewValidateCommand(logger logger.LogInterface) *cobra.Command {
 		Long: `Validate the configuration contained in the specified path. It returns an error if the config file is malformed or
 includes resources that do not exist in our catalogue.`,
 		Args: cobra.NoArgs,
-		Run: func(_ *cobra.Command, _ []string) {
-			os.Exit(utils.ValidateConfig(logger, flags.Config))
+		RunE: func(_ *cobra.Command, _ []string) error {
+			configPath := path.Clean(flags.Config)
+			logger.V(0).Writef("Validating configuration at %s...", configPath)
+			return validate.ValidateConfigurationFile(logger, configPath, os.Stdout)
 		},
 	}
 

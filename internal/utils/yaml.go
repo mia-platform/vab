@@ -17,15 +17,16 @@ package utils
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
 
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
+	"golang.org/x/exp/slices"
 	"gopkg.in/yaml.v3"
-	kustomizeTypes "sigs.k8s.io/kustomize/api/types"
+	"sigs.k8s.io/kustomize/api/konfig"
+	kustomize "sigs.k8s.io/kustomize/api/types"
 )
 
 const (
@@ -33,7 +34,21 @@ const (
 	yamlDefaultIndent      = 2
 )
 
-var errKustomizationTarget = fmt.Errorf("the target file must be a kustomization.yaml")
+type WrongFileNameError struct {
+	expectedFileName string
+	actualFileName   string
+}
+
+func NewWrongFileNameError(expected string, actual string) error {
+	return WrongFileNameError{
+		expectedFileName: expected,
+		actualFileName:   actual,
+	}
+}
+
+func (e WrongFileNameError) Error() string {
+	return "expected file name " + e.expectedFileName + " but found " + e.actualFileName
+}
 
 // ReadConfig reads a configuration file into a ClustersConfiguration struct
 func ReadConfig(configPath string) (*v1alpha1.ClustersConfiguration, error) {
@@ -88,7 +103,7 @@ func WriteConfig(config v1alpha1.ClustersConfiguration, dirOrFilePath string) er
 }
 
 // WriteKustomization creates and writes an empty kustomization file
-func WriteKustomization(kustomization kustomizeTypes.Kustomization, dirOrFilePath string) error {
+func WriteKustomization(kustomization kustomize.Kustomization, dirOrFilePath string) error {
 	dirOrFile, err := os.Stat(dirOrFilePath)
 
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
@@ -99,12 +114,20 @@ func WriteKustomization(kustomization kustomizeTypes.Kustomization, dirOrFilePat
 	var dstPathCond bool
 	switch dstPathCond {
 	case dstPathCond == (err == nil && dirOrFile.IsDir()):
-		dstPath = path.Join(dirOrFilePath, kustomizationFileName)
-	case dstPathCond == (filepath.Base(dirOrFilePath) != kustomizationFileName):
-		return errKustomizationTarget
+		dstPath = path.Join(dirOrFilePath, konfig.DefaultKustomizationFileName())
+	case dstPathCond == (!slices.Contains(konfig.RecognizedKustomizationFileNames(), filepath.Base(dirOrFilePath))):
+		return NewWrongFileNameError(konfig.DefaultKustomizationFileName(), filepath.Base(dirOrFilePath))
 	default:
 		dstPath = dirOrFilePath
 	}
 
 	return writeYamlFile(kustomization, dstPath)
+}
+
+// EmptyKustomization return a valid empty kustomization with valid kind and apiVersion fields
+func EmptyKustomization() kustomize.Kustomization {
+	// mini hack for generating a valid kustomization structure as kustomize intend
+	empty := kustomize.Kustomization{}
+	empty.FixKustomizationPostUnmarshalling()
+	return empty
 }

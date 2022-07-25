@@ -18,6 +18,29 @@ import (
 	"path"
 )
 
-func GetTestFile(module string, filename string) string {
-	return path.Join("..", "..", "tests", module, filename)
+const (
+	// Invalid resources names
+	InvalidFolderPath  = "/invalid/path"
+	InvalidFileName    = "invalid.yaml"
+	InvalidGroupName   = "invalid-group"
+	InvalidClusterName = "invalid-cluster"
+
+	// Valid resources names
+	TestGroupName1       = "test-group"
+	TestGroupName2       = "test-group2"
+	TestClusterName1     = "test-cluster"
+	TestClusterName2     = "test-cluster2"
+	KustomizeTestDirName = "kustomize-test"
+)
+
+func GetTestFile(module string, args ...string) string {
+	combinedElements := append([]string{
+		"..",
+		"..",
+		"tests",
+		module,
+	},
+		args...,
+	)
+	return path.Join(combinedElements...)
 }

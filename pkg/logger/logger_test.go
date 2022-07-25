@@ -47,24 +47,24 @@ func TestNewLogger(t *testing.T) {
 	}
 	logger := NewLogger(streams)
 
-	logger.Warnf("%s", testMessage)
-	logger.Warn(testMessage)
+	logger.Warn().Writef("%s", testMessage)
+	logger.Warn().Write(testMessage)
 	if !bytes.Equal(errBuffer.Bytes(), []byte(expectedMessage)) {
 		t.Fatalf("Unexpected message on buffer %s", stdBuffer.String())
 	}
 
 	errBuffer.Reset()
 	// default logger has 0 level set as default so info messages are logged
-	logger.V(0).Info(testMessage)
-	logger.V(0).Infof("%s", testMessage)
+	logger.V(0).Write(testMessage)
+	logger.V(0).Writef("%s", testMessage)
 	if !bytes.Equal(stdBuffer.Bytes(), []byte(expectedMessage)) {
 		t.Fatalf("Unexpected message on buffer %s", stdBuffer.String())
 	}
 
 	stdBuffer.Reset()
 	// 1 or more level are grater than the default so no log is written
-	logger.V(1).Info(testMessage)
-	logger.V(1).Infof("%s", testMessage)
+	logger.V(1).Write(testMessage)
+	logger.V(1).Writef("%s", testMessage)
 	if !bytes.Equal(stdBuffer.Bytes(), []byte("")) {
 		t.Fatalf("Unexpected message on buffer %s", stdBuffer.String())
 	}
@@ -79,7 +79,7 @@ func TestChangingLogLevel(t *testing.T) {
 	logger := NewLogger(streams)
 
 	// 1 or more level are grater than the default so no log is written
-	logger.V(1).Info(testMessage)
+	logger.V(1).Write(testMessage)
 	if !bytes.Equal(stdBuffer.Bytes(), []byte("")) {
 		t.Fatalf("Unexpected message on buffer %s", stdBuffer.String())
 	}
@@ -87,7 +87,7 @@ func TestChangingLogLevel(t *testing.T) {
 	logger.SetLogLevel(3)
 
 	// now new info logger must log from level 3 and below
-	logger.V(2).Info(testMessage)
+	logger.V(2).Write(testMessage)
 	if !bytes.Equal(stdBuffer.Bytes(), []byte(fmt.Sprintf("%s\n", testMessage))) {
 		t.Fatalf("Unexpected message on buffer %s", stdBuffer.String())
 	}
@@ -100,10 +100,10 @@ func TestChangingLogLevel(t *testing.T) {
 func TestDisabledLogger(t *testing.T) {
 	logger := DisabledLogger{}
 	// Disabled logger implement standard methods
-	logger.Warn(testMessage)
-	logger.Warnf("%s", testMessage)
-	logger.V(1).Info(testMessage)
-	logger.V(1).Infof("%s", testMessage)
+	logger.Warn().Write(testMessage)
+	logger.Warn().Writef("%s", testMessage)
+	logger.V(1).Write(testMessage)
+	logger.V(1).Writef("%s", testMessage)
 	logger.SetLogLevel(3)
 
 	// DisabledLogger can be set as a LogInterface variable without issues

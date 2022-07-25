@@ -15,7 +15,7 @@
 package cmd
 
 import (
-	"github.com/mia-platform/vab/internal/logger"
+	"github.com/mia-platform/vab/pkg/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -30,7 +30,7 @@ configuration file. After the execution, the vendors folder will include the new
 already present), and the directory structure inside the clusters folder will be updated according to the current
 configuration.`,
 		RunE: func(_ *cobra.Command, _ []string) error {
-			logger.V(0).Infof("Synchronizing...")
+			logger.V(0).Writef("Synchronizing...")
 			return nil
 		},
 	}

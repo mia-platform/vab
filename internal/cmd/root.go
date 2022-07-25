@@ -19,8 +19,8 @@ import (
 	"fmt"
 	"runtime"
 
-	log "github.com/mia-platform/vab/internal/logger"
 	"github.com/mia-platform/vab/internal/utils"
+	log "github.com/mia-platform/vab/pkg/logger"
 	"github.com/spf13/cobra"
 )
 

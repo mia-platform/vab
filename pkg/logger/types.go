@@ -20,33 +20,29 @@ type LogLevel uint8
 
 // LogInterface is a simple interface that must be adopted by a logger
 type LogInterface interface {
-	// Warn should be used to write user facing warnings, it can be outputted to stderr
-	// and it cannot be turn off via LogLevel
-	Warn(message string)
-	// Warnf should be used to write Printf style user facing warnings, it can be outputted to stderr
-	// and it cannot be turn off via LogLevel
-	Warnf(format string, args ...interface{})
+	// Warn should be used to return a LogWriterInterface that can always write to the user,
+	// it may use the stdErr stream
+	Warn() LogWriterInterface
 
-	// V() returns an InfoLogWriterInterface for a given verbosity LogLevel
+	// V() returns an LogWriterInterface for a given verbosity LogLevel
 	//
 	// Normal verbosity levels:
 	// V(0): normal user facing messages go to V(0)
 	// V(1): debug messages start when V(N > 0), these should be high level
 	// V(2+): trace level logging, in increasing "noisiness"
 	//
-	// It is expected that the returned InfoLogWriterInterface will implement a near to noop
+	// It is expected that the returned LogWriterInterface will implement a near to noop
 	// function for LogLevel major than the enabled one
-	V(LogLevel) InfoLogWriterInterface
+	V(LogLevel) LogWriterInterface
 
 	// Change the LogLevel set for the logger to the new logLevel
 	SetLogLevel(logLevel LogLevel)
 }
 
-// InfoLogWriterInterface defines a logger interface for wrinting messages if the set LogLevel
-// is minor than the enabled one
-type InfoLogWriterInterface interface {
-	// Info is used to write a user facing status message
-	Info(message string)
-	// Infof is used to write a Printf style user facing status message
-	Infof(format string, args ...interface{})
+// LogWriterInterface defines a logger interface for wrinting messages
+type LogWriterInterface interface {
+	// Write is used to write a user facing status message
+	Write(message string)
+	// Writef is used to write a Printf style user facing status message
+	Writef(format string, args ...interface{})
 }

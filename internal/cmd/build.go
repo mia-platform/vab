@@ -15,45 +15,38 @@
 package cmd
 
 import (
-	"path"
+	"os"
 
-	"github.com/mia-platform/vab/internal/logger"
-	"github.com/mia-platform/vab/internal/utils"
+	"github.com/mia-platform/vab/pkg/build"
+	"github.com/mia-platform/vab/pkg/logger"
 	"github.com/spf13/cobra"
 )
 
 const (
 	minArgs = 1
-	maxArgs = 2
+	maxArgs = 3
 )
 
 // NewBuildCommand returns a new cobra.Command for building the clusters
 // configuration with Kustomize
 func NewBuildCommand(logger logger.LogInterface) *cobra.Command {
 	buildCmd := &cobra.Command{
-		Use:   "build GROUP [CLUSTER] [flags]",
-		Short: "Run kustomize build for the specified cluster or group.",
-		Long: `Run kustomize build for the specified cluster or group. It returns the full configuration locally without applying it to
-the cluster, allowing the user to check if all the resources are generated correctly for the target cluster.`,
+		Use:   "build GROUP [CLUSTER] CONTEXT",
+		Short: "Run kustomize build for the specified cluster or group searching in the given context",
+		Long: `Run kustomize build for the specified cluster or group searching in the given context. It returns the full configuration locally without applying it to
+the cluster, allowing the user to check if all the resources are generated correctly for the target cluster.
+The configurations will be searched inside the path passed as context`,
 		Args: cobra.RangeArgs(minArgs, maxArgs),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
-
-			targetPath, err := utils.GetBuildPath(args, flags.Config)
-			if err != nil {
-				return err
+			group := args[0]
+			cluster := ""
+			context := args[len(args)-1]
+			if len(args) == maxArgs {
+				cluster = args[1]
 			}
-
-			for _, clusterPath := range targetPath {
-				logger.V(0).Info("### BUILD RESULTS FOR: " + clusterPath + " ###")
-				targetPath := path.Join(utils.ClustersDirName, clusterPath)
-				if err := utils.RunKustomizeBuild(targetPath, nil); err != nil {
-					return err
-				}
-				logger.V(0).Infof("---")
-			}
-
-			return nil
+			logger.V(10).Writef("Start build command with group name \"%s\" and cluster name \"%s\"", group, cluster)
+			return build.Build(logger, flags.Config, group, cluster, context, os.Stdout)
 		},
 	}
 

@@ -53,17 +53,15 @@ func NewLogger(streams LogStreams) *Logger {
 	}
 }
 
-func (l *Logger) Warn(message string) {
-	fmt.Fprintln(l.errorWriter, message)
+func (l *Logger) Warn() LogWriterInterface {
+	return LogWriter{
+		enabled: true,
+		writer:  l.errorWriter,
+	}
 }
 
-func (l *Logger) Warnf(format string, args ...interface{}) {
-	message := fmt.Sprintf(format, args...)
-	fmt.Fprintln(l.errorWriter, message)
-}
-
-func (l *Logger) V(logLevel LogLevel) InfoLogWriterInterface {
-	return InfoLogWriter{
+func (l *Logger) V(logLevel LogLevel) LogWriterInterface {
+	return LogWriter{
 		enabled: l.verbosityLevel >= logLevel,
 		writer:  l.writer,
 	}
@@ -73,12 +71,12 @@ func (l *Logger) SetLogLevel(logLevel LogLevel) {
 	l.verbosityLevel = logLevel
 }
 
-type InfoLogWriter struct {
+type LogWriter struct {
 	enabled bool
 	writer  io.Writer
 }
 
-func (l InfoLogWriter) Info(message string) {
+func (l LogWriter) Write(message string) {
 	if !l.enabled {
 		return
 	}
@@ -86,7 +84,7 @@ func (l InfoLogWriter) Info(message string) {
 	fmt.Fprintln(l.writer, message)
 }
 
-func (l InfoLogWriter) Infof(format string, args ...interface{}) {
+func (l LogWriter) Writef(format string, args ...interface{}) {
 	if !l.enabled {
 		return
 	}

@@ -16,11 +16,9 @@ package cmd
 
 import (
 	"os"
-	"path/filepath"
 
-	"github.com/mia-platform/vab/internal/logger"
-	"github.com/mia-platform/vab/internal/utils"
-	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
+	initProj "github.com/mia-platform/vab/pkg/init"
+	"github.com/mia-platform/vab/pkg/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -37,28 +35,15 @@ configuration), and the configuration file.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			cmd.SilenceUsage = true
-			logger.V(0).Infof("Initializing...")
+			logger.V(0).Writef("Initializing...")
 
 			currentPath, err := os.Getwd()
 			if err != nil {
+				logger.V(10).Write("Error trying to access the current path")
 				return err
 			}
 
-			configPath, err := utils.GetProjectPath(currentPath, flags.Name)
-			if err != nil {
-				return err
-			}
-
-			name := filepath.Base(configPath)
-			if err := utils.WriteConfig(*v1alpha1.EmptyConfig(name), configPath); err != nil {
-				return err
-			}
-
-			if err := utils.CreateClusterOverride(configPath, "all-groups"); err != nil {
-				return err
-			}
-
-			return nil
+			return initProj.InitProject(logger, currentPath, flags.Name)
 		},
 	}
 

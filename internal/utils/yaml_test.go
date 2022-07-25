@@ -26,6 +26,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/mia-platform/vab/internal/testutils"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
+	"sigs.k8s.io/kustomize/api/konfig"
 )
 
 const (
@@ -36,7 +37,6 @@ const (
 // Test marshalling of config struct
 func TestWriteEmptyConfig(t *testing.T) {
 	testDirPath := t.TempDir()
-	t.Log(testDirPath)
 
 	emptyConfig := v1alpha1.EmptyConfig(testConfigName)
 
@@ -121,13 +121,12 @@ func TestEmptyExistingConfig(t *testing.T) {
 // Test marshalling of Kustomization struct
 func TestWriteEmptyKustomization(t *testing.T) {
 	testDirPath := t.TempDir()
-	t.Log(testDirPath)
 
-	if err := WriteKustomization(*emptyKustomization, testDirPath); err != nil {
+	if err := WriteKustomization(EmptyKustomization(), testDirPath); err != nil {
 		t.Fatal(err)
 	}
 
-	testFileContent, _ := os.ReadFile(path.Join(testDirPath, kustomizationFileName))
+	testFileContent, _ := os.ReadFile(path.Join(testDirPath, konfig.DefaultKustomizationFileName()))
 	expectedFileContent, _ := os.ReadFile(testutils.GetTestFile("utils", "empty_kustomization.yaml"))
 
 	if !bytes.Equal(testFileContent, expectedFileContent) {
@@ -138,18 +137,19 @@ func TestWriteEmptyKustomization(t *testing.T) {
 // Test that the correct error is returned if the file is not named kustomization.yaml
 func TestWrongKustomizationFileName(t *testing.T) {
 	testDirPath := t.TempDir()
-	file, fileErr := os.Create(testutils.GetTestFile("utils", "notkustomization.yaml"))
+	file, fileErr := os.Create(path.Join(testDirPath, "notkustomization.yaml"))
 	if fileErr != nil {
 		t.Fatalf("Error while creating test file: %s", fileErr)
 	}
 
-	err := WriteKustomization(*emptyKustomization, path.Join(testDirPath, file.Name()))
+	expectedError := NewWrongFileNameError(konfig.DefaultKustomizationFileName(), path.Base(file.Name()))
+	err := WriteKustomization(EmptyKustomization(), file.Name())
 
 	if err == nil {
-		t.Fatalf("No error was returned. Expected: %s", errKustomizationTarget)
+		t.Fatalf("No error was returned. Expected: %s", expectedError)
 	}
-	if !errors.Is(err, errKustomizationTarget) {
-		t.Fatalf("Unexpected error. Expected: %s, actual: %s", errKustomizationTarget, err)
+	if !errors.As(err, &WrongFileNameError{}) {
+		t.Fatalf("Unexpected error. Expected: %s, actual: %s.", expectedError, err)
 	}
 }
 
@@ -157,7 +157,7 @@ func TestWrongKustomizationFileName(t *testing.T) {
 func TestKustomizationPathNotExists(t *testing.T) {
 	testWrongPath := "/wrong/path/to/kustomization.yaml"
 
-	err := WriteKustomization(*emptyKustomization, testWrongPath)
+	err := WriteKustomization(EmptyKustomization(), testWrongPath)
 
 	if err == nil {
 		t.Fatalf("No error was returned. Expected: %s", fs.ErrNotExist)
@@ -174,7 +174,7 @@ func TestKustomizationPathPermError(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err := WriteKustomization(*emptyKustomization, testDirPath)
+	err := WriteKustomization(EmptyKustomization(), testDirPath)
 
 	if err == nil {
 		t.Fatalf("No error was returned. Expected: %s", fs.ErrPermission)
@@ -191,7 +191,7 @@ func TestEmptyExistingKustomization(t *testing.T) {
 		t.Fatal(writeErr)
 	}
 
-	err := WriteKustomization(*emptyKustomization, testDirPath)
+	err := WriteKustomization(EmptyKustomization(), testDirPath)
 
 	if err != nil {
 		t.Fatal(err)
@@ -212,7 +212,7 @@ func TestReadEmptyConfig(t *testing.T) {
 
 // ReadConfig returns ErrNotExist if the path is invalid
 func TestReadConfigInvalidPath(t *testing.T) {
-	_, err := ReadConfig(invalidPath)
+	_, err := ReadConfig(testutils.InvalidFolderPath)
 	if err == nil {
 		t.Fatalf("No error was returned. Expected: %s", fs.ErrNotExist)
 	}
@@ -224,7 +224,7 @@ func TestReadConfigInvalidPath(t *testing.T) {
 // ReadConfig returns ErrPermission if the path is not accessible
 func TestReadConfigErrPermission(t *testing.T) {
 	testDirPath := t.TempDir()
-	dstPath := path.Join(testDirPath, testName)
+	dstPath := path.Join(testDirPath, "foo")
 	if err := os.Mkdir(dstPath, 0); err != nil {
 		t.Fatal(err)
 	}
