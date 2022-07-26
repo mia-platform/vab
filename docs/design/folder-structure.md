@@ -9,7 +9,7 @@ At the first level inside the root directory, there will be:
 ## Vendors
 
 The **vendors** folder will include two main subfolders: **modules** and **addons**.
-The `module` foldder will contain the downloaded resources divided by flavours. Modules and add-ons will be structured
+The `module` foldder will contain the downloaded resources divided by flavors. Modules and add-ons will be structured
 as Kustomize bases, hence each element will come with its own `kustomization.yaml` files.
 
 For example:

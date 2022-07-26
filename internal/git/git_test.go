@@ -17,6 +17,7 @@ package git
 import (
 	"testing"
 
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 )
 
@@ -49,5 +50,77 @@ func TestUrlStringFromAddOn(t *testing.T) {
 	url = urlForAddon(addon)
 	if url != expectedURL {
 		t.Fatalf("Unexpected url for empty add-on: %s", url)
+	}
+}
+
+func TestGetAuths(t *testing.T) {
+	addonAuth := authForAddon(v1alpha1.AddOn{})
+	if addonAuth != nil {
+		t.Fatalf("Unexpected auth configuration %s", addonAuth)
+	}
+
+	moduleAuth := authForModule(v1alpha1.Module{})
+	if moduleAuth != nil {
+		t.Fatalf("Unexpected auth configuration %s", addonAuth)
+	}
+}
+
+func TestTagReferences(t *testing.T) {
+	addonName := "addon-name/with-slash"
+	addonVersion := "1.0.0"
+	expectedReference := "refs/tags/addon-" + addonName + "-" + addonVersion
+	tag := tagReferenceForAddon(addonName, addonVersion)
+	if tag != plumbing.ReferenceName(expectedReference) {
+		t.Fatalf("Unexpected addon tag reference %s, expected %s", tag, expectedReference)
+	}
+	if !tag.IsTag() {
+		t.Fatalf("The addon reference %s is not a tag reference", tag)
+	}
+
+	moduleName := "module-name/flavor"
+	moduleVersion := "1.0.0"
+	expectedReference = "refs/tags/module-module-name-" + addonVersion
+	tag = tagReferenceForModule(moduleName, moduleVersion)
+	if tag != plumbing.ReferenceName(expectedReference) {
+		t.Fatalf("Unexpected module tag reference %s, expected %s", tag, expectedReference)
+	}
+	if !tag.IsTag() {
+		t.Fatalf("The module reference %s is not a tag reference", tag)
+	}
+}
+
+func TestCloneOptions(t *testing.T) {
+	addon := v1alpha1.AddOn{Version: "1.0.0", Disable: false}
+	addonName := "addon-name"
+	options := cloneOptionsForAddon(addonName, addon)
+
+	if options.URL != urlForAddon(addon) {
+		t.Fatalf("Unexpected URL for addon %s: %s", addonName, options.URL)
+	}
+	if options.Auth != nil {
+		t.Fatalf("Unexpected Auth for addon %s: %s", addonName, options.Auth)
+	}
+	if options.ReferenceName != tagReferenceForAddon(addonName, addon.Version) {
+		t.Fatalf("Unexpected reference name for addon %s: %s", addonName, options.ReferenceName)
+	}
+	if !options.ReferenceName.IsTag() {
+		t.Fatalf("Reference created for addon %s is not a branch: %s", addonName, options.ReferenceName)
+	}
+
+	module := v1alpha1.Module{Version: "1.0.0", Weight: 10, Disable: false}
+	moduleName := "module-name/flavor-name"
+	options = cloneOptionsForModule(moduleName, module)
+
+	if options.URL != urlForModule(module) {
+		t.Fatalf("Unexpected URL for module %s: %s", moduleName, options.URL)
+	}
+	if options.Auth != nil {
+		t.Fatalf("Unexpected Auth for module %s: %s", moduleName, options.Auth)
+	}
+	if options.ReferenceName != tagReferenceForModule(moduleName, addon.Version) {
+		t.Fatalf("Unexpected reference name for module %s: %s", moduleName, options.ReferenceName)
+	}
+	if !options.ReferenceName.IsTag() {
+		t.Fatalf("Reference created for module %s is not a branch: %s", moduleName, options.ReferenceName)
 	}
 }
