@@ -21,31 +21,33 @@ import (
 )
 
 func TestUrlStringFromModule(t *testing.T) {
+	expectedURL := "https://github.com/mia-platform/distribution"
 	module := v1alpha1.Module{Version: "1.2.3", Weight: 1, Disable: false}
 
 	url := urlForModule(module)
-	if url != defaultGitUrl {
+	if url != expectedURL {
 		t.Fatalf("Unexpected url: %s", url)
 	}
 
 	module = v1alpha1.Module{}
 	url = urlForModule(module)
-	if url != defaultGitUrl {
+	if url != expectedURL {
 		t.Fatalf("Unexpected url for empty module: %s", url)
 	}
 }
 
 func TestUrlStringFromAddOn(t *testing.T) {
+	expectedURL := "https://github.com/mia-platform/distribution"
 	addon := v1alpha1.AddOn{Version: "1.2.3", Disable: false}
 
 	url := urlForAddon(addon)
-	if url != defaultGitUrl {
+	if url != expectedURL {
 		t.Fatalf("Unexpected url: %s", url)
 	}
 
 	addon = v1alpha1.AddOn{}
 	url = urlForAddon(addon)
-	if url != defaultGitUrl {
+	if url != expectedURL {
 		t.Fatalf("Unexpected url for empty add-on: %s", url)
 	}
 }

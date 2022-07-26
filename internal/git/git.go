@@ -17,13 +17,18 @@ package git
 import "github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 
 const (
-	defaultGitUrl = "https://github.com/mia-platform/distribution"
+	// defaultGitUrl is the default git remote
+	defaultGitURL = "https://github.com"
+	// defaultRepositoryUrl is the default repository to use if no other is specified
+	defaultRepositoryURL = defaultGitURL + "/mia-platform/distribution"
 )
 
+// urlForModule return the git url to use for downloading the files for module
 func urlForModule(module v1alpha1.Module) string {
-	return defaultGitUrl
+	return defaultRepositoryURL
 }
 
+// urlForAddon return the git url to use for downloading the files for addon
 func urlForAddon(addon v1alpha1.AddOn) string {
-	return defaultGitUrl
+	return defaultRepositoryURL
 }
