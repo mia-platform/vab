@@ -15,10 +15,16 @@
 package git
 
 import (
+	"io/fs"
 	"testing"
 
+	"github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-billy/v5/memfs"
+	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
+	"gotest.tools/assert"
 )
 
 func TestUrlStringFromModule(t *testing.T) {
@@ -123,4 +129,84 @@ func TestCloneOptions(t *testing.T) {
 	if !options.ReferenceName.IsTag() {
 		t.Fatalf("Reference created for module %s is not a branch: %s", moduleName, options.ReferenceName)
 	}
+}
+
+func TestProvaClone(t *testing.T) {
+	mem := memfs.New()
+	memStorage := memory.NewStorage()
+	_, err := git.Clone(memStorage, mem, &git.CloneOptions{
+		URL:           "https://github.com/go-git/go-git.git",
+		ReferenceName: plumbing.NewTagReferenceName("v5.1.0"),
+		Depth:         1,
+		Tags:          git.NoTags,
+		SingleBranch:  true,
+	})
+	assert.NilError(t, err)
+	fileInfos, err := mem.ReadDir("/")
+	assert.NilError(t, err, "readdir")
+	for _, v := range fileInfos {
+		t.Logf("%s\n", v.Name())
+	}
+}
+
+type fakeCloner struct {
+	t *testing.T
+}
+
+func createDirs(t *testing.T, workTree billy.Filesystem, dirs []string) {
+	t.Helper()
+	for _, dir := range dirs {
+		err := workTree.MkdirAll(dir, fs.FileMode(0755))
+		assert.NilError(t, err, dir)
+	}
+}
+
+func createFiles(t *testing.T, workTree billy.Filesystem, files []string) {
+	t.Helper()
+	for _, file := range files {
+		_, err := workTree.Create(file)
+		assert.NilError(t, err, file)
+	}
+}
+
+func (c fakeCloner) Clone(addonName string, addon v1alpha1.AddOn, cloneOptions *git.CloneOptions) (billy.Filesystem, error) {
+	workTree := memfs.New()
+
+	createDirs(c.t, workTree, []string{
+		"/addon1/subdir1",
+		"/addon1/subdir2",
+		"/addon2/subdir1",
+	})
+
+	createFiles(c.t, workTree, []string{
+		"/addon1/file1",
+		"/addon1/subdir1/file2",
+		"/addon2/subdir1/file3",
+	})
+	return workTree, nil
+}
+
+func TestCloneAddon(t *testing.T) {
+	addon := v1alpha1.AddOn{
+		Version: "1.0.0",
+	}
+	fc := fakeCloner{t: t}
+	outFs, err := cloneAddon("addon1", addon, nil, fc)
+	assert.NilError(t, err)
+	expectedFs := memfs.New()
+	createDirs(t, expectedFs, []string{
+		"/addon1/subdir1",
+		"/addon1/subdir2",
+	})
+	createFiles(t, expectedFs, []string{
+		"/addon1/file1",
+		"/addon1/subdir1/file2",
+	})
+
+	outFiles, err := outFs.ReadDir("/")
+	assert.NilError(t, err)
+	expectedFiles, err := expectedFs.ReadDir("/")
+	assert.NilError(t, err)
+	assert.DeepEqual(t, outFiles, expectedFiles)
+	// fs.WalkDir(outFs, "/", func(path string, d fs.DirEntry, err error) error {})
 }

@@ -15,11 +15,15 @@
 package git
 
 import (
+	"fmt"
 	"strings"
 
+	"github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport"
+	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 )
 
@@ -42,7 +46,7 @@ func authForModule(module v1alpha1.Module) transport.AuthMethod {
 
 // tagReferenceForModule return a valid tag reference for moduleName and version
 func tagReferenceForModule(moduleName string, version string) plumbing.ReferenceName {
-	splitName := strings.Split(moduleName, "/")
+	splitName := strings.Split(moduleName, "/") // TODO da mettere in utils
 	return plumbing.NewTagReferenceName("module-" + splitName[0] + "-" + version)
 }
 
@@ -68,6 +72,8 @@ func cloneOptionsForModule(moduleName string, module v1alpha1.Module) *git.Clone
 		Auth:          authForModule(module),
 		ReferenceName: tagReferenceForModule(moduleName, module.Version),
 		Depth:         1,
+		SingleBranch:  true,
+		Tags:          git.NoTags,
 	}
 }
 
@@ -78,5 +84,36 @@ func cloneOptionsForAddon(addonName string, addon v1alpha1.AddOn) *git.CloneOpti
 		Auth:          authForAddon(addon),
 		ReferenceName: tagReferenceForAddon(addonName, addon.Version),
 		Depth:         1,
+		SingleBranch:  true,
+		Tags:          git.NoTags,
 	}
 }
+
+type cloner interface {
+	Clone(addonName string, addon v1alpha1.AddOn, cloneOptions *git.CloneOptions) (billy.Filesystem, error)
+}
+
+type clone struct {
+}
+
+func (c clone) Clone(addonName string, addon v1alpha1.AddOn, cloneOptions *git.CloneOptions) (billy.Filesystem, error) {
+	workTree := memfs.New()
+	memStorage := memory.NewStorage()
+	_, err := git.Clone(memStorage, workTree, cloneOptions)
+	if err != nil {
+		return nil, fmt.Errorf("error cloning repo: %w", err)
+	}
+	return workTree, nil
+}
+
+func cloneAddon(addonName string, addon v1alpha1.AddOn, cloneOptions *git.CloneOptions, cloner cloner) (billy.Filesystem, error) {
+	workTree := memfs.New()
+	return workTree, nil
+}
+
+// TODO Aggiungere qui la funzione func(addonName, addon, targetPath )
+// TODO prendere solo il basename di modules mentre addons non ha slash
+
+// TODO Interfaccia addon/module
+
+// TODO lanciare make generate se modifichi in pkg apis
