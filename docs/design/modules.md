@@ -32,4 +32,4 @@ The CLI will match the `module-name` with the folder name included in the `modul
 the files contained in it, so you will have all the different flavors contained in it to ease the cross dependencies
 between them.
 
-[semver]: https://semver.org/spec/v2.0.0.html (semantic versioning v2.0.0 site)
+[semver]: https://semver.org/spec/v2.0.0.html "semantic versioning v2.0.0 site"

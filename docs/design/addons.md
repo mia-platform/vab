@@ -29,4 +29,4 @@ can have multiple add-ons the tags must be in the form of `add-on-<add-on-name>-
 The CLI will match the `add-on-name` with the folder name contained inside the `add-ons` one. and will pull all
 the files contained in it.
 
-[semver]: https://semver.org/spec/v2.0.0.html (semantic versioning v2.0.0 site)
+[semver]: https://semver.org/spec/v2.0.0.html "semantic versioning v2.0.0 site"
