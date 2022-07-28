@@ -36,13 +36,11 @@ endif
 ##@ Build
 
 # Set the version number.
-VERSION ?= $(shell git describe --tags 2>/dev/null || git rev-parse --short HEAD)
-DATE_FMT = +%Y-%m-%d
-ifdef SOURCE_DATE_EPOCH
-    BUILD_DATE ?= $(shell date -u -d "@$(SOURCE_DATE_EPOCH)" "$(DATE_FMT)" 2>/dev/null || date -u -r "$(SOURCE_DATE_EPOCH)" "$(DATE_FMT)" 2>/dev/null || date -u "$(DATE_FMT)")
-else
-    BUILD_DATE ?= $(shell date "$(DATE_FMT)")
-endif
+VERSION := $(shell git describe --tags 2>/dev/null || git rev-parse --short HEAD)
+DATE_FMT := +%Y-%m-%d
+COMPLETE_FMT := +%Y-%m-%dT%H:%M:%SZ
+BUILD_DATE := $(shell date -u "$(DATE_FMT)")
+COMPLETE_BUILD_DATE := $(shell date -u "$(COMPLETE_FMT)")
 
 GO_LDFLAGS := -X github.com/mia-platform/vab/internal/cmd.Version=$(VERSION) $(GO_LDFLAGS)
 GO_LDFLAGS := -X github.com/mia-platform/vab/internal/cmd.BuildDate=$(BUILD_DATE) $(GO_LDFLAGS)
@@ -146,6 +144,17 @@ TAG ?= $(shell git describe --tags 2>/dev/null || echo latest)
 
 # Force to use buildkit as engine
 DOCKER := DOCKER_BUILDKIT=1 docker
+DESCRIPTION := cli for handling installation and upgrade of Mia-Platform unofficial distribution
+DOCKER_LABELS := --label "org.opencontainers.image.title=$(CMDNAME)"
+DOCKER_LABELS := $(DOCKER_LABELS) --label "org.opencontainers.image.description=$(DESCRIPTION)"
+DOCKER_LABELS := $(DOCKER_LABELS) --label "org.opencontainers.image.url=https://github.com/mia-platform/vab"
+DOCKER_LABELS := $(DOCKER_LABELS) --label "org.opencontainers.image.source=https://github.com/mia-platform/vab"
+DOCKER_LABELS := $(DOCKER_LABELS) --label "org.opencontainers.image.version=$(VERSION)"
+DOCKER_LABELS := $(DOCKER_LABELS) --label "org.opencontainers.image.created=$(COMPLETE_BUILD_DATE)"
+DOCKER_LABELS := $(DOCKER_LABELS) --label "org.opencontainers.image.revision=$(shell git rev-parse HEAD)"
+DOCKER_LABELS := $(DOCKER_LABELS) --label "org.opencontainers.image.licenses=Apache-2.0"
+DOCKER_LABELS := $(DOCKER_LABELS) --label "org.opencontainers.image.documentation=https://docs.mia-platform.eu"
+DOCKER_LABELS := $(DOCKER_LABELS) --label "org.opencontainers.image.vendor=Mia s.r.l."
 
 .PHONY: build-image
 # Force linux OS because alpine don't have darwin specific slices
@@ -154,4 +163,6 @@ build-image.%: build.%
 	$(eval OS := $(word 1,$(subst ., ,$*)))
 	$(eval ARCH := $(word 2,$(subst ., ,$*)))
 	@echo "Building image for ${OS} ${ARCH}..."
-	DOCKER build --platform $(OS)/$(ARCH) --pull --tag $(IMAGE):$(TAG) --file ./Dockerfile bin
+	$(DOCKER) build --platform $(OS)/$(ARCH) \
+		$(DOCKER_LABELS) \
+		--pull --tag $(IMAGE):$(TAG) --file ./Dockerfile bin
