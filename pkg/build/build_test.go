@@ -16,7 +16,6 @@ package build
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io/fs"
 	"path"
@@ -26,7 +25,7 @@ import (
 	"github.com/mia-platform/vab/internal/testutils"
 	"github.com/mia-platform/vab/internal/utils"
 	"github.com/mia-platform/vab/pkg/logger"
-	"golang.org/x/exp/slices"
+	"github.com/stretchr/testify/assert"
 )
 
 // Test that the function returns the correct kustomized configuration
@@ -34,12 +33,8 @@ func TestRunKustomizeBuild(t *testing.T) {
 	targetPath := testutils.GetTestFile("build", testutils.KustomizeTestDirName)
 
 	buffer := new(bytes.Buffer)
-	if err := runKustomizeBuild(targetPath, buffer); err != nil {
-		t.Fatal(err)
-	}
-
-	if !bytes.Equal(buffer.Bytes(), []byte(expectedKustomizeResult)) {
-		t.Fatalf("Unexpected Kustomize result:\n%s", buffer.String())
+	if err := runKustomizeBuild(targetPath, buffer); assert.NoError(t, err) {
+		assert.Equal(t, buffer.String(), expectedKustomizeResult)
 	}
 }
 
@@ -47,11 +42,8 @@ func TestRunKustomizeBuild(t *testing.T) {
 func TestInvalidKustomizeBuildPath(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	err := runKustomizeBuild(testutils.InvalidFolderPath, buffer)
-	if err == nil {
-		t.Fatalf("No error was returned. Expected: %s", fs.ErrNotExist)
-	}
-	if !errors.Is(err, fs.ErrNotExist) {
-		t.Fatalf("Unexpected error. Expected: %s, actual: %s", fs.ErrNotExist, err)
+	if assert.Error(t, err) {
+		assert.ErrorIs(t, err, fs.ErrNotExist)
 	}
 }
 
@@ -60,28 +52,17 @@ func TestBuildFunctionForASingleCluster(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	configPath := testutils.GetTestFile("build", testBuildFolder, testConfigFileName)
 	err := Build(log, configPath, testutils.TestGroupName2, testutils.TestClusterName1, testutils.GetTestFile("build", testBuildFolder), buffer)
-
-	if err != nil {
-		t.Fatalf("Unexpected error: %s", err)
+	if !assert.NoError(t, err) {
+		return
 	}
 
 	writtenLogs := buffer.String()
 	writtenLines := strings.Split(writtenLogs, "\n")
 
 	expectedStarterMarker := fmt.Sprintf(startMarkerFormat, path.Join(utils.ClustersDirName, testutils.TestGroupName2, testutils.TestClusterName1))
-	if len(writtenLines) < 15 {
-		t.Fatalf("Unexpected line length %d", len(writtenLines))
-	}
-
-	if !slices.Contains(writtenLines, expectedStarterMarker) {
-		t.Log(writtenLines[0])
-		t.Fatal("Start marker for cluster not found")
-	}
-
-	if !slices.Contains(writtenLines, endMarkerString) {
-		t.Log(writtenLines[len(writtenLines)-1])
-		t.Fatal("End marker not found")
-	}
+	assert.NotEqual(t, writtenLines, 15, "Unexpected line length")
+	assert.Contains(t, writtenLines, expectedStarterMarker, "Start marker for cluster not found")
+	assert.Contains(t, writtenLines, endMarkerString, "End marker not found")
 }
 
 func TestBuildFunctionForAGroup(t *testing.T) {
@@ -90,34 +71,19 @@ func TestBuildFunctionForAGroup(t *testing.T) {
 	configPath := testutils.GetTestFile("build", testBuildFolder, testConfigFileName)
 	err := Build(log, configPath, testutils.TestGroupName2, "", testutils.GetTestFile("build", testBuildFolder), buffer)
 
-	if err != nil {
-		t.Fatalf("Unexpected error: %s", err)
+	if !assert.NoError(t, err) {
+		return
 	}
 
 	writtenLogs := buffer.String()
 	writtenLines := strings.Split(writtenLogs, "\n")
 
 	expectedStarterMarker := fmt.Sprintf(startMarkerFormat, path.Join(utils.ClustersDirName, testutils.TestGroupName2, testutils.TestClusterName1))
-	if len(writtenLines) < 29 {
-		t.Log(writtenLogs)
-		t.Fatalf("Unexpected line length %d", len(writtenLines))
-	}
-
-	if !slices.Contains(writtenLines, expectedStarterMarker) {
-		t.Log(writtenLines[0])
-		t.Fatal("Start marker for cluster not found")
-	}
-
 	expectedSeparationMarker := fmt.Sprintf(startMarkerFormat, path.Join(utils.ClustersDirName, testutils.TestGroupName2, testutils.TestClusterName2))
-	if !slices.Contains(writtenLines, expectedSeparationMarker) {
-		t.Log(expectedSeparationMarker)
-		t.Fatal("Sepration for the two clusters not found")
-	}
-
-	if !slices.Contains(writtenLines, endMarkerString) {
-		t.Log(writtenLines[len(writtenLines)-1])
-		t.Fatal("End marker not found")
-	}
+	assert.NotEqual(t, writtenLines, 29, "Unexpected line length")
+	assert.Contains(t, writtenLines, expectedStarterMarker, "Start marker for cluster not found")
+	assert.Contains(t, writtenLines, expectedSeparationMarker, "Sepration for the two clusters not found")
+	assert.Contains(t, writtenLines, endMarkerString, "End marker not found")
 }
 
 func TestWrongContextPath(t *testing.T) {
@@ -126,20 +92,13 @@ func TestWrongContextPath(t *testing.T) {
 	configPath := testutils.GetTestFile("build", testBuildFolder, testConfigFileName)
 	err := Build(log, configPath, "", "", testutils.InvalidFolderPath, buffer)
 
-	if err == nil {
-		t.Fatalf("No error was returned. Expected: %s", fs.ErrNotExist)
-	}
-	if !errors.Is(err, fs.ErrNotExist) {
-		t.Fatalf("Unexpected error. Expected: %s, actual: %s", fs.ErrNotExist, err)
+	if assert.Error(t, err) {
+		assert.ErrorIs(t, err, fs.ErrNotExist)
 	}
 
 	err = Build(log, configPath, "", "", configPath, buffer)
-	if err == nil {
-		t.Fatalf("No error was returned")
-	}
-
-	if err.Error() != fmt.Sprintf("the target path %s is not a directory", configPath) {
-		t.Fatalf("Unexpected Error: %s", err)
+	if assert.Error(t, err) {
+		assert.Equal(t, err.Error(), fmt.Sprintf("the target path %s is not a directory", configPath))
 	}
 }
 
@@ -149,11 +108,8 @@ func TestBuildInvalidConfigPath(t *testing.T) {
 	contextPath := testutils.GetTestFile("build", testBuildFolder)
 	err := Build(log, testutils.InvalidFileName, "", "", contextPath, buffer)
 
-	if err == nil {
-		t.Fatalf("No error was returned. Expected: %s", fs.ErrNotExist)
-	}
-	if !errors.Is(err, fs.ErrNotExist) {
-		t.Fatalf("Unexpected error. Expected: %s, actual: %s", fs.ErrNotExist, err)
+	if assert.Error(t, err) {
+		assert.ErrorIs(t, err, fs.ErrNotExist)
 	}
 }
 
@@ -162,10 +118,7 @@ func TestBuildInvalidKustomization(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	configPath := testutils.GetTestFile("build", testBuildFolder, testConfigFileName)
 	err := Build(log, configPath, testutils.TestGroupName1, testutils.TestClusterName1, testutils.GetTestFile("build", testBuildFolder), buffer)
-
-	if err == nil {
-		t.Fatalf("No error was returned. Expected: %s", fs.ErrNotExist)
-	}
+	assert.Error(t, err)
 }
 
 const (

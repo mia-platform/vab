@@ -22,7 +22,7 @@ import (
 
 	"github.com/mia-platform/vab/internal/testutils"
 	"github.com/mia-platform/vab/pkg/logger"
-	"golang.org/x/exp/slices"
+	"github.com/stretchr/testify/assert"
 )
 
 // Test parsing error returned from ReadConfig
@@ -32,12 +32,8 @@ func TestValidateParseError(t *testing.T) {
 	logger := logger.DisabledLogger{}
 
 	err := ConfigurationFile(logger, targetPath, buffer)
-	if err == nil {
-		t.Fatal("Expected error")
-	}
-
-	if !strings.Contains(err.Error(), "error while parsing the configuration file:") {
-		t.Fatalf("Unexpected error: %v", err)
+	if assert.Error(t, err) {
+		assert.Contains(t, err.Error(), "error while parsing the configuration file:")
 	}
 }
 
@@ -47,12 +43,8 @@ func TestValidateEmptySpec(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	logger := logger.DisabledLogger{}
 	err := ConfigurationFile(logger, targetPath, buffer)
-	if err != nil {
-		t.Fatalf("Unexpected error: %v", err)
-	}
-
-	if !bytes.Equal(buffer.Bytes(), []byte(expectedOutput1)) {
-		t.Fatalf("Unexpected output: %s", buffer.String())
+	if assert.NoError(t, err) {
+		assert.Equal(t, buffer.String(), expectedOutput1)
 	}
 }
 
@@ -61,14 +53,10 @@ func TestCheckTypeMeta(t *testing.T) {
 	targetPath := testutils.GetTestFile("validate", "invalidkind.yaml")
 	buffer := new(bytes.Buffer)
 	logger := logger.DisabledLogger{}
+
 	err := ConfigurationFile(logger, targetPath, buffer)
-
-	if err == nil {
-		t.Fatal("Expected error")
-	}
-
-	if !bytes.Equal(buffer.Bytes(), []byte(expectedOutput2)) {
-		t.Fatalf("Unexpected output: %s", buffer.String())
+	if assert.Error(t, err) {
+		assert.Equal(t, buffer.String(), expectedOutput2)
 	}
 }
 
@@ -78,19 +66,12 @@ func TestValidateOutput(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	logger := logger.DisabledLogger{}
 	err := ConfigurationFile(logger, targetPath, buffer)
-	if err == nil {
-		t.Fatal("Expected error")
-	}
-
-	loggedLines := strings.Split(buffer.String(), "\n")
-	expectedOutput3Array := strings.Split(expectedOutput3, "\n")
-	if len(loggedLines) != len(expectedOutput3Array) {
-		t.Fatalf("Expected %d log lines, %d founded", len(expectedOutput3Array), len(loggedLines))
-	}
-
-	for _, line := range loggedLines {
-		if !slices.Contains(expectedOutput3Array, line) {
-			t.Fatalf("Unexpected logged line %s", line)
+	if assert.Error(t, err) {
+		loggedLines := strings.Split(buffer.String(), "\n")
+		expectedOutput3Array := strings.Split(expectedOutput3, "\n")
+		assert.Equal(t, len(loggedLines), len(expectedOutput3Array), "Wrong log lines founded")
+		for _, line := range loggedLines {
+			assert.Contains(t, expectedOutput3Array, line, "Unexpected log line")
 		}
 	}
 }

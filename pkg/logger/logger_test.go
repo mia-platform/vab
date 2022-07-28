@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const testMessage = "Test message"
@@ -27,13 +29,8 @@ const testMessage = "Test message"
 func TestDefaultStreams(t *testing.T) {
 	defaultStream := DefaultStreams()
 
-	if defaultStream.OutStream != os.Stdout {
-		t.Fatal("Unexpected default out stream")
-	}
-
-	if defaultStream.ErrStream != os.Stderr {
-		t.Fatal("Unexpected default error stream")
-	}
+	assert.Equal(t, defaultStream.OutStream, os.Stdout, "Unexpected default out stream")
+	assert.Equal(t, defaultStream.ErrStream, os.Stderr, "Unexpected default error stream")
 }
 
 // Test that a newly created logger will log warning messages to buffer if is set to not using stderr
@@ -49,25 +46,19 @@ func TestNewLogger(t *testing.T) {
 
 	logger.Warn().Writef("%s", testMessage)
 	logger.Warn().Write(testMessage)
-	if !bytes.Equal(errBuffer.Bytes(), []byte(expectedMessage)) {
-		t.Fatalf("Unexpected message on buffer %s", stdBuffer.String())
-	}
+	assert.Equal(t, errBuffer.String(), expectedMessage)
 
 	errBuffer.Reset()
 	// default logger has 0 level set as default so info messages are logged
 	logger.V(0).Write(testMessage)
 	logger.V(0).Writef("%s", testMessage)
-	if !bytes.Equal(stdBuffer.Bytes(), []byte(expectedMessage)) {
-		t.Fatalf("Unexpected message on buffer %s", stdBuffer.String())
-	}
+	assert.Equal(t, stdBuffer.String(), expectedMessage)
 
 	stdBuffer.Reset()
 	// 1 or more level are grater than the default so no log is written
 	logger.V(1).Write(testMessage)
 	logger.V(1).Writef("%s", testMessage)
-	if !bytes.Equal(stdBuffer.Bytes(), []byte("")) {
-		t.Fatalf("Unexpected message on buffer %s", stdBuffer.String())
-	}
+	assert.Equal(t, stdBuffer.String(), "")
 }
 
 func TestChangingLogLevel(t *testing.T) {
@@ -80,17 +71,13 @@ func TestChangingLogLevel(t *testing.T) {
 
 	// 1 or more level are grater than the default so no log is written
 	logger.V(1).Write(testMessage)
-	if !bytes.Equal(stdBuffer.Bytes(), []byte("")) {
-		t.Fatalf("Unexpected message on buffer %s", stdBuffer.String())
-	}
+	assert.Equal(t, stdBuffer.String(), "")
 
 	logger.SetLogLevel(3)
 
 	// now new info logger must log from level 3 and below
 	logger.V(2).Write(testMessage)
-	if !bytes.Equal(stdBuffer.Bytes(), []byte(fmt.Sprintf("%s\n", testMessage))) {
-		t.Fatalf("Unexpected message on buffer %s", stdBuffer.String())
-	}
+	assert.Equal(t, stdBuffer.String(), fmt.Sprintf("%s\n", testMessage))
 
 	// Logger can be set as LogInterface variable without issues
 	var logInterface LogInterface = NewLogger(streams)
