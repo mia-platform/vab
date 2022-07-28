@@ -15,17 +15,14 @@
 package utils
 
 import (
-	"bytes"
-	"errors"
 	"io/fs"
 	"os"
 	"path"
-	"strings"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/mia-platform/vab/internal/testutils"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
+	"github.com/stretchr/testify/assert"
 	"sigs.k8s.io/kustomize/api/konfig"
 )
 
@@ -40,15 +37,10 @@ func TestWriteEmptyConfig(t *testing.T) {
 
 	emptyConfig := v1alpha1.EmptyConfig(testConfigName)
 
-	if err := WriteConfig(*emptyConfig, testDirPath); err != nil {
-		t.Fatal(err)
-	}
-
-	testFileContent, _ := os.ReadFile(path.Join(testDirPath, DefaultConfigFilename))
-	expectedFileContent, _ := os.ReadFile(testutils.GetTestFile("utils", emptyConfigFile))
-
-	if !bytes.Equal(testFileContent, expectedFileContent) {
-		t.Fatal("Unexpected file content.")
+	if err := WriteConfig(*emptyConfig, testDirPath); assert.NoError(t, err) {
+		testFileContent, _ := os.ReadFile(path.Join(testDirPath, DefaultConfigFilename))
+		expectedFileContent, _ := os.ReadFile(testutils.GetTestFile("utils", emptyConfigFile))
+		assert.Equal(t, testFileContent, expectedFileContent, "Unexpected file content.")
 	}
 }
 
@@ -60,12 +52,9 @@ func TestCustomConfigName(t *testing.T) {
 
 	emptyConfig := v1alpha1.EmptyConfig(testConfigName)
 
-	if err := WriteConfig(*emptyConfig, filePath); err != nil {
-		t.Fatal(err)
-	}
-
-	if _, err := os.Stat(filePath); err != nil {
-		t.Fatal(err)
+	if err := WriteConfig(*emptyConfig, filePath); assert.NoError(t, err) {
+		_, err = os.Stat(filePath)
+		assert.NoError(t, err)
 	}
 }
 
@@ -76,45 +65,35 @@ func TestPathNotExists(t *testing.T) {
 	emptyConfig := v1alpha1.EmptyConfig(testConfigName)
 	err := WriteConfig(*emptyConfig, testWrongPath)
 
-	if err == nil {
-		t.Fatalf("No error was returned. Expected: %s", fs.ErrNotExist)
-	}
-	if !errors.Is(err, fs.ErrNotExist) {
-		t.Fatalf("Unexpected error. Expected: %s, actual: %s", fs.ErrNotExist, err)
+	if assert.Error(t, err, "Expected: %s", fs.ErrNotExist) {
+		assert.ErrorIs(t, err, fs.ErrNotExist)
 	}
 }
 
 // Test that the correct error is returned if vab does not have permissions to access config path
 func TestPathPermError(t *testing.T) {
 	testDirPath := t.TempDir()
-	if err := os.Chmod(testDirPath, 0); err != nil {
-		t.Fatal(err)
+	if err := os.Chmod(testDirPath, 0); !assert.NoError(t, err) {
+		return
 	}
 
 	emptyConfig := v1alpha1.EmptyConfig(testConfigName)
 	err := WriteConfig(*emptyConfig, testDirPath)
 
-	if err == nil {
-		t.Fatalf("No error was returned. Expected: %s", fs.ErrPermission)
-	}
-	if !errors.Is(err, fs.ErrPermission) {
-		t.Fatalf("Unexpected error. Expected: %s, actual: %s", fs.ErrPermission, err)
+	if assert.Error(t, err, "Expected: %s", fs.ErrPermission) {
+		assert.ErrorIs(t, err, fs.ErrPermission)
 	}
 }
 
 // Test that no error is returned if the config file already exists
 func TestEmptyExistingConfig(t *testing.T) {
 	testDirPath := t.TempDir()
+	writeErr := os.WriteFile(path.Join(testDirPath, "config.yaml"), []byte{}, defaultFilePermissions)
 
-	if writeErr := os.WriteFile(path.Join(testDirPath, "config.yaml"), []byte{}, defaultFilePermissions); writeErr != nil {
-		t.Fatal(writeErr)
-	}
-
-	emptyConfig := v1alpha1.EmptyConfig(testConfigName)
-	err := WriteConfig(*emptyConfig, testDirPath)
-
-	if err != nil {
-		t.Fatal(err)
+	if assert.NoError(t, writeErr) {
+		emptyConfig := v1alpha1.EmptyConfig(testConfigName)
+		err := WriteConfig(*emptyConfig, testDirPath)
+		assert.NoError(t, err)
 	}
 }
 
@@ -122,15 +101,10 @@ func TestEmptyExistingConfig(t *testing.T) {
 func TestWriteEmptyKustomization(t *testing.T) {
 	testDirPath := t.TempDir()
 
-	if err := WriteKustomization(EmptyKustomization(), testDirPath); err != nil {
-		t.Fatal(err)
-	}
-
-	testFileContent, _ := os.ReadFile(path.Join(testDirPath, konfig.DefaultKustomizationFileName()))
-	expectedFileContent, _ := os.ReadFile(testutils.GetTestFile("utils", "empty_kustomization.yaml"))
-
-	if !bytes.Equal(testFileContent, expectedFileContent) {
-		t.Fatal("Unexpected file content.")
+	if err := WriteKustomization(EmptyKustomization(), testDirPath); assert.NoError(t, err, err) {
+		testFileContent, _ := os.ReadFile(path.Join(testDirPath, konfig.DefaultKustomizationFileName()))
+		expectedFileContent, _ := os.ReadFile(testutils.GetTestFile("utils", "empty_kustomization.yaml"))
+		assert.Equal(t, testFileContent, expectedFileContent, "Unexpected file content.")
 	}
 }
 
@@ -138,18 +112,15 @@ func TestWriteEmptyKustomization(t *testing.T) {
 func TestWrongKustomizationFileName(t *testing.T) {
 	testDirPath := t.TempDir()
 	file, fileErr := os.Create(path.Join(testDirPath, "notkustomization.yaml"))
-	if fileErr != nil {
-		t.Fatalf("Error while creating test file: %s", fileErr)
+	if !assert.NoError(t, fileErr, "Error while creating test file") {
+		return
 	}
 
 	expectedError := NewWrongFileNameError(konfig.DefaultKustomizationFileName(), path.Base(file.Name()))
 	err := WriteKustomization(EmptyKustomization(), file.Name())
 
-	if err == nil {
-		t.Fatalf("No error was returned. Expected: %s", expectedError)
-	}
-	if !errors.As(err, &WrongFileNameError{}) {
-		t.Fatalf("Unexpected error. Expected: %s, actual: %s.", expectedError, err)
+	if assert.Error(t, err, "Expected: %s", expectedError) {
+		assert.ErrorAs(t, err, &WrongFileNameError{})
 	}
 }
 
@@ -159,65 +130,50 @@ func TestKustomizationPathNotExists(t *testing.T) {
 
 	err := WriteKustomization(EmptyKustomization(), testWrongPath)
 
-	if err == nil {
-		t.Fatalf("No error was returned. Expected: %s", fs.ErrNotExist)
-	}
-	if !errors.Is(err, fs.ErrNotExist) {
-		t.Fatalf("Unexpected error. Expected: %s, actual: %s", fs.ErrNotExist, err)
+	if assert.Error(t, err, "Expected: %s", fs.ErrNotExist) {
+		assert.ErrorIs(t, err, fs.ErrNotExist)
 	}
 }
 
 // Test that the correct error is returned if vab does not have permissions to access config path
 func TestKustomizationPathPermError(t *testing.T) {
 	testDirPath := t.TempDir()
-	if err := os.Chmod(testDirPath, 0); err != nil {
-		t.Fatal(err)
+	if err := os.Chmod(testDirPath, 0); !assert.NoError(t, err) {
+		return
 	}
 
 	err := WriteKustomization(EmptyKustomization(), testDirPath)
-
-	if err == nil {
-		t.Fatalf("No error was returned. Expected: %s", fs.ErrPermission)
-	}
-	if !errors.Is(err, fs.ErrPermission) {
-		t.Fatalf("Unexpected error. Expected: %s, actual: %s", fs.ErrPermission, err)
+	if assert.Error(t, err, "Expected: %s", fs.ErrPermission) {
+		assert.ErrorIs(t, err, fs.ErrPermission)
 	}
 }
 
 // Test that no error is returned if the Kustomization file already exists
 func TestEmptyExistingKustomization(t *testing.T) {
 	testDirPath := t.TempDir()
-	if writeErr := os.WriteFile(path.Join(testDirPath, "kustomization.yaml"), []byte{}, defaultFilePermissions); writeErr != nil {
-		t.Fatal(writeErr)
+	writeErr := os.WriteFile(path.Join(testDirPath, "kustomization.yaml"), []byte{}, defaultFilePermissions)
+	if assert.NoError(t, writeErr) {
+		return
 	}
 
 	err := WriteKustomization(EmptyKustomization(), testDirPath)
-
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 }
 
 // ReadConfig reads the configuration correctly
 func TestReadEmptyConfig(t *testing.T) {
 	config, err := ReadConfig(testutils.GetTestFile("utils", emptyConfigFile))
-	if err != nil {
-		t.Fatal(err)
-	}
-	expectedConfig := v1alpha1.EmptyConfig(testConfigName)
-	if !cmp.Equal(config, expectedConfig) {
-		t.Fatal("Unexpected configuration.")
+	if assert.NoError(t, err) {
+		expectedConfig := v1alpha1.EmptyConfig(testConfigName)
+		assert.Equal(t, config, expectedConfig, "Unexpected configuration.")
 	}
 }
 
 // ReadConfig returns ErrNotExist if the path is invalid
 func TestReadConfigInvalidPath(t *testing.T) {
 	_, err := ReadConfig(testutils.InvalidFolderPath)
-	if err == nil {
-		t.Fatalf("No error was returned. Expected: %s", fs.ErrNotExist)
-	}
-	if !errors.Is(err, fs.ErrNotExist) {
-		t.Fatalf("Unexpected error. Expected: %s, actual: %s", fs.ErrNotExist, err)
+	if assert.Error(t, err) {
+		assert.ErrorIs(t, err, fs.ErrNotExist)
 	}
 }
 
@@ -225,15 +181,13 @@ func TestReadConfigInvalidPath(t *testing.T) {
 func TestReadConfigErrPermission(t *testing.T) {
 	testDirPath := t.TempDir()
 	dstPath := path.Join(testDirPath, "foo")
-	if err := os.Mkdir(dstPath, 0); err != nil {
-		t.Fatal(err)
+	if err := os.Mkdir(dstPath, 0); !assert.NoError(t, err) {
+		return
 	}
+
 	_, err := ReadConfig(dstPath)
-	if err == nil {
-		t.Fatalf("No error was returned. Expected: %s", fs.ErrPermission)
-	}
-	if !errors.Is(err, fs.ErrPermission) {
-		t.Fatalf("Unexpected error. Expected: %s, actual: %s", fs.ErrPermission, err)
+	if assert.Error(t, err) {
+		assert.ErrorIs(t, err, fs.ErrPermission)
 	}
 }
 
@@ -241,10 +195,7 @@ func TestReadConfigErrPermission(t *testing.T) {
 func TestReadConfigUnmarshalErr(t *testing.T) {
 	invalidConfigPath := testutils.GetTestFile("utils", "invalid_yaml.yaml")
 	_, err := ReadConfig(invalidConfigPath)
-	if err == nil {
-		t.Fatalf("No error was returned. Expected: %s", fs.ErrNotExist)
-	}
-	if !strings.Contains(err.Error(), "yaml") {
-		t.Fatalf("Unexpected error: %s", err)
+	if assert.Error(t, err) {
+		assert.Contains(t, err.Error(), "yaml")
 	}
 }

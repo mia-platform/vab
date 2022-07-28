@@ -17,17 +17,15 @@ package testutils
 import (
 	"path"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // Test that the path for test file is the known one
 func TestGetTestFile(t *testing.T) {
 	filePath := GetTestFile("test", "prova.yaml")
-	if filePath != path.Join("..", "..", "tests", "test", "prova.yaml") {
-		t.Fatalf("Unexpected path to file %s", filePath)
-	}
+	assert.Equal(t, filePath, path.Join("..", "..", "tests", "test", "prova.yaml"), "Unexpected path to file %s", filePath)
 
 	filePath = GetTestFile("test", "dir", "subdir")
-	if filePath != path.Join("..", "..", "tests", "test", "dir", "subdir") {
-		t.Fatalf("Unexpected path to file %s", filePath)
-	}
+	assert.Equal(t, filePath, path.Join("..", "..", "tests", "test", "dir", "subdir"), "Unexpected path to file %s", filePath)
 }

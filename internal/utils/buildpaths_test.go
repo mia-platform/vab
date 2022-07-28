@@ -16,11 +16,10 @@ package utils
 
 import (
 	"path"
-	"strings"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/mia-platform/vab/internal/testutils"
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -31,13 +30,9 @@ const (
 func TestGetClusterPath(t *testing.T) {
 	configPath := testutils.GetTestFile("utils", testGroupsFile)
 	buildPath, err := BuildPaths(configPath, testutils.TestGroupName1, testutils.TestClusterName1)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	expectedPath := path.Join(ClustersDirName, testutils.TestGroupName1, testutils.TestClusterName1)
-	if buildPath[0] != expectedPath {
-		t.Fatalf("Unexpected path. Expected: %s, actual: %s", expectedPath, buildPath[0])
+	if assert.NoError(t, err) {
+		expectedPath := path.Join(ClustersDirName, testutils.TestGroupName1, testutils.TestClusterName1)
+		assert.Equal(t, buildPath[0], expectedPath)
 	}
 }
 
@@ -45,15 +40,12 @@ func TestGetClusterPath(t *testing.T) {
 func TestGetGroupPath(t *testing.T) {
 	configPath := testutils.GetTestFile("utils", testGroupsFile)
 	buildPaths, err := BuildPaths(configPath, testutils.TestGroupName1, "")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	clusterPath1 := path.Join(ClustersDirName, testutils.TestGroupName1, testutils.TestClusterName1)
-	clusterPath2 := path.Join(ClustersDirName, testutils.TestGroupName1, testutils.TestClusterName2)
-	expectedPaths := []string{clusterPath1, clusterPath2}
-	if !cmp.Equal(buildPaths, expectedPaths) {
-		t.Fatalf("Unexpected paths. Expected: %v, actual: %v", expectedPaths, buildPaths)
+	assert.Nil(t, err, err)
+	if assert.NoError(t, err) {
+		clusterPath1 := path.Join(ClustersDirName, testutils.TestGroupName1, testutils.TestClusterName1)
+		clusterPath2 := path.Join(ClustersDirName, testutils.TestGroupName1, testutils.TestClusterName2)
+		expectedPaths := []string{clusterPath1, clusterPath2}
+		assert.Equal(t, buildPaths, expectedPaths, "Unexpected paths. Expected: %v, actual: %v", expectedPaths, buildPaths)
 	}
 }
 
@@ -61,12 +53,8 @@ func TestGetGroupPath(t *testing.T) {
 func TestBuildPathsWrongGroup(t *testing.T) {
 	configPath := testutils.GetTestFile("utils", testGroupsFile)
 	_, err := BuildPaths(configPath, testutils.InvalidGroupName, "")
-	if err == nil {
-		t.Fatal("No error was returned. Expected: Group " + testutils.InvalidGroupName + " not found in configuration")
-	}
-
-	if !strings.Contains(err.Error(), "not found in configuration") {
-		t.Fatalf("Unexpected error: %s", err)
+	if assert.Error(t, err, "Expected: Group "+testutils.InvalidGroupName+" not found in configuration") {
+		assert.Contains(t, err.Error(), "not found in configuration", "Unexpected error: %s", err)
 	}
 }
 
@@ -74,11 +62,7 @@ func TestBuildPathsWrongGroup(t *testing.T) {
 func TestBuildPathsWrongCluster(t *testing.T) {
 	configPath := testutils.GetTestFile("utils", testGroupsFile)
 	_, err := BuildPaths(configPath, testutils.InvalidGroupName, testutils.InvalidClusterName)
-	if err == nil {
-		t.Fatal("No error was returned. Expected: Cluster " + testutils.InvalidGroupName + " not found in configuration")
-	}
-
-	if !strings.Contains(err.Error(), "not found in configuration") {
-		t.Fatalf("Unexpected error: %s", err)
+	if assert.Error(t, err, "Expected: Cluster "+testutils.InvalidGroupName+" not found in configuration") {
+		assert.Contains(t, err.Error(), "not found in configuration", "Unexpected error: %s", err)
 	}
 }
