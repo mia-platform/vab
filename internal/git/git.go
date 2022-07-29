@@ -15,7 +15,6 @@
 package git
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/go-git/go-billy/v5"
@@ -34,86 +33,49 @@ const (
 	defaultRepositoryURL = defaultGitURL + "/mia-platform/distribution"
 )
 
-// urlForModule return the git url to use for downloading the files for module
-func urlForModule(module v1alpha1.Module) string {
+// remoteUrl return the git url to use for downloading the files for a package (module or addon)
+func remoteURL[Package v1alpha1.Module | v1alpha1.AddOn](pkg Package) string {
 	return defaultRepositoryURL
 }
 
-// authForModule return an AuthMethod for the module
-func authForModule(module v1alpha1.Module) transport.AuthMethod {
+// remoteAuth return an AuthMethod for package (module or addon)
+func remoteAuth[Package v1alpha1.Module | v1alpha1.AddOn](pkg Package) transport.AuthMethod {
 	return nil
 }
 
-// tagReferenceForModule return a valid tag reference for moduleName and version
-func tagReferenceForModule(moduleName string, version string) plumbing.ReferenceName {
-	splitName := strings.Split(moduleName, "/") // TODO da mettere in utils
-	return plumbing.NewTagReferenceName("module-" + splitName[0] + "-" + version)
+// tagReferenceForPackage return a valid tag reference for the package name and version
+func tagReferenceForPackage[Package v1alpha1.Module | v1alpha1.AddOn](pkgName string, pkg Package) plumbing.ReferenceName {
+	var tag string
+	switch pkg := (interface{})(pkg).(type) {
+	case v1alpha1.Module:
+		tag = "module-" + strings.Split(pkgName, "/")[0] + "-" + pkg.Version
+	case v1alpha1.AddOn:
+		tag = "addon-" + pkgName + "-" + pkg.Version
+	}
+
+	return plumbing.NewTagReferenceName(tag)
 }
 
-// urlForAddon return the git url to use for downloading the files for addon
-func urlForAddon(addon v1alpha1.AddOn) string {
-	return defaultRepositoryURL
-}
-
-// authForAddon return an AuthMethod for the addon
-func authForAddon(addon v1alpha1.AddOn) transport.AuthMethod {
-	return nil
-}
-
-// tagReferenceForAddon return a valid tag reference for addonName and version
-func tagReferenceForAddon(addonName string, version string) plumbing.ReferenceName {
-	return plumbing.NewTagReferenceName("addon-" + addonName + "-" + version)
-}
-
-// cloneOptionsForModule return a the options for cloning moduleName with the module configuration
-func cloneOptionsForModule(moduleName string, module v1alpha1.Module) *git.CloneOptions {
+// cloneOptionsForPackage return the options for cloning the package with pkgName with pkg configuaration
+func cloneOptionsForPackage[Package v1alpha1.Module | v1alpha1.AddOn](pkgName string, pkg Package) *git.CloneOptions {
 	return &git.CloneOptions{
-		URL:           urlForModule(module),
-		Auth:          authForModule(module),
-		ReferenceName: tagReferenceForModule(moduleName, module.Version),
+		URL:           remoteURL(pkg),
+		Auth:          remoteAuth(pkg),
+		ReferenceName: tagReferenceForPackage(pkgName, pkg),
 		Depth:         1,
 		SingleBranch:  true,
 		Tags:          git.NoTags,
 	}
 }
 
-// cloneOptionsForAddon return a the options for cloning addonName with the addon configuration
-func cloneOptionsForAddon(addonName string, addon v1alpha1.AddOn) *git.CloneOptions {
-	return &git.CloneOptions{
-		URL:           urlForAddon(addon),
-		Auth:          authForAddon(addon),
-		ReferenceName: tagReferenceForAddon(addonName, addon.Version),
-		Depth:         1,
-		SingleBranch:  true,
-		Tags:          git.NoTags,
+// worktreeForPackage return a worktree from the cloned repository for the package with pkgName
+func worktreeForPackage[Package v1alpha1.Module | v1alpha1.AddOn](pkgName string, pkg Package) (billy.Filesystem, error) {
+	cloneOptions := cloneOptionsForPackage(pkgName, pkg)
+	fs := memfs.New()
+	storage := memory.NewStorage()
+	if _, err := git.Clone(storage, fs, cloneOptions); err != nil {
+		return nil, err
 	}
+
+	return fs, nil
 }
-
-type cloner interface {
-	Clone(addonName string, addon v1alpha1.AddOn, cloneOptions *git.CloneOptions) (billy.Filesystem, error)
-}
-
-type clone struct {
-}
-
-func (c clone) Clone(addonName string, addon v1alpha1.AddOn, cloneOptions *git.CloneOptions) (billy.Filesystem, error) {
-	workTree := memfs.New()
-	memStorage := memory.NewStorage()
-	_, err := git.Clone(memStorage, workTree, cloneOptions)
-	if err != nil {
-		return nil, fmt.Errorf("error cloning repo: %w", err)
-	}
-	return workTree, nil
-}
-
-func cloneAddon(addonName string, addon v1alpha1.AddOn, cloneOptions *git.CloneOptions, cloner cloner) (billy.Filesystem, error) {
-	workTree := memfs.New()
-	return workTree, nil
-}
-
-// TODO Aggiungere qui la funzione func(addonName, addon, targetPath )
-// TODO prendere solo il basename di modules mentre addons non ha slash
-
-// TODO Interfaccia addon/module
-
-// TODO lanciare make generate se modifichi in pkg apis
