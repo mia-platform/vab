@@ -20,7 +20,7 @@ make build
 ```
 
 This command will build the cli for your actual OS and architecture and will put the binary inside the folder
-`bin/<os>/<arch>/`, if you want to build for every supported architectures run `make build-all`
+`bin/<os>/<arch>/`.
 
 Or run the tests with:
 
@@ -56,5 +56,16 @@ make build-image
 
 The command will first build the appropriate binary for your architecture and then build the correct docker image for
 your platform based on Linux Alpine.
+
+### Building Multiarch Docker Image
+
+If you need to try and build a multiarch docker image locally:
+
+```bash
+make build-image-multiarch
+```
+
+For building this image you need to have installed `docker` and the `buildx` extension for emulating multiple
+architecture on your pc. This command for now is created for using it in the ci.
 
 [golangci-lint]: https://golangci-lint.run (Fast linters Runner for Go)

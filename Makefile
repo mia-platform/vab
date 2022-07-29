@@ -47,18 +47,17 @@ GO_LDFLAGS := -X github.com/mia-platform/vab/internal/cmd.BuildDate=$(BUILD_DATE
 
 .PHONY: build build-all
 build: build.$(GOOS).$(GOARCH)
-build-linux-amd64: build.linux.amd64
-build-linux-arm64: build.linux.arm64
-build-darwin-amd64: build.darwin.amd64
-build-darwin-arm64: build.darwin.arm64
-build-all: build-linux-amd64 build-linux-arm64 build.darwin.amd64 build.darwin.arm64
 
 build.%:
 	$(eval OS := $(word 1,$(subst ., ,$*)))
 	$(eval ARCH := $(word 2,$(subst ., ,$*)))
-	@echo "Building cli for ${OS} ${ARCH}..."
-	CGO_ENABLED=0 GOOS=$(OS) GOARCH=$(ARCH) go build -ldflags "$(GO_LDFLAGS)" \
-		-o $(OUTPUT_DIR)/$(OS)/$(ARCH)/$(CMDNAME) $(PROJECT_DIR)/cmd/$(CMDNAME)
+	$(eval ARM := $(word 3,$(subst ., ,$*)))
+	@echo "Building cli for ${OS} ${ARCH}${ARM}..."
+
+	$(eval OUTDIR := $(shell if [ "${ARM}" ]; then echo "${OUTPUT_DIR}/${OS}/${ARCH}/${ARM}/${CMDNAME}"; else echo "${OUTPUT_DIR}/${OS}/${ARCH}/${CMDNAME}"; fi))
+	$(eval ARM = $(subst v,,$(shell if [ "${ARM}" ]; then echo "GOARM=${ARM}"; fi )))
+	CGO_ENABLED=0 GOOS=$(OS) GOARCH=$(ARCH) $(ARM) go build -ldflags "$(GO_LDFLAGS)" \
+		-o $(OUTDIR) $(PROJECT_DIR)/cmd/$(CMDNAME)
 
 ##@ Test
 
@@ -137,7 +136,6 @@ generate-dep:
 
 # REGISTRY is the image registry to use for build and push image targets, default to docker hub
 REGISTRY ?= docker.io/miaplatform
-IMAGE := $(REGISTRY)/vab
 
 # TAG is the tag to use for build and push image targets, use git tag or latest
 TAG ?= $(shell git describe --tags 2>/dev/null || echo latest)
@@ -163,6 +161,27 @@ build-image.%: build.%
 	$(eval OS := $(word 1,$(subst ., ,$*)))
 	$(eval ARCH := $(word 2,$(subst ., ,$*)))
 	@echo "Building image for ${OS} ${ARCH}..."
-	$(DOCKER) build --platform $(OS)/$(ARCH) \
+	$(DOCKER) build --pull --platform $(OS)/$(ARCH) \
+		--tag $(REGISTRY)/vab:$(TAG) \
+		--file ./Dockerfile bin
+
+verify-buildx:
+# For building multiarch images for now we need to use buildx so we stop if we don't find it
+	@$(DOCKER) buildx &>/dev/null || { echo "Docker buildx command appear to not be installed."; exit 1; }
+
+CONTEXT_NAME := vab-build-context
+SUPPORTED_PLATFORMS := linux/386,linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6
+$(eval BUILD_PLATFORMS = $(shell echo "$(SUPPORTED_PLATFORMS)" | sed "s#,# #g;s#/#.#g"))
+MULTIARCH_BUILD := $(addprefix build.,$(BUILD_PLATFORMS))
+
+.PHONY: build-image-multiarch
+build-image-multiarch: verify-buildx $(MULTIARCH_BUILD)
+# WARNING FOR NOW IS ONLY WORNING ON DARWIN WITH DOCKER DESKTOP INSTALLED!
+	@echo "Building image for following architectures: $(SUPPORTED_PLATFORMS)"
+	@$(DOCKER) buildx rm $(CONTEXT_NAME) &>/dev/null || true
+	$(DOCKER) buildx create --use --name $(CONTEXT_NAME) --platform "$(SUPPORTED_PLATFORMS)"
+	$(DOCKER) buildx build --pull --platform "$(SUPPORTED_PLATFORMS)" \
 		$(DOCKER_LABELS) \
-		--pull --tag $(IMAGE):$(TAG) --file ./Dockerfile bin
+		--tag docker.io/miaplatform/vab:$(TAG) \
+		--tag ghcr.io/mia-platform/vab:$(TAG) \
+		--file ./Dockerfile bin
