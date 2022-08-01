@@ -16,12 +16,14 @@ package git
 
 import (
 	"io/fs"
+	"os"
 	"testing"
 
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
+	"github.com/mia-platform/vab/pkg/logger"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -114,6 +116,8 @@ func prepareFakeWorktree(t *testing.T) billy.Filesystem {
 	assert.NoError(t, err)
 	_, err = worktree.Create("modules/test-module1/test-flavour2/file1.yaml")
 	assert.NoError(t, err)
+	_, err = worktree.Create("modules/test-module2/test-flavour1/file1.yaml")
+	assert.NoError(t, err)
 	_, err = worktree.Create("add-ons/test-addon1/file1.yaml")
 	assert.NoError(t, err)
 	_, err = worktree.Create("add-ons/test-addon1/subdir/file1.yaml")
@@ -126,14 +130,57 @@ func prepareFakeWorktree(t *testing.T) billy.Filesystem {
 
 func TestFilterFilesForPackage(t *testing.T) {
 	fakeWorktree := prepareFakeWorktree(t)
-	assert.NotNil(t, fakeWorktree)
+	if !assert.NotNil(t, fakeWorktree) {
+		return
+	}
 
-	moduleName := "test-module1/test-flavour1"
-	module := v1alpha1.Module{
+	logger := logger.DisabledLogger{}
+	t.Run("filter module files", func(t *testing.T) {
+		moduleName := "test-module1/test-flavour1"
+		module := v1alpha1.Module{
+			Version: "1.0.0",
+		}
+
+		expectedArray := []*File{
+			newFile("modules/test-module1/test-flavour1/file1.yaml", fakeWorktree),
+			newFile("modules/test-module1/test-flavour1/file2.yaml", fakeWorktree),
+			newFile("modules/test-module1/test-flavour2/file1.yaml", fakeWorktree),
+		}
+		files, err := filterWorktreeForPackage(logger, &fakeWorktree, moduleName, module)
+		assert.NoError(t, err)
+		assert.Equal(t, files, expectedArray)
+	})
+
+	t.Run("filter addon files", func(t *testing.T) {
+		addonName := "test-addon1"
+		addon := v1alpha1.AddOn{
+			Version: "1.0.0",
+		}
+
+		expectedArray := []*File{
+			newFile("add-ons/test-addon1/file1.yaml", fakeWorktree),
+			newFile("add-ons/test-addon1/subdir/file1.yaml", fakeWorktree),
+		}
+		files, err := filterWorktreeForPackage(logger, &fakeWorktree, addonName, addon)
+		assert.NoError(t, err)
+		assert.Equal(t, files, expectedArray)
+	})
+}
+
+func TestFilterError(t *testing.T) {
+	fakeWorktree := prepareFakeWorktree(t)
+	if !assert.NotNil(t, fakeWorktree) {
+		return
+	}
+
+	logger := logger.DisabledLogger{}
+	addonName := "test-addon4"
+	addon := v1alpha1.AddOn{
 		Version: "1.0.0",
 	}
 
-	files, err := filterWorktreeForPackage(fakeWorktree, moduleName, module)
-	assert.NoError(t, err)
-	assert.NotNil(t, files)
+	files, err := filterWorktreeForPackage(logger, &fakeWorktree, addonName, addon)
+	assert.Error(t, err)
+	assert.ErrorIs(t, err, os.ErrNotExist)
+	assert.Nil(t, files)
 }
