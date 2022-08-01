@@ -15,6 +15,7 @@
 package git
 
 import (
+	"io/fs"
 	"strings"
 
 	"github.com/go-git/go-billy/v5"
@@ -33,18 +34,22 @@ const (
 	defaultRepositoryURL = defaultGitURL + "/mia-platform/distribution"
 )
 
+type Package interface {
+	v1alpha1.Module | v1alpha1.AddOn
+}
+
 // remoteUrl return the git url to use for downloading the files for a package (module or addon)
-func remoteURL[Package v1alpha1.Module | v1alpha1.AddOn](pkg Package) string {
+func remoteURL[P Package](pkg P) string {
 	return defaultRepositoryURL
 }
 
 // remoteAuth return an AuthMethod for package (module or addon)
-func remoteAuth[Package v1alpha1.Module | v1alpha1.AddOn](pkg Package) transport.AuthMethod {
+func remoteAuth[P Package](pkg P) transport.AuthMethod {
 	return nil
 }
 
 // tagReferenceForPackage return a valid tag reference for the package name and version
-func tagReferenceForPackage[Package v1alpha1.Module | v1alpha1.AddOn](pkgName string, pkg Package) plumbing.ReferenceName {
+func tagReferenceForPackage[P Package](pkgName string, pkg P) plumbing.ReferenceName {
 	var tag string
 	switch pkg := (interface{})(pkg).(type) {
 	case v1alpha1.Module:
@@ -57,7 +62,7 @@ func tagReferenceForPackage[Package v1alpha1.Module | v1alpha1.AddOn](pkgName st
 }
 
 // cloneOptionsForPackage return the options for cloning the package with pkgName with pkg configuaration
-func cloneOptionsForPackage[Package v1alpha1.Module | v1alpha1.AddOn](pkgName string, pkg Package) *git.CloneOptions {
+func cloneOptionsForPackage[P Package](pkgName string, pkg P) *git.CloneOptions {
 	return &git.CloneOptions{
 		URL:           remoteURL(pkg),
 		Auth:          remoteAuth(pkg),
@@ -69,7 +74,7 @@ func cloneOptionsForPackage[Package v1alpha1.Module | v1alpha1.AddOn](pkgName st
 }
 
 // worktreeForPackage return a worktree from the cloned repository for the package with pkgName
-func worktreeForPackage[Package v1alpha1.Module | v1alpha1.AddOn](pkgName string, pkg Package) (billy.Filesystem, error) {
+func worktreeForPackage[P Package](pkgName string, pkg P) (billy.Filesystem, error) {
 	cloneOptions := cloneOptionsForPackage(pkgName, pkg)
 	fs := memfs.New()
 	storage := memory.NewStorage()
@@ -78,4 +83,21 @@ func worktreeForPackage[Package v1alpha1.Module | v1alpha1.AddOn](pkgName string
 	}
 
 	return fs, nil
+}
+
+func filterWorktreeForPackage[P Package](worktree billy.Filesystem, pkgName string, pkg P) ([]fs.FileInfo, error) {
+	var packageFolder string
+	switch (interface{})(pkg).(type) {
+	case v1alpha1.Module:
+		packageFolder = "./modules/" + strings.Split(pkgName, "/")[0]
+	case v1alpha1.AddOn:
+		packageFolder = "./add-ons/" + pkgName
+	}
+
+	dirElements, err := worktree.ReadDir(packageFolder)
+	if err != err {
+		return nil, err
+	}
+
+	return dirElements, nil
 }

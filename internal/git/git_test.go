@@ -127,4 +127,13 @@ func prepareFakeWorktree(t *testing.T) billy.Filesystem {
 func TestFilterFilesForPackage(t *testing.T) {
 	fakeWorktree := prepareFakeWorktree(t)
 	assert.NotNil(t, fakeWorktree)
+
+	moduleName := "test-module1/test-flavour1"
+	module := v1alpha1.Module{
+		Version: "1.0.0",
+	}
+
+	files, err := filterWorktreeForPackage(fakeWorktree, moduleName, module)
+	assert.NoError(t, err)
+	assert.NotNil(t, files)
 }
