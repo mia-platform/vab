@@ -106,7 +106,7 @@ func filterWorktreeForPackage[P Package](log logger.LogInterface, worktree *bill
 			return nil
 		}
 		log.V(10).Writef("Found file %s", filePath)
-		files = append(files, newFile(filePath, *worktree))
+		files = append(files, NewFile(filePath, packageFolder, *worktree))
 		return nil
 	})
 

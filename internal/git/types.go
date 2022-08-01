@@ -16,21 +16,25 @@ package git
 
 import (
 	"io"
+	"path"
+	"strings"
 
 	"github.com/go-git/go-billy/v5"
 )
 
 type File struct {
-	path string
-	fs   billy.Filesystem
-	file billy.File
+	path       string
+	baseFolder string
+	fs         billy.Filesystem
+	file       billy.File
 	io.ReadCloser
 }
 
-func newFile(path string, fs billy.Filesystem) *File {
+func NewFile(path string, baseFolder string, fs billy.Filesystem) *File {
 	return &File{
-		path: path,
-		fs:   fs,
+		path:       path,
+		fs:         fs,
+		baseFolder: baseFolder,
 	}
 }
 
@@ -48,6 +52,10 @@ func (f *File) Close() error {
 		return nil
 	}
 	return f.file.Close()
+}
+
+func (f *File) FilePath() string {
+	return path.Clean(path.Join(".", strings.TrimPrefix(f.path, f.baseFolder)))
 }
 
 func (f *File) String() string {

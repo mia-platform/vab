@@ -21,14 +21,14 @@ For example:
 |   └── [...]
 └── vendors
     ├── modules
-    |   ├── ingress
+    |   ├── ingress-1.0.0
     |   |   ├── traefik
     |   |   |   ├── [...]
     |   |   |   └── kustomization.yaml
     |   |   └── nginx
     |   |       ├── [...]
     |   |       └── kustomization.yaml
-    |   └── cni
+    |   └── cni-1.0.0
     |       ├── cilium
     |       |   ├── [...]
     |       |   └── kustomization.yaml
@@ -36,7 +36,7 @@ For example:
     |           ├── [...]
     |           └── kustomization.yaml
     └── add-ons
-        └── ingress-traefik-monitoring
+        └── ingress-traefik-monitoring-1.0.0
             ├── [...]
             └── kustomization.yaml
 ```
