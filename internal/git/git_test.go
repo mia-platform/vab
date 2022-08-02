@@ -15,13 +15,13 @@
 package git
 
 import (
-	"io/fs"
+	"os"
 	"testing"
 
-	"github.com/go-git/go-billy/v5"
-	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/mia-platform/vab/internal/testutils"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
+	"github.com/mia-platform/vab/pkg/logger"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -87,53 +87,53 @@ func TestCloneOptions(t *testing.T) {
 	assert.Equal(t, options.ReferenceName, tagReferenceForPackage(moduleName, module))
 }
 
-func prepareFakeWorktree(t *testing.T) billy.Filesystem {
-	t.Helper()
+func TestFilterFilesForPackage(t *testing.T) {
+	fakeWorktree := testutils.PrepareFakeWorktree(t)
 
-	var err error
-	// Create a new repository
-	worktree := memfs.New()
+	logger := logger.DisabledLogger{}
+	t.Run("filter module files", func(t *testing.T) {
+		moduleName := "test-module1/test-flavour1"
+		module := v1alpha1.Module{
+			Version: "1.0.0",
+		}
 
-	err = worktree.MkdirAll("modules/test-module1/test-flavour1", fs.FileMode(0755))
-	assert.NoError(t, err)
-	err = worktree.MkdirAll("modules/test-module1/test-flavour2", fs.FileMode(0755))
-	assert.NoError(t, err)
-	err = worktree.MkdirAll("modules/test-module2/test-flavour1", fs.FileMode(0755))
-	assert.NoError(t, err)
-	err = worktree.MkdirAll("add-ons/test-addon1/subdir", fs.FileMode(0755))
-	assert.NoError(t, err)
-	err = worktree.MkdirAll("add-ons/test-addon2/", fs.FileMode(0755))
-	assert.NoError(t, err)
-	err = worktree.MkdirAll("otherdir", fs.FileMode(0755))
-	assert.NoError(t, err)
-	_, err = worktree.Create("README.md")
-	assert.NoError(t, err)
-	_, err = worktree.Create("modules/test-module1/test-flavour1/file1.yaml")
-	assert.NoError(t, err)
-	_, err = worktree.Create("modules/test-module1/test-flavour1/file2.yaml")
-	assert.NoError(t, err)
-	_, err = worktree.Create("modules/test-module1/test-flavour2/file1.yaml")
-	assert.NoError(t, err)
-	_, err = worktree.Create("add-ons/test-addon1/file1.yaml")
-	assert.NoError(t, err)
-	_, err = worktree.Create("add-ons/test-addon1/subdir/file1.yaml")
-	assert.NoError(t, err)
-	_, err = worktree.Create("add-ons/test-addon2/file1.yaml")
-	assert.NoError(t, err)
+		expectedArray := []*File{
+			NewFile("modules/test-module1/test-flavour1/file1.yaml", "./modules/test-module1", fakeWorktree),
+			NewFile("modules/test-module1/test-flavour1/file2.yaml", "./modules/test-module1", fakeWorktree),
+			NewFile("modules/test-module1/test-flavour2/file1.yaml", "./modules/test-module1", fakeWorktree),
+		}
+		files, err := filterWorktreeForPackage(logger, &fakeWorktree, moduleName, module)
+		assert.NoError(t, err)
+		assert.Equal(t, files, expectedArray)
+	})
 
-	return worktree
+	t.Run("filter addon files", func(t *testing.T) {
+		addonName := "test-addon1"
+		addon := v1alpha1.AddOn{
+			Version: "1.0.0",
+		}
+
+		expectedArray := []*File{
+			NewFile("add-ons/test-addon1/file1.yaml", "./add-ons/test-addon1", fakeWorktree),
+			NewFile("add-ons/test-addon1/subdir/file1.yaml", "./add-ons/test-addon1", fakeWorktree),
+		}
+		files, err := filterWorktreeForPackage(logger, &fakeWorktree, addonName, addon)
+		assert.NoError(t, err)
+		assert.Equal(t, files, expectedArray)
+	})
 }
 
-func TestFilterFilesForPackage(t *testing.T) {
-	fakeWorktree := prepareFakeWorktree(t)
-	assert.NotNil(t, fakeWorktree)
+func TestFilterError(t *testing.T) {
+	fakeWorktree := testutils.PrepareFakeWorktree(t)
 
-	moduleName := "test-module1/test-flavour1"
-	module := v1alpha1.Module{
+	logger := logger.DisabledLogger{}
+	addonName := "test-addon4"
+	addon := v1alpha1.AddOn{
 		Version: "1.0.0",
 	}
 
-	files, err := filterWorktreeForPackage(fakeWorktree, moduleName, module)
-	assert.NoError(t, err)
-	assert.NotNil(t, files)
+	files, err := filterWorktreeForPackage(logger, &fakeWorktree, addonName, addon)
+	assert.Error(t, err)
+	assert.ErrorIs(t, err, os.ErrNotExist)
+	assert.Nil(t, files)
 }

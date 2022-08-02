@@ -15,6 +15,7 @@
 package git
 
 import (
+	"fmt"
 	"io/fs"
 	"strings"
 
@@ -25,6 +26,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
+	"github.com/mia-platform/vab/pkg/logger"
 )
 
 const (
@@ -74,18 +76,18 @@ func cloneOptionsForPackage[P Package](pkgName string, pkg P) *git.CloneOptions 
 }
 
 // worktreeForPackage return a worktree from the cloned repository for the package with pkgName
-func worktreeForPackage[P Package](pkgName string, pkg P) (billy.Filesystem, error) {
+func worktreeForPackage[P Package](pkgName string, pkg P) (*billy.Filesystem, error) {
 	cloneOptions := cloneOptionsForPackage(pkgName, pkg)
 	fs := memfs.New()
 	storage := memory.NewStorage()
 	if _, err := git.Clone(storage, fs, cloneOptions); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error cloning repository %w", err)
 	}
 
-	return fs, nil
+	return &fs, nil
 }
 
-func filterWorktreeForPackage[P Package](worktree billy.Filesystem, pkgName string, pkg P) ([]fs.FileInfo, error) {
+func filterWorktreeForPackage[P Package](log logger.LogInterface, worktree *billy.Filesystem, pkgName string, pkg P) ([]*File, error) {
 	var packageFolder string
 	switch (interface{})(pkg).(type) {
 	case v1alpha1.Module:
@@ -94,10 +96,35 @@ func filterWorktreeForPackage[P Package](worktree billy.Filesystem, pkgName stri
 		packageFolder = "./add-ons/" + pkgName
 	}
 
-	dirElements, err := worktree.ReadDir(packageFolder)
-	if err != err {
+	log.V(10).Writef("Extracting file paths from package in %s", packageFolder)
+	files := []*File{}
+	err := Walk(*worktree, packageFolder, func(filePath string, info fs.FileInfo, err error) error {
+		if err != nil {
+			return fmt.Errorf("error finding file %s, %w", filePath, err)
+		}
+		if info.IsDir() {
+			return nil
+		}
+		log.V(10).Writef("Found file %s", filePath)
+		files = append(files, NewFile(filePath, packageFolder, *worktree))
+		return nil
+	})
+
+	if err != nil {
+		log.V(5).Writef("Error extracting files for %s", pkgName)
+		return nil, err
+	}
+	return files, nil
+}
+
+func GetFilesForPackage[P Package](log logger.LogInterface, pkgName string, pkg P) ([]*File, error) {
+	log.V(0).Writef("Download package %s from git...", pkgName)
+	memFs, err := worktreeForPackage(pkgName, pkg)
+	if err != nil {
+		log.V(5).Writef("Error during cloning repostitory for %s", pkgName)
 		return nil, err
 	}
 
-	return dirElements, nil
+	log.V(0).Writef("Getting file paths for %s", pkgName)
+	return filterWorktreeForPackage(log, memFs, pkgName, pkg)
 }
