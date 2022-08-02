@@ -8,6 +8,7 @@ import (
 	kustomize "sigs.k8s.io/kustomize/api/types"
 )
 
+// getSortedModules returns the list of modules sorted correctly
 func TestSortedModulesList(t *testing.T) {
 	modules := make(map[string]v1alpha1.Module)
 	modules["m4"] = v1alpha1.Module{
@@ -22,11 +23,11 @@ func TestSortedModulesList(t *testing.T) {
 		Version: "1.0.0",
 		Weight:  3,
 	}
-	modules["m2a"] = v1alpha1.Module{
+	modules["m2b"] = v1alpha1.Module{
 		Version: "1.0.0",
 		Weight:  2,
 	}
-	modules["m2b"] = v1alpha1.Module{
+	modules["m2a"] = v1alpha1.Module{
 		Version: "1.0.0",
 		Weight:  2,
 	}
@@ -42,6 +43,8 @@ func TestSortedModulesList(t *testing.T) {
 	assert.Equal(t, expectedList, list, "Unexpected modules list.")
 }
 
+// SyncResources appends the correct resources in the kustomization.yaml
+// when the existing resources list is empty
 func TestSyncEmptyKustomization(t *testing.T) {
 	emptyKustomization := kustomize.Kustomization{}
 	modules := make(map[string]v1alpha1.Module)
@@ -82,6 +85,8 @@ func TestSyncEmptyKustomization(t *testing.T) {
 
 }
 
+// SyncResources appends the correct resources in the kustomization.yaml
+// when the existing resources list is not empty
 func TestSyncExistingKustomization(t *testing.T) {
 	kustomization := kustomize.Kustomization{}
 	kustomization.Resources = []string{
