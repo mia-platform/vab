@@ -8,11 +8,16 @@ import (
 	kustomize "sigs.k8s.io/kustomize/api/types"
 )
 
-// SyncKustomizations updates the kustomization files to the latest sync
+// SyncModules updates the modules in kustomization resources to the latest sync
 func SyncModules(modules *map[string]v1alpha1.Module, k kustomize.Kustomization) kustomize.Kustomization {
 
 	modulesList := sortedModulesList(modules)
 
+	// If the file already includes a non-empty list of resources, this function
+	// collects all the custom modules that were added manually by the user
+	// (i.e. all those modules that are not present in the vendors folder, thus
+	// without "vendors" in their path). Then, the custom modules are appended
+	// to the updated modules list that will substitute the already existing one.
 	if k.Resources != nil {
 		for _, r := range k.Resources {
 			if !strings.Contains(r, "vendors") {
