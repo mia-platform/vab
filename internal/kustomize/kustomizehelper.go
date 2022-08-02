@@ -8,10 +8,12 @@ import (
 	kustomize "sigs.k8s.io/kustomize/api/types"
 )
 
-// SyncModules updates the modules in kustomization resources to the latest sync
-func SyncModules(modules *map[string]v1alpha1.Module, k kustomize.Kustomization) kustomize.Kustomization {
+// SyncResources updates the clusters' kustomization resources to the latest sync
+func SyncResources(modules *map[string]v1alpha1.Module, addons *map[string]v1alpha1.AddOn, k kustomize.Kustomization) kustomize.Kustomization {
 
-	modulesList := sortedModulesList(modules)
+	modulesList := getSortedModulesList(modules)
+	addonsList := getAddOnsList(addons)
+	resourcesList := append(modulesList, addonsList...)
 
 	// If the file already includes a non-empty list of resources, this function
 	// collects all the custom modules that were added manually by the user
@@ -21,18 +23,19 @@ func SyncModules(modules *map[string]v1alpha1.Module, k kustomize.Kustomization)
 	if k.Resources != nil {
 		for _, r := range k.Resources {
 			if !strings.Contains(r, "vendors") {
-				modulesList = append(modulesList, r)
+				resourcesList = append(resourcesList, r)
 			}
 		}
 	}
 
-	k.Resources = modulesList
+	k.Resources = resourcesList
 
 	return k
 }
 
-// sortedModulesList returns the list of module names sorted by weight
-func sortedModulesList(modules *map[string]v1alpha1.Module) []string {
+// getSortedModulesList returns the list of module names sorted by weight.
+// In case of equal weights, the modules are ordered lexicographically.
+func getSortedModulesList(modules *map[string]v1alpha1.Module) []string {
 
 	modulesList := make([]string, 0, len(*modules))
 
@@ -43,9 +46,32 @@ func sortedModulesList(modules *map[string]v1alpha1.Module) []string {
 	}
 
 	sort.SliceStable(modulesList, func(i, j int) bool {
+		// If the weights are equal, order the elements lexicographically
+		if (*modules)[modulesList[i]].Weight == (*modules)[modulesList[j]].Weight {
+			return modulesList[i] < modulesList[j]
+		}
+		// Otherwise, sort by weight (increasing order)
 		return (*modules)[modulesList[i]].Weight < (*modules)[modulesList[j]].Weight
 	})
 
 	return modulesList
 
+}
+
+// getAddOnsList returns the list of addons names in lexicographic order
+func getAddOnsList(addons *map[string]v1alpha1.AddOn) []string {
+
+	addonsList := make([]string, 0, len(*addons))
+
+	for ao := range *addons {
+		if !(*addons)[ao].Disable {
+			addonsList = append(addonsList, ao)
+		}
+	}
+
+	sort.SliceStable(addonsList, func(i, j int) bool {
+		return addonsList[i] < addonsList[j]
+	})
+
+	return addonsList
 }

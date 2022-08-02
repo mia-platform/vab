@@ -22,7 +22,11 @@ func TestSortedModulesList(t *testing.T) {
 		Version: "1.0.0",
 		Weight:  3,
 	}
-	modules["m2"] = v1alpha1.Module{
+	modules["m2a"] = v1alpha1.Module{
+		Version: "1.0.0",
+		Weight:  2,
+	}
+	modules["m2b"] = v1alpha1.Module{
 		Version: "1.0.0",
 		Weight:  2,
 	}
@@ -32,19 +36,15 @@ func TestSortedModulesList(t *testing.T) {
 		Disable: true,
 	}
 
-	expectedList := []string{"m1", "m2", "m3", "m4"}
-	list := sortedModulesList(&modules)
+	expectedList := []string{"m1", "m2a", "m2b", "m3", "m4"}
+	list := getSortedModulesList(&modules)
 
 	assert.Equal(t, expectedList, list, "Unexpected modules list.")
 }
 
-func TestSyncModules(t *testing.T) {
+func TestSyncEmptyKustomization(t *testing.T) {
 	emptyKustomization := kustomize.Kustomization{}
 	modules := make(map[string]v1alpha1.Module)
-	modules["m4"] = v1alpha1.Module{
-		Version: "1.0.0",
-		Weight:  4,
-	}
 	modules["m1"] = v1alpha1.Module{
 		Version: "1.0.0",
 		Weight:  1,
@@ -62,11 +62,80 @@ func TestSyncModules(t *testing.T) {
 		Weight:  10,
 		Disable: true,
 	}
+	addons := make(map[string]v1alpha1.AddOn)
+	addons["ao1"] = v1alpha1.AddOn{
+		Version: "1.0.0",
+	}
+	addons["ao2"] = v1alpha1.AddOn{
+		Version: "1.0.0",
+	}
+	addons["ao0"] = v1alpha1.AddOn{
+		Version: "1.0.0",
+		Disable: true,
+	}
 
-	finalKustomization := SyncModules(&modules, emptyKustomization)
-	expectedResources := []string{"m1", "m2", "m3", "m4"}
+	finalKustomization := SyncResources(&modules, &addons, emptyKustomization)
+	expectedResources := []string{"m1", "m2", "m3", "ao1", "ao2"}
 
 	assert.Equal(t, expectedResources, finalKustomization.Resources, "Unexpected resources in Kustomization.")
 	assert.NotEqual(t, emptyKustomization, expectedResources, "The original Kustomization struct should remain unchanged.")
+
+}
+
+func TestSyncExistingKustomization(t *testing.T) {
+	kustomization := kustomize.Kustomization{}
+	kustomization.Resources = []string{
+		"vendors/modules/mod1-1.0.0",
+		"vendors/modules/mod2-1.0.0",
+		"vendors/modules/mod3-1.0.0",
+		"local/mod-1.0.0",
+		"vendors/addon/ao1-1.0.0",
+		"vendors/addon/ao2-1.0.0",
+		"vendors/addon/ao3-1.0.0",
+		"local/ao-1.0.0",
+	}
+	modules := make(map[string]v1alpha1.Module)
+	// change mod1 version
+	modules["vendors/modules/mod1-2.0.0"] = v1alpha1.Module{
+		Version: "2.0.0",
+		Weight:  1,
+	}
+	// disable mod2
+	modules["vendors/modules/mod2-1.0.0"] = v1alpha1.Module{
+		Version: "1.0.0",
+		Weight:  2,
+		Disable: true,
+	}
+	// unchanged module
+	modules["vendors/modules/mod3-1.0.0"] = v1alpha1.Module{
+		Version: "1.0.0",
+		Weight:  3,
+	}
+	addons := make(map[string]v1alpha1.AddOn)
+	// change ao1 version
+	addons["vendors/addon/ao1-2.0.0"] = v1alpha1.AddOn{
+		Version: "2.0.0",
+	}
+	// disable ao2
+	addons["vendors/addon/ao2-1.0.0"] = v1alpha1.AddOn{
+		Version: "1.0.0",
+		Disable: true,
+	}
+	// unchanged add-on
+	addons["vendors/addon/ao3-1.0.0"] = v1alpha1.AddOn{
+		Version: "1.0.0",
+	}
+
+	finalKustomization := SyncResources(&modules, &addons, kustomization)
+	expectedResources := []string{
+		"vendors/modules/mod1-2.0.0",
+		"vendors/modules/mod3-1.0.0",
+		"vendors/addon/ao1-2.0.0",
+		"vendors/addon/ao3-1.0.0",
+		"local/mod-1.0.0",
+		"local/ao-1.0.0",
+	}
+
+	assert.Equal(t, expectedResources, finalKustomization.Resources, "Unexpected resources in Kustomization.")
 
 }
