@@ -10,10 +10,9 @@ import (
 
 // SyncResources updates the clusters' kustomization resources to the latest sync
 func SyncResources(modules *map[string]v1alpha1.Module, addons *map[string]v1alpha1.AddOn, k kustomize.Kustomization) kustomize.Kustomization {
-
-	modulesList := getSortedModulesList(modules)
+	resourcesList := getSortedModulesList(modules)
 	addonsList := getAddOnsList(addons)
-	resourcesList := append(modulesList, addonsList...)
+	resourcesList = append(resourcesList, addonsList...)
 
 	// If the file already includes a non-empty list of resources, this function
 	// collects all the custom modules that were added manually by the user
@@ -36,7 +35,6 @@ func SyncResources(modules *map[string]v1alpha1.Module, addons *map[string]v1alp
 // getSortedModulesList returns the list of module names sorted by weight.
 // In case of equal weights, the modules are ordered lexicographically.
 func getSortedModulesList(modules *map[string]v1alpha1.Module) []string {
-
 	modulesList := make([]string, 0, len(*modules))
 
 	for m := range *modules {
@@ -55,12 +53,10 @@ func getSortedModulesList(modules *map[string]v1alpha1.Module) []string {
 	})
 
 	return modulesList
-
 }
 
 // getAddOnsList returns the list of addons names in lexicographic order
 func getAddOnsList(addons *map[string]v1alpha1.AddOn) []string {
-
 	addonsList := make([]string, 0, len(*addons))
 
 	for ao := range *addons {

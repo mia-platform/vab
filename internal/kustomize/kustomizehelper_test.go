@@ -82,7 +82,6 @@ func TestSyncEmptyKustomization(t *testing.T) {
 
 	assert.Equal(t, expectedResources, finalKustomization.Resources, "Unexpected resources in Kustomization.")
 	assert.NotEqual(t, emptyKustomization, expectedResources, "The original Kustomization struct should remain unchanged.")
-
 }
 
 // SyncResources appends the correct resources in the kustomization.yaml
@@ -142,5 +141,4 @@ func TestSyncExistingKustomization(t *testing.T) {
 	}
 
 	assert.Equal(t, expectedResources, finalKustomization.Resources, "Unexpected resources in Kustomization.")
-
 }

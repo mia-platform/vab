@@ -58,7 +58,6 @@ func Readwrite(files []*git.File, targetPath string) error {
 		if err != nil {
 			return fmt.Errorf("error closing: %s : %w", outFile.Name(), err)
 		}
-
 	}
 	return nil
 }
