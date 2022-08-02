@@ -33,23 +33,23 @@ func Readwrite(files []*git.File, targetPath string) error {
 			return fmt.Errorf("error creating directory: %s : %w", path.Dir(gitFile.FilePath()), err)
 		}
 
-		inFile, err := gitFile.Open()
+		err = gitFile.Open()
 		if err != nil {
-			return fmt.Errorf("error opering file: %s : %w", inFile.Name(), err)
+			return fmt.Errorf("error opering file: %s : %w", gitFile.String(), err)
 		}
 		outFile, err := os.Create(path.Join(targetPath, gitFile.FilePath()))
 		if err != nil {
 			return fmt.Errorf("error opering file: %s : %w", path.Join(targetPath, gitFile.FilePath()), err)
 		}
 
-		r := bufio.NewReader(inFile)
+		r := bufio.NewReader(gitFile)
 		w := bufio.NewWriter(outFile)
 
 		buf := make([]byte, 1024)
 		for {
 			n, err := r.Read(buf)
 			if err != nil && err != io.EOF {
-				return fmt.Errorf("error reading file: %s : %w", inFile.Name(), err)
+				return fmt.Errorf("error reading file: %s : %w", gitFile.String(), err)
 			}
 			if n == 0 {
 				break
@@ -64,9 +64,9 @@ func Readwrite(files []*git.File, targetPath string) error {
 			return fmt.Errorf("error flushing file: %s : %w", outFile.Name(), err)
 		}
 
-		err = inFile.Close()
+		err = gitFile.Close()
 		if err != nil {
-			return fmt.Errorf("error closing: %s : %w", inFile.Name(), err)
+			return fmt.Errorf("error closing: %s : %w", gitFile.String(), err)
 		}
 
 		err = outFile.Close()
