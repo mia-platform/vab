@@ -17,7 +17,6 @@ package sync
 import (
 	"bufio"
 	"fmt"
-	"io"
 	"os"
 	"path"
 
@@ -45,23 +44,9 @@ func Readwrite(files []*git.File, targetPath string) error {
 		r := bufio.NewReader(gitFile)
 		w := bufio.NewWriter(outFile)
 
-		buf := make([]byte, 1024)
-		for {
-			n, err := r.Read(buf)
-			if err != nil && err != io.EOF {
-				return fmt.Errorf("error reading file: %s : %w", gitFile.String(), err)
-			}
-			if n == 0 {
-				break
-			}
-
-			if _, err := w.Write(buf[:n]); err != nil {
-				return fmt.Errorf("error writing: %s : %w", outFile.Name(), err)
-			}
-		}
-
-		if err = w.Flush(); err != nil {
-			return fmt.Errorf("error flushing file: %s : %w", outFile.Name(), err)
+		_, err = r.WriteTo(w)
+		if err != nil {
+			return fmt.Errorf("error writing: %s : %w", outFile.Name(), err)
 		}
 
 		err = gitFile.Close()
