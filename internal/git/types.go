@@ -15,6 +15,7 @@
 package git
 
 import (
+	"errors"
 	"io"
 	"path"
 	"strings"
@@ -45,6 +46,9 @@ func (f *File) Open() error {
 }
 
 func (f *File) Read(p []byte) (n int, err error) {
+	if f.file == nil {
+		return 0, errors.New("error reading file: file is nil")
+	}
 	return f.file.Read(p)
 }
 
