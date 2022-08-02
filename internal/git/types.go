@@ -15,7 +15,6 @@
 package git
 
 import (
-	"io"
 	"path"
 	"strings"
 
@@ -27,7 +26,6 @@ type File struct {
 	baseFolder string
 	fs         billy.Filesystem
 	billy.File
-	io.ReadCloser
 }
 
 func NewFile(path string, baseFolder string, fs billy.Filesystem) *File {
