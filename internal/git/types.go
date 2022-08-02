@@ -15,6 +15,7 @@
 package git
 
 import (
+	"errors"
 	"io"
 	"path"
 	"strings"
@@ -38,13 +39,17 @@ func NewFile(path string, baseFolder string, fs billy.Filesystem) *File {
 	}
 }
 
-func (f *File) Read(p []byte) (n int, err error) {
+func (f *File) Open() error {
 	file, err := f.fs.Open(f.path)
-	if err != nil {
-		return 0, err
-	}
 	f.file = file
-	return file.Read(p)
+	return err
+}
+
+func (f *File) Read(p []byte) (n int, err error) {
+	if f.file == nil {
+		return 0, errors.New("error reading file: file is nil")
+	}
+	return f.file.Read(p)
 }
 
 func (f *File) Close() error {

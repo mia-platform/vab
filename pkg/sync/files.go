@@ -15,6 +15,7 @@
 package sync
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"path"
@@ -22,32 +23,42 @@ import (
 	"github.com/mia-platform/vab/internal/git"
 )
 
-// Lista di File, targetPath ( dentro a module/add-on ), version = crea tutte le cartelle
-// in caso di errore cancella tutta la dir
-
 func Readwrite(files []*git.File, targetPath string) error {
 	for _, gitFile := range files {
-		outFile, err := os.Open(path.Join(targetPath, gitFile.FilePath()))
+		fmt.Printf("filepath: %s\n", gitFile.FilePath())
+
+		err := os.MkdirAll(path.Dir(path.Join(targetPath, gitFile.FilePath())), os.ModePerm)
+		if err != nil {
+			return fmt.Errorf("error creating directory: %s : %w", path.Dir(gitFile.FilePath()), err)
+		}
+
+		err = gitFile.Open()
 		if err != nil {
 			return fmt.Errorf("error opering file: %s : %w", gitFile.String(), err)
 		}
-
-		// TODO - Read and write file portions
-		var buffer []byte
-		_, err = gitFile.Read(buffer)
+		outFile, err := os.Create(path.Join(targetPath, gitFile.FilePath()))
 		if err != nil {
-			return fmt.Errorf("error reading file: %s : %w", gitFile.String(), err)
+			return fmt.Errorf("error opering file: %s : %w", path.Join(targetPath, gitFile.FilePath()), err)
 		}
 
-		_, err = outFile.Write(buffer)
+		r := bufio.NewReader(gitFile)
+		w := bufio.NewWriter(outFile)
+
+		_, err = r.WriteTo(w)
 		if err != nil {
-			return fmt.Errorf("error writing file: %s : %w", gitFile.String(), err)
+			return fmt.Errorf("error writing: %s : %w", outFile.Name(), err)
 		}
 
-		outFile.Close()
+		err = gitFile.Close()
 		if err != nil {
-			return fmt.Errorf("error closing file: %s : %w", gitFile.String(), err)
+			return fmt.Errorf("error closing: %s : %w", gitFile.String(), err)
 		}
+
+		err = outFile.Close()
+		if err != nil {
+			return fmt.Errorf("error closing: %s : %w", outFile.Name(), err)
+		}
+
 	}
 	return nil
 }
