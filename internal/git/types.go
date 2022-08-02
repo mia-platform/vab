@@ -26,7 +26,7 @@ type File struct {
 	path       string
 	baseFolder string
 	fs         billy.Filesystem
-	file       billy.File
+	billy.File
 	io.ReadCloser
 }
 
@@ -38,20 +38,8 @@ func NewFile(path string, baseFolder string, fs billy.Filesystem) *File {
 	}
 }
 
-func (f *File) Read(p []byte) (n int, err error) {
-	file, err := f.fs.Open(f.path)
-	if err != nil {
-		return 0, err
-	}
-	f.file = file
-	return file.Read(p)
-}
-
-func (f *File) Close() error {
-	if f.file == nil {
-		return nil
-	}
-	return f.file.Close()
+func (f *File) Open() (billy.File, error) {
+	return f.fs.Open(f.path)
 }
 
 func (f *File) FilePath() string {

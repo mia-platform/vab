@@ -32,25 +32,28 @@ func compareFile(t *testing.T, fileContent []byte, filePath string) {
 }
 
 func TestReadWrite(t *testing.T) {
-	tempWorktree := testutils.PrepareTempWorktree(t)
+	fakeWorktree := testutils.PrepareFakeWorktree(t)
 
 	input := []*git.File{
-		git.NewFile("modules/test-module1/test-flavour1/file1.yaml", "./modules/test-module1", tempWorktree),
-		git.NewFile("modules/test-module1/test-flavour1/file2.yaml", "./modules/test-module1", tempWorktree),
-		git.NewFile("modules/test-module1/test-flavour2/file1.yaml", "./modules/test-module1", tempWorktree),
-		git.NewFile("modules/test-module2/test-flavour1/file1.yaml", "./modules/test-module2", tempWorktree),
+		git.NewFile("./modules/test-module1/test-flavour1/file1.yaml", "./modules/test-module1", fakeWorktree),
+		git.NewFile("./modules/test-module1/test-flavour1/file2.yaml", "./modules/test-module1", fakeWorktree),
+		git.NewFile("./modules/test-module1/test-flavour2/file1.yaml", "./modules/test-module1", fakeWorktree),
 	}
 
-	targetPath := path.Join(tempWorktree.Root(), "test-module1/test-flavour1")
+	tempdir := t.TempDir()
 
-	err := Readwrite(input, targetPath)
+	err := Readwrite(input, tempdir)
 	assert.NoError(t, err)
 
-	compareFile(t, []byte("file1-1 content\n"), "test-flavour1/file1.yaml")
-	compareFile(t, []byte("file1-2 content\n"), "test-flavour1/file2.yaml")
-	compareFile(t, []byte("file2-1 content\n"), "test-flavour2/file1.yaml")
+	compareFile(t, []byte("file1-1-1 content\n"), path.Join(tempdir, "test-flavour1/file1.yaml"))
+	compareFile(t, []byte("file1-1-2 content\n"), path.Join(tempdir, "test-flavour1/file2.yaml"))
+	compareFile(t, []byte("file1-2-1 content\n"), path.Join(tempdir, "test-flavour2/file1.yaml"))
 
-	dirList, err := tempWorktree.ReadDir(path.Join(tempWorktree.Root(), "test-module1/test-flavour1"))
+	dirList, err := os.ReadDir(path.Join(tempdir, "test-flavour1/"))
 	assert.NoError(t, err)
-	assert.Equal(t, 3, len(dirList))
+	assert.Equal(t, 2, len(dirList))
+
+	dirList, err = os.ReadDir(path.Join(tempdir, "test-flavour2/"))
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(dirList))
 }

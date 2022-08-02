@@ -15,39 +15,65 @@
 package sync
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"path"
 
 	"github.com/mia-platform/vab/internal/git"
 )
 
-// Lista di File, targetPath ( dentro a module/add-on ), version = crea tutte le cartelle
-// in caso di errore cancella tutta la dir
-
 func Readwrite(files []*git.File, targetPath string) error {
 	for _, gitFile := range files {
-		outFile, err := os.Open(path.Join(targetPath, gitFile.FilePath()))
+		fmt.Printf("filepath: %s\n", gitFile.FilePath())
+
+		err := os.MkdirAll(path.Dir(path.Join(targetPath, gitFile.FilePath())), os.ModePerm)
 		if err != nil {
-			return fmt.Errorf("error opering file: %s : %w", gitFile.String(), err)
+			return fmt.Errorf("error creating directory: %s : %w", path.Dir(gitFile.FilePath()), err)
 		}
 
-		// TODO - Read and write file portions
-		var buffer []byte
-		_, err = gitFile.Read(buffer)
+		inFile, err := gitFile.Open()
 		if err != nil {
-			return fmt.Errorf("error reading file: %s : %w", gitFile.String(), err)
+			return fmt.Errorf("error opering file: %s : %w", inFile.Name(), err)
+		}
+		outFile, err := os.Create(path.Join(targetPath, gitFile.FilePath()))
+		if err != nil {
+			return fmt.Errorf("error opering file: %s : %w", path.Join(targetPath, gitFile.FilePath()), err)
 		}
 
-		_, err = outFile.Write(buffer)
-		if err != nil {
-			return fmt.Errorf("error writing file: %s : %w", gitFile.String(), err)
+		r := bufio.NewReader(inFile)
+		w := bufio.NewWriter(outFile)
+
+		buf := make([]byte, 1024)
+		for {
+			n, err := r.Read(buf)
+			if err != nil && err != io.EOF {
+				return fmt.Errorf("error reading file: %s : %w", inFile.Name(), err)
+			}
+			if n == 0 {
+				break
+			}
+
+			if _, err := w.Write(buf[:n]); err != nil {
+				return fmt.Errorf("error writing: %s : %w", outFile.Name(), err)
+			}
 		}
 
-		outFile.Close()
-		if err != nil {
-			return fmt.Errorf("error closing file: %s : %w", gitFile.String(), err)
+		if err = w.Flush(); err != nil {
+			return fmt.Errorf("error flushing file: %s : %w", outFile.Name(), err)
 		}
+
+		err = inFile.Close()
+		if err != nil {
+			return fmt.Errorf("error closing: %s : %w", inFile.Name(), err)
+		}
+
+		err = outFile.Close()
+		if err != nil {
+			return fmt.Errorf("error closing: %s : %w", outFile.Name(), err)
+		}
+
 	}
 	return nil
 }
