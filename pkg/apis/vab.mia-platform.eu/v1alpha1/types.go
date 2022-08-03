@@ -14,6 +14,12 @@
 
 package v1alpha1
 
+// Package is a generic interface for modules and add-ons
+type Package interface {
+	Module | AddOn
+	IsDisabled() bool
+}
+
 // TypeMeta partially copies apimachinery/pkg/apis/meta/v1.TypeMeta
 type TypeMeta struct {
 	Kind       string `yaml:"kind,omitempty"`
@@ -104,6 +110,11 @@ type Module struct {
 	Disable bool `yaml:"disable"`
 }
 
+// IsDisabled returns Module.Disable
+func (m Module) IsDisabled() bool {
+	return m.Disable
+}
+
 // AddOn contains the add-on's version
 type AddOn struct {
 
@@ -112,4 +123,9 @@ type AddOn struct {
 
 	// Flag that disables the add-on if set to true
 	Disable bool `yaml:"disable"`
+}
+
+// IsDisabled returns AddOn.Disable
+func (a AddOn) IsDisabled() bool {
+	return a.Disable
 }

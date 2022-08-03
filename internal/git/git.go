@@ -36,22 +36,18 @@ const (
 	defaultRepositoryURL = defaultGitURL + "/mia-platform/distribution"
 )
 
-type Package interface {
-	v1alpha1.Module | v1alpha1.AddOn
-}
-
 // remoteUrl return the git url to use for downloading the files for a package (module or addon)
-func remoteURL[P Package](pkg P) string {
+func remoteURL[P v1alpha1.Package](pkg P) string {
 	return defaultRepositoryURL
 }
 
 // remoteAuth return an AuthMethod for package (module or addon)
-func remoteAuth[P Package](pkg P) transport.AuthMethod {
+func remoteAuth[P v1alpha1.Package](pkg P) transport.AuthMethod {
 	return nil
 }
 
 // tagReferenceForPackage return a valid tag reference for the package name and version
-func tagReferenceForPackage[P Package](pkgName string, pkg P) plumbing.ReferenceName {
+func tagReferenceForPackage[P v1alpha1.Package](pkgName string, pkg P) plumbing.ReferenceName {
 	var tag string
 	switch pkg := (interface{})(pkg).(type) {
 	case v1alpha1.Module:
@@ -64,7 +60,7 @@ func tagReferenceForPackage[P Package](pkgName string, pkg P) plumbing.Reference
 }
 
 // cloneOptionsForPackage return the options for cloning the package with pkgName with pkg configuaration
-func cloneOptionsForPackage[P Package](pkgName string, pkg P) *git.CloneOptions {
+func cloneOptionsForPackage[P v1alpha1.Package](pkgName string, pkg P) *git.CloneOptions {
 	return &git.CloneOptions{
 		URL:           remoteURL(pkg),
 		Auth:          remoteAuth(pkg),
@@ -76,7 +72,7 @@ func cloneOptionsForPackage[P Package](pkgName string, pkg P) *git.CloneOptions 
 }
 
 // worktreeForPackage return a worktree from the cloned repository for the package with pkgName
-func worktreeForPackage[P Package](pkgName string, pkg P) (*billy.Filesystem, error) {
+func worktreeForPackage[P v1alpha1.Package](pkgName string, pkg P) (*billy.Filesystem, error) {
 	cloneOptions := cloneOptionsForPackage(pkgName, pkg)
 	fs := memfs.New()
 	storage := memory.NewStorage()
@@ -87,7 +83,7 @@ func worktreeForPackage[P Package](pkgName string, pkg P) (*billy.Filesystem, er
 	return &fs, nil
 }
 
-func filterWorktreeForPackage[P Package](log logger.LogInterface, worktree *billy.Filesystem, pkgName string, pkg P) ([]*File, error) {
+func filterWorktreeForPackage[P v1alpha1.Package](log logger.LogInterface, worktree *billy.Filesystem, pkgName string, pkg P) ([]*File, error) {
 	var packageFolder string
 	switch (interface{})(pkg).(type) {
 	case v1alpha1.Module:
@@ -117,7 +113,7 @@ func filterWorktreeForPackage[P Package](log logger.LogInterface, worktree *bill
 	return files, nil
 }
 
-func GetFilesForPackage[P Package](log logger.LogInterface, pkgName string, pkg P) ([]*File, error) {
+func GetFilesForPackage[P v1alpha1.Package](log logger.LogInterface, pkgName string, pkg P) ([]*File, error) {
 	log.V(0).Writef("Download package %s from git...", pkgName)
 	memFs, err := worktreeForPackage(pkgName, pkg)
 	if err != nil {
