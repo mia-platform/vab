@@ -28,18 +28,18 @@ import (
 func TestRemoteURL(t *testing.T) {
 	expectedURL := "https://github.com/mia-platform/distribution"
 
-	module := v1alpha1.Module{Version: "1.2.3", Weight: 1, Disable: false}
-	assert.Equal(t, remoteURL(module), expectedURL)
-	assert.Equal(t, remoteURL(v1alpha1.Module{}), expectedURL)
+	// module := v1alpha1.Module{Version: "1.2.3", Weight: 1, Disable: false}
+	assert.Equal(t, remoteURL(), expectedURL)
+	assert.Equal(t, remoteURL(), expectedURL)
 
-	addon := v1alpha1.AddOn{Version: "1.2.3", Disable: false}
-	assert.Equal(t, remoteURL(addon), expectedURL)
-	assert.Equal(t, remoteURL(v1alpha1.AddOn{}), expectedURL)
+	// addon := v1alpha1.AddOn{Version: "1.2.3", Disable: false}
+	assert.Equal(t, remoteURL(), expectedURL)
+	assert.Equal(t, remoteURL(), expectedURL)
 }
 
 func TestGetAuths(t *testing.T) {
-	assert.Nil(t, remoteAuth(v1alpha1.AddOn{}))
-	assert.Nil(t, remoteAuth(v1alpha1.Module{}))
+	assert.Nil(t, remoteAuth())
+	assert.Nil(t, remoteAuth())
 }
 
 func TestTagReferences(t *testing.T) {
@@ -74,7 +74,7 @@ func TestCloneOptions(t *testing.T) {
 	addonName := "addon-name"
 	options := cloneOptionsForPackage(addonName, addon)
 
-	assert.Equal(t, options.URL, remoteURL(addon))
+	assert.Equal(t, options.URL, remoteURL())
 	assert.Nil(t, options.Auth)
 	assert.Equal(t, options.ReferenceName, tagReferenceForPackage(addonName, addon))
 
@@ -82,7 +82,7 @@ func TestCloneOptions(t *testing.T) {
 	moduleName := "module-name/flavor-name"
 	options = cloneOptionsForPackage(moduleName, module)
 
-	assert.Equal(t, options.URL, remoteURL(module))
+	assert.Equal(t, options.URL, remoteURL())
 	assert.Nil(t, options.Auth)
 	assert.Equal(t, options.ReferenceName, tagReferenceForPackage(moduleName, module))
 }

@@ -16,7 +16,6 @@ package v1alpha1
 
 // Package is a generic interface for modules and add-ons
 type Package interface {
-	Module | AddOn
 	IsDisabled() bool
 }
 

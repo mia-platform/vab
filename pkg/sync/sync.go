@@ -26,7 +26,7 @@ import (
 )
 
 // Sync synchronizes modules and add-ons to the latest configuration
-func Sync[P v1alpha1.Package](logger logger.LogInterface, configPath string) error { // add basePath as parameter
+func Sync(logger logger.LogInterface, configPath string) error { // add basePath as parameter
 
 	// ReadConfig -> get modules and addons
 	config, err := utils.ReadConfig(configPath)
@@ -40,11 +40,11 @@ func Sync[P v1alpha1.Package](logger logger.LogInterface, configPath string) err
 	defaultModules := config.Spec.Modules
 	defaultAddons := config.Spec.AddOns
 
-	if err := SyncPackages(logger, defaultModules); err != nil {
+	if err := SyncModules(logger, defaultModules); err != nil {
 		return fmt.Errorf("error syncing default modules %+v: %w", defaultModules, err)
 	}
 
-	if err := SyncPackages(logger, defaultAddons); err != nil {
+	if err := SyncAddons(logger, defaultAddons); err != nil {
 		return fmt.Errorf("error syncing default add-ons %+v: %w", defaultAddons, err)
 	}
 
@@ -75,28 +75,46 @@ func Sync[P v1alpha1.Package](logger logger.LogInterface, configPath string) err
 	return nil
 }
 
-// SyncPackages clones and writes package repos to disk
-func SyncPackages[P v1alpha1.Package](logger logger.LogInterface, pkgMap map[string]P) error {
-
-	for p := range pkgMap {
-
-		if pkgMap[p].IsDisabled() {
+func SyncModules(logger logger.LogInterface, modules map[string]v1alpha1.Module) error {
+	for name, v := range modules {
+		if v.IsDisabled() {
 			continue
 		}
-
-		files, err := git.GetFilesForPackage(logger, p, pkgMap[p])
-
+		err := SyncPackages(logger, name, v)
 		if err != nil {
-			return fmt.Errorf("error getting files for module %s: %w", p, err)
+			return err
 		}
+	}
+	return nil
+}
 
-		targetPath := path.Join(utils.VendorsModulesPath, p)
-		logger.V(10).Writef("Path for module %s: %s", p, targetPath)
-
-		if err := WritePkgToDir(files, targetPath); err != nil {
-			return fmt.Errorf("error while writing package %s on disk: %w", p, err)
+func SyncAddons(logger logger.LogInterface, addons map[string]v1alpha1.AddOn) error {
+	for name, v := range addons {
+		if v.IsDisabled() {
+			continue
 		}
+		err := SyncPackages(logger, name, v)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
+// SyncPackages clones and writes package repos to disk
+func SyncPackages(logger logger.LogInterface, packageName string, pkg v1alpha1.Package) error {
+
+	files, err := git.GetFilesForPackage(logger, packageName, pkg)
+
+	if err != nil {
+		return fmt.Errorf("error getting files for module %s: %w", packageName, err)
+	}
+
+	targetPath := path.Join(utils.VendorsModulesPath, packageName)
+	logger.V(10).Writef("Path for module %s: %s", packageName, targetPath)
+
+	if err := WritePkgToDir(files, targetPath); err != nil {
+		return fmt.Errorf("error while writing package %s on disk: %w", packageName, err)
 	}
 
 	return nil

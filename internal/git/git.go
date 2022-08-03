@@ -37,19 +37,19 @@ const (
 )
 
 // remoteUrl return the git url to use for downloading the files for a package (module or addon)
-func remoteURL[P v1alpha1.Package](pkg P) string {
+func remoteURL() string {
 	return defaultRepositoryURL
 }
 
 // remoteAuth return an AuthMethod for package (module or addon)
-func remoteAuth[P v1alpha1.Package](pkg P) transport.AuthMethod {
+func remoteAuth() transport.AuthMethod {
 	return nil
 }
 
 // tagReferenceForPackage return a valid tag reference for the package name and version
-func tagReferenceForPackage[P v1alpha1.Package](pkgName string, pkg P) plumbing.ReferenceName {
+func tagReferenceForPackage(pkgName string, pkg v1alpha1.Package) plumbing.ReferenceName {
 	var tag string
-	switch pkg := (interface{})(pkg).(type) {
+	switch pkg := pkg.(type) {
 	case v1alpha1.Module:
 		tag = "module-" + strings.Split(pkgName, "/")[0] + "-" + pkg.Version
 	case v1alpha1.AddOn:
@@ -60,10 +60,10 @@ func tagReferenceForPackage[P v1alpha1.Package](pkgName string, pkg P) plumbing.
 }
 
 // cloneOptionsForPackage return the options for cloning the package with pkgName with pkg configuaration
-func cloneOptionsForPackage[P v1alpha1.Package](pkgName string, pkg P) *git.CloneOptions {
+func cloneOptionsForPackage(pkgName string, pkg v1alpha1.Package) *git.CloneOptions {
 	return &git.CloneOptions{
-		URL:           remoteURL(pkg),
-		Auth:          remoteAuth(pkg),
+		URL:           remoteURL(),
+		Auth:          remoteAuth(),
 		ReferenceName: tagReferenceForPackage(pkgName, pkg),
 		Depth:         1,
 		SingleBranch:  true,
@@ -72,7 +72,7 @@ func cloneOptionsForPackage[P v1alpha1.Package](pkgName string, pkg P) *git.Clon
 }
 
 // worktreeForPackage return a worktree from the cloned repository for the package with pkgName
-func worktreeForPackage[P v1alpha1.Package](pkgName string, pkg P) (*billy.Filesystem, error) {
+func worktreeForPackage(pkgName string, pkg v1alpha1.Package) (*billy.Filesystem, error) {
 	cloneOptions := cloneOptionsForPackage(pkgName, pkg)
 	fs := memfs.New()
 	storage := memory.NewStorage()
@@ -83,9 +83,9 @@ func worktreeForPackage[P v1alpha1.Package](pkgName string, pkg P) (*billy.Files
 	return &fs, nil
 }
 
-func filterWorktreeForPackage[P v1alpha1.Package](log logger.LogInterface, worktree *billy.Filesystem, pkgName string, pkg P) ([]*File, error) {
+func filterWorktreeForPackage(log logger.LogInterface, worktree *billy.Filesystem, pkgName string, pkg v1alpha1.Package) ([]*File, error) {
 	var packageFolder string
-	switch (interface{})(pkg).(type) {
+	switch pkg.(type) {
 	case v1alpha1.Module:
 		packageFolder = "./modules/" + strings.Split(pkgName, "/")[0]
 	case v1alpha1.AddOn:
@@ -113,7 +113,7 @@ func filterWorktreeForPackage[P v1alpha1.Package](log logger.LogInterface, workt
 	return files, nil
 }
 
-func GetFilesForPackage[P v1alpha1.Package](log logger.LogInterface, pkgName string, pkg P) ([]*File, error) {
+func GetFilesForPackage(log logger.LogInterface, pkgName string, pkg v1alpha1.Package) ([]*File, error) {
 	log.V(0).Writef("Download package %s from git...", pkgName)
 	memFs, err := worktreeForPackage(pkgName, pkg)
 	if err != nil {
