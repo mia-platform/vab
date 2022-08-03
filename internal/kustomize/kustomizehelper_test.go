@@ -103,55 +103,55 @@ func TestSyncEmptyKustomization(t *testing.T) {
 func TestSyncExistingKustomization(t *testing.T) {
 	kustomization := kustomize.Kustomization{}
 	kustomization.Resources = []string{
-		"vendors/modules/mod1-1.0.0",
-		"vendors/modules/mod2-1.0.0",
-		"vendors/modules/mod3-1.0.0",
-		"local/mod-1.0.0",
-		"vendors/addon/ao1-1.0.0",
-		"vendors/addon/ao2-1.0.0",
-		"vendors/addon/ao3-1.0.0",
-		"local/ao-1.0.0",
+		"./vendors/modules/mod1-1.0.0",
+		"./vendors/modules/mod2-1.0.0",
+		"./vendors/modules/mod3-1.0.0",
+		"./local/mod-1.0.0",
+		"./vendors/addon/ao1-1.0.0",
+		"./vendors/addon/ao2-1.0.0",
+		"./vendors/addon/ao3-1.0.0",
+		"./local/ao-1.0.0",
 	}
 	modules := make(map[string]v1alpha1.Module)
 	// change mod1 version
-	modules["vendors/modules/mod1-2.0.0"] = v1alpha1.Module{
+	modules["./vendors/modules/mod1-2.0.0"] = v1alpha1.Module{
 		Version: "2.0.0",
 		Weight:  1,
 	}
 	// disable mod2
-	modules["vendors/modules/mod2-1.0.0"] = v1alpha1.Module{
+	modules["./vendors/modules/mod2-1.0.0"] = v1alpha1.Module{
 		Version: "1.0.0",
 		Weight:  2,
 		Disable: true,
 	}
 	// unchanged module
-	modules["vendors/modules/mod3-1.0.0"] = v1alpha1.Module{
+	modules["./vendors/modules/mod3-1.0.0"] = v1alpha1.Module{
 		Version: "1.0.0",
 		Weight:  3,
 	}
 	addons := make(map[string]v1alpha1.AddOn)
 	// change ao1 version
-	addons["vendors/addon/ao1-2.0.0"] = v1alpha1.AddOn{
+	addons["./vendors/addon/ao1-2.0.0"] = v1alpha1.AddOn{
 		Version: "2.0.0",
 	}
 	// disable ao2
-	addons["vendors/addon/ao2-1.0.0"] = v1alpha1.AddOn{
+	addons["./vendors/addon/ao2-1.0.0"] = v1alpha1.AddOn{
 		Version: "1.0.0",
 		Disable: true,
 	}
 	// unchanged add-on
-	addons["vendors/addon/ao3-1.0.0"] = v1alpha1.AddOn{
+	addons["./vendors/addon/ao3-1.0.0"] = v1alpha1.AddOn{
 		Version: "1.0.0",
 	}
 
 	finalKustomization := SyncKustomizeResources(&modules, &addons, kustomization)
 	expectedResources := []string{
-		"vendors/modules/mod1-2.0.0",
-		"vendors/modules/mod3-1.0.0",
-		"vendors/addon/ao1-2.0.0",
-		"vendors/addon/ao3-1.0.0",
-		"local/mod-1.0.0",
-		"local/ao-1.0.0",
+		"./vendors/modules/mod1-2.0.0",
+		"./vendors/modules/mod3-1.0.0",
+		"./vendors/addon/ao1-2.0.0",
+		"./vendors/addon/ao3-1.0.0",
+		"./local/mod-1.0.0",
+		"./local/ao-1.0.0",
 	}
 
 	assert.Equal(t, expectedResources, finalKustomization.Resources, "Unexpected resources in Kustomization.")
