@@ -21,11 +21,12 @@ import (
 	"github.com/mia-platform/vab/internal/git"
 	kustomizehelper "github.com/mia-platform/vab/internal/kustomize"
 	"github.com/mia-platform/vab/internal/utils"
+	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"github.com/mia-platform/vab/pkg/logger"
 )
 
 // Sync synchronizes modules and add-ons to the latest configuration
-func Sync[P git.Package](logger logger.LogInterface, configPath string) error {
+func Sync[P v1alpha1.Package](logger logger.LogInterface, configPath string) error { // add basePath as parameter
 
 	// ReadConfig -> get modules and addons
 	config, err := utils.ReadConfig(configPath)
@@ -49,6 +50,7 @@ func Sync[P git.Package](logger logger.LogInterface, configPath string) error {
 
 	// loop on all clusters
 	// SyncPackages + SyncResources + WriteKustomization
+	// TODO: optimize loops with concurrency
 	for _, group := range config.Spec.Groups {
 		for _, cluster := range group.Clusters {
 			// TODO: sync modules and add-ons patches for each cluster
@@ -58,13 +60,15 @@ func Sync[P git.Package](logger logger.LogInterface, configPath string) error {
 			// if err := SyncPackages(logger, cluster.AddOns); err != nil {
 			// 	return fmt.Errorf("error syncing add-ons for cluster %s, %+v: %w", cluster.Name, cluster.AddOns, err)
 			// }
+
 			kustomizationPath := path.Join(utils.ClustersDirName, group.Name, cluster.Name, utils.KustomizationFileName)
 			// TODO: check if file exists
 			kustomization, err := kustomizehelper.ReadKustomization(kustomizationPath)
 			if err != nil {
 				return fmt.Errorf("error reading kustomization file for %s/%s: %w", group.Name, cluster.Name, err)
 			}
-			utils.WriteKustomization(*kustomization, kustomizationPath)
+			syncedKustomization := kustomizehelper.SyncKustomizeResources(&defaultModules, &defaultAddons, *kustomization)
+			utils.WriteKustomization(syncedKustomization, kustomizationPath)
 		}
 	}
 
@@ -72,9 +76,13 @@ func Sync[P git.Package](logger logger.LogInterface, configPath string) error {
 }
 
 // SyncPackages clones and writes package repos to disk
-func SyncPackages[P git.Package](logger logger.LogInterface, pkgMap map[string]P) error {
+func SyncPackages[P v1alpha1.Package](logger logger.LogInterface, pkgMap map[string]P) error {
 
 	for p := range pkgMap {
+
+		if pkgMap[p].IsDisabled() {
+			continue
+		}
 
 		files, err := git.GetFilesForPackage(logger, p, pkgMap[p])
 
