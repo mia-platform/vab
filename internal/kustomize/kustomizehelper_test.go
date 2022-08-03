@@ -91,7 +91,7 @@ func TestSyncEmptyKustomization(t *testing.T) {
 		Disable: true,
 	}
 
-	finalKustomization := SyncResources(&modules, &addons, emptyKustomization)
+	finalKustomization := SyncKustomizeResources(&modules, &addons, emptyKustomization)
 	expectedResources := []string{"m1", "m2", "m3", "ao1", "ao2"}
 
 	assert.Equal(t, expectedResources, finalKustomization.Resources, "Unexpected resources in Kustomization.")
@@ -144,7 +144,7 @@ func TestSyncExistingKustomization(t *testing.T) {
 		Version: "1.0.0",
 	}
 
-	finalKustomization := SyncResources(&modules, &addons, kustomization)
+	finalKustomization := SyncKustomizeResources(&modules, &addons, kustomization)
 	expectedResources := []string{
 		"vendors/modules/mod1-2.0.0",
 		"vendors/modules/mod3-1.0.0",

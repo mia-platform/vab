@@ -15,15 +15,18 @@
 package kustomizehelper
 
 import (
+	"fmt"
+	"os"
 	"sort"
 	"strings"
 
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
+	"gopkg.in/yaml.v2"
 	kustomize "sigs.k8s.io/kustomize/api/types"
 )
 
-// SyncResources updates the clusters' kustomization resources to the latest sync
-func SyncResources(modules *map[string]v1alpha1.Module, addons *map[string]v1alpha1.AddOn, k kustomize.Kustomization) kustomize.Kustomization {
+// SyncKustomizeResources updates the clusters' kustomization resources to the latest sync
+func SyncKustomizeResources(modules *map[string]v1alpha1.Module, addons *map[string]v1alpha1.AddOn, k kustomize.Kustomization) kustomize.Kustomization {
 	resourcesList := getSortedModulesList(modules)
 	addonsList := getAddOnsList(addons)
 	resourcesList = append(resourcesList, addonsList...)
@@ -35,7 +38,7 @@ func SyncResources(modules *map[string]v1alpha1.Module, addons *map[string]v1alp
 	// to the updated modules list that will substitute the already existing one.
 	if k.Resources != nil {
 		for _, r := range k.Resources {
-			if !strings.Contains(r, "vendors") {
+			if !strings.Contains(r, "/vendors/") {
 				resourcesList = append(resourcesList, r)
 			}
 		}
@@ -84,4 +87,20 @@ func getAddOnsList(addons *map[string]v1alpha1.AddOn) []string {
 	})
 
 	return addonsList
+}
+
+// ReadKustomization reads a kustomization file given its path
+func ReadKustomization(kustomizationPath string) (*kustomize.Kustomization, error) {
+	kustomization, err := os.ReadFile(kustomizationPath)
+	if err != nil {
+		return nil, fmt.Errorf("error reading kustomization file %s: %w", kustomizationPath, err)
+	}
+
+	output := &kustomize.Kustomization{}
+	err = yaml.Unmarshal(kustomization, output)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshaling kustomization file %s: %w", kustomizationPath, err)
+	}
+
+	return output, nil
 }
