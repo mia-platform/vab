@@ -75,12 +75,18 @@ func Sync(logger logger.LogInterface, configPath string) error { // add basePath
 	return nil
 }
 
+// SyncModules synchronizes modules to the latest configuration
+// TODO: merge duplicate functions
 func SyncModules(logger logger.LogInterface, modules map[string]v1alpha1.Module) error {
 	for name, v := range modules {
 		if v.IsDisabled() {
 			continue
 		}
-		err := SyncPackages(logger, name, v)
+		files, err := ClonePackages(logger, name, v)
+		if err != nil {
+			return err
+		}
+		err = MoveToDisk(logger, files, name)
 		if err != nil {
 			return err
 		}
@@ -88,12 +94,18 @@ func SyncModules(logger logger.LogInterface, modules map[string]v1alpha1.Module)
 	return nil
 }
 
+// SyncModules synchronizes add-ons to the latest configuration
+// TODO: merge duplicate functions
 func SyncAddons(logger logger.LogInterface, addons map[string]v1alpha1.AddOn) error {
 	for name, v := range addons {
 		if v.IsDisabled() {
 			continue
 		}
-		err := SyncPackages(logger, name, v)
+		files, err := ClonePackages(logger, name, v)
+		if err != nil {
+			return err
+		}
+		err = MoveToDisk(logger, files, name)
 		if err != nil {
 			return err
 		}
@@ -101,14 +113,21 @@ func SyncAddons(logger logger.LogInterface, addons map[string]v1alpha1.AddOn) er
 	return nil
 }
 
-// SyncPackages clones and writes package repos to disk
-func SyncPackages(logger logger.LogInterface, packageName string, pkg v1alpha1.Package) error {
+// ClonePackages clones and writes package repos to disk
+func ClonePackages(logger logger.LogInterface, packageName string, pkg v1alpha1.Package) ([]*git.File, error) {
 
 	files, err := git.GetFilesForPackage(logger, packageName, pkg)
 
 	if err != nil {
-		return fmt.Errorf("error getting files for module %s: %w", packageName, err)
+		return nil, fmt.Errorf("error getting files for module %s: %w", packageName, err)
 	}
+
+	return files, nil
+
+}
+
+// MoveToDisk moves the cloned packages from memory to disk
+func MoveToDisk(logger logger.LogInterface, files []*git.File, packageName string) error {
 
 	targetPath := path.Join(utils.VendorsModulesPath, packageName)
 	logger.V(10).Writef("Path for module %s: %s", packageName, targetPath)
