@@ -42,7 +42,7 @@ func TestReadWrite(t *testing.T) {
 
 	tempdir := t.TempDir()
 
-	err := Readwrite(input, tempdir)
+	err := WritePkgToDir(input, tempdir)
 	assert.NoError(t, err)
 
 	compareFile(t, []byte("file1-1-1 content\n"), path.Join(tempdir, "test-flavour1/file1.yaml"))

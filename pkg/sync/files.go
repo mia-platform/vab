@@ -23,7 +23,7 @@ import (
 	"github.com/mia-platform/vab/internal/git"
 )
 
-func Readwrite(files []*git.File, targetPath string) error {
+func WritePkgToDir(files []*git.File, targetPath string) error {
 	for _, gitFile := range files {
 		fmt.Printf("filepath: %s\n", gitFile.FilePath())
 
