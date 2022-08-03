@@ -23,6 +23,7 @@ import (
 	"github.com/mia-platform/vab/internal/git"
 )
 
+// WritePkgToDir writes the files in memory to the target path on disk
 func WritePkgToDir(files []*git.File, targetPath string) error {
 	for _, gitFile := range files {
 		fmt.Printf("filepath: %s\n", gitFile.FilePath())
