@@ -35,11 +35,11 @@ func WritePkgToDir(files []*git.File, targetPath string) error {
 
 		err = gitFile.Open()
 		if err != nil {
-			return fmt.Errorf("error opering file: %s : %w", gitFile.String(), err)
+			return fmt.Errorf("error opening file: %s : %w", gitFile.String(), err)
 		}
 		outFile, err := os.Create(path.Join(targetPath, gitFile.FilePath()))
 		if err != nil {
-			return fmt.Errorf("error opering file: %s : %w", path.Join(targetPath, gitFile.FilePath()), err)
+			return fmt.Errorf("error opening file: %s : %w", path.Join(targetPath, gitFile.FilePath()), err)
 		}
 
 		r := bufio.NewReader(gitFile)

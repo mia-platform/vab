@@ -19,5 +19,5 @@ const (
 	KustomizationFileName = "kustomization.yaml"
 	ClustersDirName       = "clusters"
 	VendorsModulesPath    = "vendors/modules"
-	VednorsAddonsPath     = "vendors/add-ons"
+	VendorsAddonsPath     = "vendors/add-ons"
 )

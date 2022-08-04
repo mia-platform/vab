@@ -35,9 +35,9 @@ func TestReadWrite(t *testing.T) {
 	fakeWorktree := testutils.PrepareFakeWorktree(t)
 
 	input := []*git.File{
-		git.NewFile("./modules/test-module1/test-flavour1/file1.yaml", "./modules/test-module1", fakeWorktree),
-		git.NewFile("./modules/test-module1/test-flavour1/file2.yaml", "./modules/test-module1", fakeWorktree),
-		git.NewFile("./modules/test-module1/test-flavour2/file1.yaml", "./modules/test-module1", fakeWorktree),
+		git.NewFile(path.Join(testModuleBasePath, testFileName1), testModuleBasePath, fakeWorktree),
+		git.NewFile(path.Join(testModuleBasePath, testFileName2), testModuleBasePath, fakeWorktree),
+		git.NewFile(path.Join(testModuleBasePath, testFileName3), testModuleBasePath, fakeWorktree),
 	}
 
 	tempdir := t.TempDir()
@@ -45,9 +45,9 @@ func TestReadWrite(t *testing.T) {
 	err := WritePkgToDir(input, tempdir)
 	assert.NoError(t, err)
 
-	compareFile(t, []byte("file1-1-1 content\n"), path.Join(tempdir, "test-flavour1/file1.yaml"))
-	compareFile(t, []byte("file1-1-2 content\n"), path.Join(tempdir, "test-flavour1/file2.yaml"))
-	compareFile(t, []byte("file1-2-1 content\n"), path.Join(tempdir, "test-flavour2/file1.yaml"))
+	compareFile(t, []byte("file1-1-1 content\n"), path.Join(tempdir, testFileName1))
+	compareFile(t, []byte("file1-1-2 content\n"), path.Join(tempdir, testFileName2))
+	compareFile(t, []byte("file1-2-1 content\n"), path.Join(tempdir, testFileName3))
 
 	dirList, err := os.ReadDir(path.Join(tempdir, "test-flavour1/"))
 	assert.NoError(t, err)

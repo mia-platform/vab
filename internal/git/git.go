@@ -116,20 +116,21 @@ func filterWorktreeForPackage(log logger.LogInterface, worktree *billy.Filesyste
 	return files, nil
 }
 
+// FilesGetter is a type to identify GetFiles functions (testing purposes)
 type FilesGetter func(log logger.LogInterface, pkgName string, pkg v1alpha1.Package) ([]*File, error)
 
+// MockGetFilesForPackage mocks the behavior of GetFilesForPackage (testing purposes)
 func MockGetFilesForPackage(log logger.LogInterface, pkgName string, pkg v1alpha1.Package) ([]*File, error) {
-
 	mockDir := os.TempDir()
 	worktree := osfs.New(mockDir)
 	mockPath1 := path.Join(mockDir, "mockfile_1.yaml")
 	mockPath2 := path.Join(mockDir, "mockfile_2.yaml")
 	mockFile1 := NewFile(mockPath1, mockDir, worktree)
 	mockFile2 := NewFile(mockPath2, mockDir, worktree)
-
 	return []*File{mockFile1, mockFile2}, nil
 }
 
+// GetFilesForPackage clones the package in memory
 func GetFilesForPackage(log logger.LogInterface, pkgName string, pkg v1alpha1.Package) ([]*File, error) {
 	log.V(0).Writef("Download package %s from git...", pkgName)
 	memFs, err := worktreeForPackage(pkgName, pkg)
