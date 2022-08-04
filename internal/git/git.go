@@ -17,10 +17,13 @@ package git
 import (
 	"fmt"
 	"io/fs"
+	"os"
+	"path"
 	"strings"
 
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/memfs"
+	"github.com/go-git/go-billy/v5/osfs"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport"
@@ -111,6 +114,20 @@ func filterWorktreeForPackage(log logger.LogInterface, worktree *billy.Filesyste
 		return nil, err
 	}
 	return files, nil
+}
+
+type FilesGetter func(log logger.LogInterface, pkgName string, pkg v1alpha1.Package) ([]*File, error)
+
+func MockGetFilesForPackage(log logger.LogInterface, pkgName string, pkg v1alpha1.Package) ([]*File, error) {
+
+	mockDir := os.TempDir()
+	worktree := osfs.New(mockDir)
+	mockPath1 := path.Join(mockDir, "mockfile_1.yaml")
+	mockPath2 := path.Join(mockDir, "mockfile_2.yaml")
+	mockFile1 := NewFile(mockPath1, mockDir, worktree)
+	mockFile2 := NewFile(mockPath2, mockDir, worktree)
+
+	return []*File{mockFile1, mockFile2}, nil
 }
 
 func GetFilesForPackage(log logger.LogInterface, pkgName string, pkg v1alpha1.Package) ([]*File, error) {

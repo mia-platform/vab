@@ -26,7 +26,7 @@ import (
 )
 
 // Sync synchronizes modules and add-ons to the latest configuration
-func Sync(logger logger.LogInterface, configPath string) error { // add basePath as parameter
+func Sync(logger logger.LogInterface, configPath string, filesGetter git.FilesGetter) error { // add basePath as parameter
 
 	// ReadConfig -> get modules and addons
 	config, err := utils.ReadConfig(configPath)
@@ -40,11 +40,11 @@ func Sync(logger logger.LogInterface, configPath string) error { // add basePath
 	defaultModules := config.Spec.Modules
 	defaultAddons := config.Spec.AddOns
 
-	if err := SyncModules(logger, defaultModules); err != nil {
+	if err := SyncModules(logger, defaultModules, filesGetter); err != nil {
 		return fmt.Errorf("error syncing default modules %+v: %w", defaultModules, err)
 	}
 
-	if err := SyncAddons(logger, defaultAddons); err != nil {
+	if err := SyncAddons(logger, defaultAddons, filesGetter); err != nil {
 		return fmt.Errorf("error syncing default add-ons %+v: %w", defaultAddons, err)
 	}
 
@@ -77,12 +77,12 @@ func Sync(logger logger.LogInterface, configPath string) error { // add basePath
 
 // SyncModules synchronizes modules to the latest configuration
 // TODO: merge duplicate functions
-func SyncModules(logger logger.LogInterface, modules map[string]v1alpha1.Module) error {
+func SyncModules(logger logger.LogInterface, modules map[string]v1alpha1.Module, filesGetter git.FilesGetter) error {
 	for name, v := range modules {
 		if v.IsDisabled() {
 			continue
 		}
-		files, err := ClonePackages(logger, name, v)
+		files, err := ClonePackages(logger, name, v, filesGetter)
 		if err != nil {
 			return err
 		}
@@ -96,12 +96,12 @@ func SyncModules(logger logger.LogInterface, modules map[string]v1alpha1.Module)
 
 // SyncModules synchronizes add-ons to the latest configuration
 // TODO: merge duplicate functions
-func SyncAddons(logger logger.LogInterface, addons map[string]v1alpha1.AddOn) error {
+func SyncAddons(logger logger.LogInterface, addons map[string]v1alpha1.AddOn, filesGetter git.FilesGetter) error {
 	for name, v := range addons {
 		if v.IsDisabled() {
 			continue
 		}
-		files, err := ClonePackages(logger, name, v)
+		files, err := ClonePackages(logger, name, v, filesGetter)
 		if err != nil {
 			return err
 		}
@@ -114,9 +114,9 @@ func SyncAddons(logger logger.LogInterface, addons map[string]v1alpha1.AddOn) er
 }
 
 // ClonePackages clones and writes package repos to disk
-func ClonePackages(logger logger.LogInterface, packageName string, pkg v1alpha1.Package) ([]*git.File, error) {
+func ClonePackages(logger logger.LogInterface, packageName string, pkg v1alpha1.Package, filesGetter git.FilesGetter) ([]*git.File, error) {
 
-	files, err := git.GetFilesForPackage(logger, packageName, pkg)
+	files, err := filesGetter(logger, packageName, pkg)
 
 	if err != nil {
 		return nil, fmt.Errorf("error getting files for module %s: %w", packageName, err)
