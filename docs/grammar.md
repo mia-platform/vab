@@ -15,7 +15,7 @@ of modules and add-ons for our tool.
 
 <cluster-name>  ::= <identifier>
 
-<identifier>    ::= <alphanumerics> | <alphanumerics> "-" <alphanumerics>
+<identifier>    ::= <alphanumerics> | <alphanumerics> "-" <identifier>
 
 <alphanumerics> ::= <letter> | <letter> <characters>
 
