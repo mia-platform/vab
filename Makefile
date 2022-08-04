@@ -74,6 +74,10 @@ endif
 test-coverage:
 	go test ./... -race -coverprofile=coverage.xml -covermode=atomic
 
+.PHONY: show-coverage
+show-coverage: test-coverage
+	go tool cover -func=coverage.xml
+
 ##@ Clean project
 
 .PHONY: clean
