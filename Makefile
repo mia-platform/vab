@@ -23,6 +23,10 @@ CMDNAME := vab
 TOOLS_DIR := $(PROJECT_DIR)/tools
 TOOLS_BIN := $(TOOLS_DIR)/bin
 
+SUPPORTED_PLATFORMS := linux/386,linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6
+$(eval BUILD_PLATFORMS = $(shell echo "$(SUPPORTED_PLATFORMS)" | sed "s#,# #g;s#/#.#g"))
+MULTIARCH_BUILD := $(addprefix build.,$(BUILD_PLATFORMS))
+
 # Golang variables
 GOOS := $(shell go env GOOS)
 GOARCH := $(shell go env GOARCH)
@@ -47,16 +51,17 @@ GO_LDFLAGS := -X github.com/mia-platform/vab/internal/cmd.BuildDate=$(BUILD_DATE
 
 .PHONY: build build-all
 build: build.$(GOOS).$(GOARCH)
+build-all: $(MULTIARCH_BUILD)
 
 build.%:
 	$(eval OS := $(word 1,$(subst ., ,$*)))
 	$(eval ARCH := $(word 2,$(subst ., ,$*)))
-	$(eval ARM := $(word 3,$(subst ., ,$*)))
+	$(eval VARM := $(word 3,$(subst ., ,$*)))
 	@echo "Building cli for ${OS} ${ARCH}${ARM}..."
 
-	$(eval OUTDIR := $(shell if [ "${ARM}" ]; then echo "${OUTPUT_DIR}/${OS}/${ARCH}/${ARM}/${CMDNAME}"; else echo "${OUTPUT_DIR}/${OS}/${ARCH}/${CMDNAME}"; fi))
-	$(eval ARM = $(subst v,,$(shell if [ "${ARM}" ]; then echo "GOARM=${ARM}"; fi )))
-	CGO_ENABLED=0 GOOS=$(OS) GOARCH=$(ARCH) $(ARM) go build -ldflags "$(GO_LDFLAGS)" \
+	$(eval OUTDIR := $(shell if [ "${VARM}" ]; then echo "${OUTPUT_DIR}/${OS}/${ARCH}/${VARM}/${CMDNAME}"; else echo "${OUTPUT_DIR}/${OS}/${ARCH}/${CMDNAME}"; fi))
+	$(eval ARM = $(subst v,,$(VARM)))
+	CGO_ENABLED=0 GOOS=$(OS) GOARCH=$(ARCH) GOARM=$(ARM) go build -ldflags "$(GO_LDFLAGS)" \
 		-o $(OUTDIR) $(PROJECT_DIR)/cmd/$(CMDNAME)
 
 ##@ Test
@@ -174,12 +179,9 @@ verify-buildx:
 	@$(DOCKER) buildx &>/dev/null || { echo "Docker buildx command appear to not be installed."; exit 1; }
 
 CONTEXT_NAME := vab-build-context
-SUPPORTED_PLATFORMS := linux/386,linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6
-$(eval BUILD_PLATFORMS = $(shell echo "$(SUPPORTED_PLATFORMS)" | sed "s#,# #g;s#/#.#g"))
-MULTIARCH_BUILD := $(addprefix build.,$(BUILD_PLATFORMS))
 
 .PHONY: build-image-multiarch
-build-image-multiarch: verify-buildx $(MULTIARCH_BUILD)
+build-image-multiarch: verify-buildx build-all
 # WARNING FOR NOW IS ONLY WORNING ON DARWIN WITH DOCKER DESKTOP INSTALLED!
 	@echo "Building image for following architectures: $(SUPPORTED_PLATFORMS)"
 	@$(DOCKER) buildx rm $(CONTEXT_NAME) &>/dev/null || true
