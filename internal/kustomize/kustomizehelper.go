@@ -21,7 +21,7 @@ import (
 	"strings"
 
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 	kustomize "sigs.k8s.io/kustomize/api/types"
 )
 
