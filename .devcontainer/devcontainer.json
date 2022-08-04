@@ -3,7 +3,7 @@
   "build": {
     "dockerfile": "Dockerfile",
     "args": {
-      "VARIANT": "1.18.3",
+      "VARIANT": "1.19.0",
       "USERNAME": "vscode"
     }
   },
@@ -14,10 +14,6 @@
   ],
   "remoteUser": "vscode",
   "settings": {
-    "terminal.integrated.profile.linux": "/bin/zsh",
-    "files.eol": "\n",
-    "files.insertFinalNewline": true,
-    "files.trimFinalNewlines": true,
     "files.trimTrailingWhitespace": false,
     "editor.formatOnSave": true
   },
