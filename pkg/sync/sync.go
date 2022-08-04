@@ -26,7 +26,7 @@ import (
 )
 
 // Sync synchronizes modules and add-ons to the latest configuration
-func Sync(logger logger.LogInterface, configPath string, filesGetter git.FilesGetter) error { // add basePath as parameter
+func Sync(logger logger.LogInterface, configPath string, filesGetter git.FilesGetter, basePath string) error { // add basePath as parameter
 
 	// ReadConfig -> get modules and addons
 	config, err := utils.ReadConfig(configPath)
@@ -40,11 +40,11 @@ func Sync(logger logger.LogInterface, configPath string, filesGetter git.FilesGe
 	defaultModules := config.Spec.Modules
 	defaultAddons := config.Spec.AddOns
 
-	if err := SyncModules(logger, defaultModules, filesGetter); err != nil {
+	if err := SyncModules(logger, defaultModules, basePath, filesGetter); err != nil {
 		return fmt.Errorf("error syncing default modules %+v: %w", defaultModules, err)
 	}
 
-	if err := SyncAddons(logger, defaultAddons, filesGetter); err != nil {
+	if err := SyncAddons(logger, defaultAddons, basePath, filesGetter); err != nil {
 		return fmt.Errorf("error syncing default add-ons %+v: %w", defaultAddons, err)
 	}
 
@@ -77,7 +77,7 @@ func Sync(logger logger.LogInterface, configPath string, filesGetter git.FilesGe
 
 // SyncModules synchronizes modules to the latest configuration
 // TODO: merge duplicate functions
-func SyncModules(logger logger.LogInterface, modules map[string]v1alpha1.Module, filesGetter git.FilesGetter) error {
+func SyncModules(logger logger.LogInterface, modules map[string]v1alpha1.Module, basePath string, filesGetter git.FilesGetter) error {
 	for name, v := range modules {
 		if v.IsDisabled() {
 			continue
@@ -86,7 +86,8 @@ func SyncModules(logger logger.LogInterface, modules map[string]v1alpha1.Module,
 		if err != nil {
 			return err
 		}
-		err = MoveToDisk(logger, files, name)
+		modulePath := path.Join(basePath, utils.VendorsModulesPath, name)
+		err = MoveToDisk(logger, files, name, modulePath)
 		if err != nil {
 			return err
 		}
@@ -96,7 +97,7 @@ func SyncModules(logger logger.LogInterface, modules map[string]v1alpha1.Module,
 
 // SyncModules synchronizes add-ons to the latest configuration
 // TODO: merge duplicate functions
-func SyncAddons(logger logger.LogInterface, addons map[string]v1alpha1.AddOn, filesGetter git.FilesGetter) error {
+func SyncAddons(logger logger.LogInterface, addons map[string]v1alpha1.AddOn, basePath string, filesGetter git.FilesGetter) error {
 	for name, v := range addons {
 		if v.IsDisabled() {
 			continue
@@ -105,7 +106,8 @@ func SyncAddons(logger logger.LogInterface, addons map[string]v1alpha1.AddOn, fi
 		if err != nil {
 			return err
 		}
-		err = MoveToDisk(logger, files, name)
+		addonPath := path.Join(basePath, utils.VendorsAddonsPath, name)
+		err = MoveToDisk(logger, files, name, addonPath)
 		if err != nil {
 			return err
 		}
@@ -127,9 +129,8 @@ func ClonePackages(logger logger.LogInterface, packageName string, pkg v1alpha1.
 }
 
 // MoveToDisk moves the cloned packages from memory to disk
-func MoveToDisk(logger logger.LogInterface, files []*git.File, packageName string) error {
+func MoveToDisk(logger logger.LogInterface, files []*git.File, packageName string, targetPath string) error {
 
-	targetPath := path.Join(utils.VendorsModulesPath, packageName)
 	logger.V(10).Writef("Path for module %s: %s", packageName, targetPath)
 
 	if err := WritePkgToDir(files, targetPath); err != nil {
