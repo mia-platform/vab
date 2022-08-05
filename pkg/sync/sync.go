@@ -28,24 +28,23 @@ import (
 // Sync synchronizes modules and add-ons to the latest configuration
 func Sync(logger logger.LogInterface, filesGetter git.FilesGetter, configPath string, basePath string) error { // add basePath as parameter
 
-	// ReadConfig -> get modules and addons
+	// ReadConfig -> get default modules and addons
 	config, err := utils.ReadConfig(configPath)
-
 	if err != nil {
 		return fmt.Errorf("sync error: %w", err)
 	}
-
-	// loop on modules and addons
-	// GetFilesForPackage + WritePkgToDir
 	defaultModules := config.Spec.Modules
 	defaultAddons := config.Spec.AddOns
 
+	// sync default modules and add-ons in all-groups "bases" folder
 	if err := SyncModules(logger, defaultModules, basePath, filesGetter); err != nil {
 		return fmt.Errorf("error syncing default modules %+v: %w", defaultModules, err)
 	}
-
 	if err := SyncAddons(logger, defaultAddons, basePath, filesGetter); err != nil {
 		return fmt.Errorf("error syncing default add-ons %+v: %w", defaultAddons, err)
+	}
+	if err := UpdateBases(utils.AllGroupsDirPath, defaultModules, defaultAddons); err != nil {
+		return fmt.Errorf("error updating kustomize bases for all-groups: %w", err)
 	}
 
 	// loop on all clusters
@@ -139,4 +138,16 @@ func MoveToDisk(logger logger.LogInterface, files []*git.File, packageName strin
 
 	return nil
 
+}
+
+// UpdateBases updates the kustomize bases in the target path
+func UpdateBases(targetPath string, modules map[string]v1alpha1.Module, addons map[string]v1alpha1.AddOn) error {
+	targetKustomizationPath := path.Join(targetPath, "bases", utils.KustomizationFileName)
+	kustomization, err := kustomizehelper.ReadKustomization(targetKustomizationPath)
+	if err != nil {
+		return fmt.Errorf("error reading kustomization file for %s: %w", targetPath, err)
+	}
+	syncedAllGroupsKustomization := kustomizehelper.SyncKustomizeResources(&modules, &addons, *kustomization)
+	utils.WriteKustomization(syncedAllGroupsKustomization, targetKustomizationPath)
+	return nil
 }
