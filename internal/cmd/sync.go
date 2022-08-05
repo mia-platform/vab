@@ -15,7 +15,9 @@
 package cmd
 
 import (
+	"github.com/mia-platform/vab/internal/git"
 	"github.com/mia-platform/vab/pkg/logger"
+	"github.com/mia-platform/vab/pkg/sync"
 	"github.com/spf13/cobra"
 )
 
@@ -31,7 +33,8 @@ already present), and the directory structure inside the clusters folder will be
 configuration.`,
 		RunE: func(_ *cobra.Command, _ []string) error {
 			logger.V(0).Writef("Synchronizing configuration at %s...", flags.Config)
-			return nil
+			gitFilesGetter := git.GitFilesGetter{}
+			return sync.Sync(logger, gitFilesGetter, flags.Config, ".")
 		},
 	}
 	return syncCmd
