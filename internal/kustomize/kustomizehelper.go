@@ -15,11 +15,13 @@
 package kustomizehelper
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"sort"
 	"strings"
 
+	"github.com/mia-platform/vab/internal/utils"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"gopkg.in/yaml.v3"
 	kustomize "sigs.k8s.io/kustomize/api/types"
@@ -91,11 +93,20 @@ func getAddOnsList(addons *map[string]v1alpha1.AddOn) []string {
 
 // ReadKustomization reads a kustomization file given its path
 func ReadKustomization(kustomizationPath string) (*kustomize.Kustomization, error) {
+	// create the kustomization file if it does not exist
+	_, err := os.Stat(kustomizationPath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			utils.WriteKustomization(utils.EmptyKustomization(), kustomizationPath)
+		} else {
+			return nil, fmt.Errorf("error accessing kustomization file %s: %w", kustomizationPath, err)
+		}
+	}
+	// read the kustomization file and return its content
 	kustomization, err := os.ReadFile(kustomizationPath)
 	if err != nil {
 		return nil, fmt.Errorf("error reading kustomization file %s: %w", kustomizationPath, err)
 	}
-
 	output := &kustomize.Kustomization{}
 	err = yaml.Unmarshal(kustomization, output)
 	if err != nil {
