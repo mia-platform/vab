@@ -26,11 +26,7 @@ import (
 )
 
 const (
-	testPackageName    = "test-package-1.0.0"
-	testModuleBasePath = "modules/test-module1"
-	testFileName1      = "test-flavour1/file1.yaml"
-	testFileName2      = "test-flavour1/file2.yaml"
-	testFileName3      = "test-flavour2/file1.yaml"
+	testPackageName = "test-module1/test-flavour1"
 )
 
 func TestClonePackage(t *testing.T) {
@@ -39,7 +35,7 @@ func TestClonePackage(t *testing.T) {
 		Version: "1.0.0",
 		Weight:  2,
 	}
-	outputFiles, err := ClonePackages(logger, testPackageName, testModule, git.MockGetFilesForPackage)
+	outputFiles, err := ClonePackages(logger, testPackageName, testModule, testutils.FakeFilesGetter{Testing: t})
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -50,20 +46,38 @@ func TestMoveToDisk(t *testing.T) {
 	logger := logger.DisabledLogger{}
 	fakeWorktree := testutils.PrepareFakeWorktree(t)
 	input := []*git.File{
-		git.NewFile(path.Join(testModuleBasePath, testFileName1), testModuleBasePath, fakeWorktree),
-		git.NewFile(path.Join(testModuleBasePath, testFileName2), testModuleBasePath, fakeWorktree),
-		git.NewFile(path.Join(testModuleBasePath, testFileName3), testModuleBasePath, fakeWorktree),
+		git.NewFile("./modules/test-module1/test-flavour1/file1.yaml", "./modules/test-module1", *fakeWorktree),
+		git.NewFile("./modules/test-module1/test-flavour1/file2.yaml", "./modules/test-module1", *fakeWorktree),
+		git.NewFile("./modules/test-module1/test-flavour2/file1.yaml", "./modules/test-module1", *fakeWorktree),
 	}
 	testDirPath := t.TempDir()
 	err := MoveToDisk(logger, input, testPackageName, testDirPath)
 	if !assert.NoError(t, err) {
 		return
 	}
-	assert.FileExists(t, path.Join(testDirPath, testFileName1), "Mock file 1 does not exist on disk")
-	assert.FileExists(t, path.Join(testDirPath, testFileName2), "Mock file 2 does not exist on disk")
-	assert.FileExists(t, path.Join(testDirPath, testFileName3), "Mock file 3 does not exist on disk")
+	assert.FileExists(t, path.Join(testDirPath, "test-flavour1/file1.yaml"), "Mock file 1 does not exist on disk")
+	assert.FileExists(t, path.Join(testDirPath, "test-flavour1/file2.yaml"), "Mock file 2 does not exist on disk")
+	assert.FileExists(t, path.Join(testDirPath, "test-flavour2/file1.yaml"), "Mock file 3 does not exist on disk")
 }
 
-func TestSyncAddons(t *testing.T) {
-
+func TestSyncModules(t *testing.T) {
+	logger := logger.DisabledLogger{}
+	modules := make(map[string]v1alpha1.Module)
+	modules["test-module1/test-flavour1"] = v1alpha1.Module{
+		Version: "1.0.0",
+		Weight:  4,
+	}
+	modules["test-module1/test-flavour2"] = v1alpha1.Module{
+		Version: "1.0.0",
+		Weight:  1,
+	}
+	modules["test-module2/test-flavour1"] = v1alpha1.Module{
+		Version: "1.0.0",
+		Weight:  3,
+	}
+	testDirPath := t.TempDir()
+	err := SyncModules(logger, modules, testDirPath, testutils.FakeFilesGetter{Testing: t})
+	if !assert.NoError(t, err) {
+		return
+	}
 }
