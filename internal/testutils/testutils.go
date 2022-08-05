@@ -22,6 +22,7 @@ import (
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/go-git/go-billy/v5/osfs"
+	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -96,7 +97,7 @@ func populateWorktree(t *testing.T, fsys billy.Filesystem) {
 	assert.NoError(t, err)
 }
 
-func PrepareWorktree(t *testing.T, fsType string) billy.Filesystem {
+func PrepareWorktree(t *testing.T, fsType string) *billy.Filesystem {
 	t.Helper()
 	var worktree billy.Filesystem
 	switch fsType {
@@ -111,15 +112,18 @@ func PrepareWorktree(t *testing.T, fsType string) billy.Filesystem {
 	if !assert.NotNil(t, worktree) {
 		t.FailNow()
 	}
-	return worktree
+	return &worktree
 }
 
-func PrepareTempWorktree(t *testing.T) billy.Filesystem {
-	t.Helper()
-	return PrepareWorktree(t, "osfs")
-}
-
-func PrepareFakeWorktree(t *testing.T) billy.Filesystem {
+func PrepareFakeWorktree(t *testing.T) *billy.Filesystem {
 	t.Helper()
 	return PrepareWorktree(t, "memfs")
+}
+
+type FakeFilesGetter struct {
+	Testing *testing.T
+}
+
+func (filesGetter FakeFilesGetter) WorkTreeForPackage(pkgName string, pkg v1alpha1.Package) (*billy.Filesystem, error) {
+	return PrepareFakeWorktree(filesGetter.Testing), nil
 }

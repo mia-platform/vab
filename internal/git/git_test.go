@@ -98,11 +98,11 @@ func TestFilterFilesForPackage(t *testing.T) {
 		}
 
 		expectedArray := []*File{
-			NewFile("modules/test-module1/test-flavour1/file1.yaml", "./modules/test-module1", fakeWorktree),
-			NewFile("modules/test-module1/test-flavour1/file2.yaml", "./modules/test-module1", fakeWorktree),
-			NewFile("modules/test-module1/test-flavour2/file1.yaml", "./modules/test-module1", fakeWorktree),
+			NewFile("modules/test-module1/test-flavour1/file1.yaml", "./modules/test-module1", *fakeWorktree),
+			NewFile("modules/test-module1/test-flavour1/file2.yaml", "./modules/test-module1", *fakeWorktree),
+			NewFile("modules/test-module1/test-flavour2/file1.yaml", "./modules/test-module1", *fakeWorktree),
 		}
-		files, err := filterWorktreeForPackage(logger, &fakeWorktree, moduleName, module)
+		files, err := filterWorktreeForPackage(logger, fakeWorktree, moduleName, module)
 		assert.NoError(t, err)
 		assert.Equal(t, files, expectedArray)
 	})
@@ -114,10 +114,10 @@ func TestFilterFilesForPackage(t *testing.T) {
 		}
 
 		expectedArray := []*File{
-			NewFile("add-ons/test-addon1/file1.yaml", "./add-ons/test-addon1", fakeWorktree),
-			NewFile("add-ons/test-addon1/subdir/file1.yaml", "./add-ons/test-addon1", fakeWorktree),
+			NewFile("add-ons/test-addon1/file1.yaml", "./add-ons/test-addon1", *fakeWorktree),
+			NewFile("add-ons/test-addon1/subdir/file1.yaml", "./add-ons/test-addon1", *fakeWorktree),
 		}
-		files, err := filterWorktreeForPackage(logger, &fakeWorktree, addonName, addon)
+		files, err := filterWorktreeForPackage(logger, fakeWorktree, addonName, addon)
 		assert.NoError(t, err)
 		assert.Equal(t, files, expectedArray)
 	})
@@ -132,7 +132,7 @@ func TestFilterError(t *testing.T) {
 		Version: "1.0.0",
 	}
 
-	files, err := filterWorktreeForPackage(logger, &fakeWorktree, addonName, addon)
+	files, err := filterWorktreeForPackage(logger, fakeWorktree, addonName, addon)
 	assert.Error(t, err)
 	assert.ErrorIs(t, err, os.ErrNotExist)
 	assert.Nil(t, files)

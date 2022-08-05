@@ -26,7 +26,7 @@ import (
 )
 
 // Sync synchronizes modules and add-ons to the latest configuration
-func Sync(logger logger.LogInterface, configPath string, filesGetter git.FilesGetter, basePath string) error { // add basePath as parameter
+func Sync(logger logger.LogInterface, filesGetter git.FilesGetter, configPath string, basePath string) error { // add basePath as parameter
 
 	// ReadConfig -> get modules and addons
 	config, err := utils.ReadConfig(configPath)
@@ -118,7 +118,7 @@ func SyncAddons(logger logger.LogInterface, addons map[string]v1alpha1.AddOn, ba
 // ClonePackages clones and writes package repos to disk
 func ClonePackages(logger logger.LogInterface, packageName string, pkg v1alpha1.Package, filesGetter git.FilesGetter) ([]*git.File, error) {
 
-	files, err := filesGetter(logger, packageName, pkg)
+	files, err := git.GetFilesForPackage(logger, filesGetter, packageName, pkg)
 
 	if err != nil {
 		return nil, fmt.Errorf("error getting files for module %s: %w", packageName, err)

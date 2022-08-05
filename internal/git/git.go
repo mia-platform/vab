@@ -17,13 +17,10 @@ package git
 import (
 	"fmt"
 	"io/fs"
-	"os"
-	"path"
 	"strings"
 
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/memfs"
-	"github.com/go-git/go-billy/v5/osfs"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport"
@@ -116,24 +113,10 @@ func filterWorktreeForPackage(log logger.LogInterface, worktree *billy.Filesyste
 	return files, nil
 }
 
-// FilesGetter is a type to identify GetFiles functions (testing purposes)
-type FilesGetter func(log logger.LogInterface, pkgName string, pkg v1alpha1.Package) ([]*File, error)
-
-// MockGetFilesForPackage mocks the behavior of GetFilesForPackage (testing purposes)
-func MockGetFilesForPackage(log logger.LogInterface, pkgName string, pkg v1alpha1.Package) ([]*File, error) {
-	mockDir := os.TempDir()
-	worktree := osfs.New(mockDir)
-	mockPath1 := path.Join(mockDir, "mockfile_1.yaml")
-	mockPath2 := path.Join(mockDir, "mockfile_2.yaml")
-	mockFile1 := NewFile(mockPath1, mockDir, worktree)
-	mockFile2 := NewFile(mockPath2, mockDir, worktree)
-	return []*File{mockFile1, mockFile2}, nil
-}
-
 // GetFilesForPackage clones the package in memory
-func GetFilesForPackage(log logger.LogInterface, pkgName string, pkg v1alpha1.Package) ([]*File, error) {
+func GetFilesForPackage(log logger.LogInterface, filesGetter FilesGetter, pkgName string, pkg v1alpha1.Package) ([]*File, error) {
 	log.V(0).Writef("Download package %s from git...", pkgName)
-	memFs, err := worktreeForPackage(pkgName, pkg)
+	memFs, err := filesGetter.WorkTreeForPackage(pkgName, pkg)
 	if err != nil {
 		log.V(5).Writef("Error during cloning repostitory for %s", pkgName)
 		return nil, err

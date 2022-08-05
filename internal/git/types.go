@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/go-git/go-billy/v5"
+	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 )
 
 type File struct {
@@ -65,4 +66,14 @@ func (f *File) FilePath() string {
 
 func (f *File) String() string {
 	return f.path
+}
+
+type FilesGetter interface {
+	WorkTreeForPackage(pkgName string, pkg v1alpha1.Package) (*billy.Filesystem, error)
+}
+
+type GitFilesGetter struct{}
+
+func (filesGetter GitFilesGetter) WorkTreeForPackage(pkgName string, pkg v1alpha1.Package) (*billy.Filesystem, error) {
+	return worktreeForPackage(pkgName, pkg)
 }
