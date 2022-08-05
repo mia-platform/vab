@@ -63,20 +63,38 @@ func TestMoveToDisk(t *testing.T) {
 func TestSyncModules(t *testing.T) {
 	logger := logger.DisabledLogger{}
 	modules := make(map[string]v1alpha1.Module)
-	modules["test-module1/test-flavour1"] = v1alpha1.Module{
+	modules["test-module1/test-flavour3"] = v1alpha1.Module{
 		Version: "1.0.0",
 		Weight:  4,
 	}
-	modules["test-module1/test-flavour2"] = v1alpha1.Module{
+	modules["test-module2/test-flavour2"] = v1alpha1.Module{
 		Version: "1.0.0",
 		Weight:  1,
 	}
 	modules["test-module2/test-flavour1"] = v1alpha1.Module{
 		Version: "1.0.0",
 		Weight:  3,
+		Disable: true,
 	}
 	testDirPath := t.TempDir()
 	err := SyncModules(logger, modules, testDirPath, testutils.FakeFilesGetter{Testing: t})
+	if !assert.NoError(t, err) {
+		return
+	}
+}
+
+func TestSyncAddons(t *testing.T) {
+	logger := logger.DisabledLogger{}
+	addons := make(map[string]v1alpha1.AddOn)
+	addons["test-addon1"] = v1alpha1.AddOn{
+		Version: "1.0.0",
+	}
+	addons["test-addon2"] = v1alpha1.AddOn{
+		Version: "1.0.0",
+		Disable: true,
+	}
+	testDirPath := t.TempDir()
+	err := SyncAddons(logger, addons, testDirPath, testutils.FakeFilesGetter{Testing: t})
 	if !assert.NoError(t, err) {
 		return
 	}
