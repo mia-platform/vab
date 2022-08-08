@@ -18,6 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path"
 	"sort"
 	"strings"
 
@@ -92,25 +93,32 @@ func getAddOnsList(addons *map[string]v1alpha1.AddOn) []string {
 }
 
 // ReadKustomization reads a kustomization file given its path
-func ReadKustomization(kustomizationPath string) (*kustomize.Kustomization, error) {
+func ReadKustomization(targetPath string) (*kustomize.Kustomization, error) {
 	// create the kustomization file if it does not exist
-	_, err := os.Stat(kustomizationPath)
+	_, err := os.Stat(targetPath)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			utils.WriteKustomization(utils.EmptyKustomization(), kustomizationPath)
+			os.MkdirAll(targetPath, os.ModePerm)
+			utils.WriteKustomization(utils.EmptyKustomization(), targetPath)
 		} else {
-			return nil, fmt.Errorf("error accessing kustomization file %s: %w", kustomizationPath, err)
+			return nil, fmt.Errorf("error accessing kustomization file %s: %w", targetPath, err)
 		}
 	}
 	// read the kustomization file and return its content
+	kustomizationPath := path.Join(targetPath, utils.KustomizationFileName)
 	kustomization, err := os.ReadFile(kustomizationPath)
 	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			utils.WriteKustomization(utils.EmptyKustomization(), targetPath)
+		} else {
+			return nil, fmt.Errorf("error accessing kustomization file %s: %w", kustomizationPath, err)
+		}
 		return nil, fmt.Errorf("error reading kustomization file %s: %w", kustomizationPath, err)
 	}
 	output := &kustomize.Kustomization{}
 	err = yaml.Unmarshal(kustomization, output)
 	if err != nil {
-		return nil, fmt.Errorf("error unmarshaling kustomization file %s: %w", kustomizationPath, err)
+		return nil, fmt.Errorf("error unmarshaling kustomization file %s: %w", targetPath, err)
 	}
 
 	return output, nil
