@@ -29,7 +29,7 @@ import (
 )
 
 // SyncKustomizeResources updates the clusters' kustomization resources to the latest sync
-func SyncKustomizeResources(modules *map[string]v1alpha1.Module, addons *map[string]v1alpha1.AddOn, k kustomize.Kustomization) kustomize.Kustomization {
+func SyncKustomizeResources(modules *map[string]v1alpha1.Module, addons *map[string]v1alpha1.AddOn, k kustomize.Kustomization) *kustomize.Kustomization {
 	resourcesList := getSortedModulesList(modules)
 	addonsList := getAddOnsList(addons)
 	resourcesList = append(resourcesList, addonsList...)
@@ -41,15 +41,16 @@ func SyncKustomizeResources(modules *map[string]v1alpha1.Module, addons *map[str
 	// to the updated modules list that will substitute the already existing one.
 	if k.Resources != nil {
 		for _, r := range k.Resources {
-			if !strings.Contains(r, "/vendors/") {
+			if !strings.Contains(r, "vendors/") {
 				resourcesList = append(resourcesList, r)
 			}
 		}
 	}
 
-	k.Resources = resourcesList
+	k.Resources = []string{}
+	k.Resources = append(k.Resources, resourcesList...)
 
-	return k
+	return &k
 }
 
 // getSortedModulesList returns the list of module names sorted by weight.
@@ -59,7 +60,8 @@ func getSortedModulesList(modules *map[string]v1alpha1.Module) []string {
 
 	for m := range *modules {
 		if !(*modules)[m].Disable {
-			modulesList = append(modulesList, m)
+			modulePath := path.Join(utils.VendorsModulesPath, m)
+			modulesList = append(modulesList, modulePath)
 		}
 	}
 
@@ -81,7 +83,8 @@ func getAddOnsList(addons *map[string]v1alpha1.AddOn) []string {
 
 	for ao := range *addons {
 		if !(*addons)[ao].Disable {
-			addonsList = append(addonsList, ao)
+			addonPath := path.Join(utils.VendorsAddonsPath, ao)
+			addonsList = append(addonsList, addonPath)
 		}
 	}
 
