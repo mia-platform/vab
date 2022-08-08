@@ -28,7 +28,17 @@ import (
 )
 
 const (
-	testPackageName       = "test-module1/test-flavour1"
+	testPackageName                = "test-module1/test-flavour1"
+	clusterName                    = "test-cluster"
+	expectedKustomizationAllGroups = `kind: Kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+resources:
+	- ./vendors/modules/test-module2/test-flavour2
+	- ./vendors/modules/test-module3/test-flavour3
+	- ./vendors/modules/test-module1/test-flavour1
+	- ./vendors/add-ons/test-addon1
+	- ./vendors/add-ons/test-addon2
+`
 	expectedKustomization = `kind: Kustomization
 apiVersion: kustomize.config.k8s.io/v1beta1
 resources:
@@ -70,7 +80,7 @@ func TestMoveToDisk(t *testing.T) {
 func TestSyncModules(t *testing.T) {
 	logger := logger.DisabledLogger{}
 	modules := make(map[string]v1alpha1.Module)
-	modules["test-module1/test-flavour3"] = v1alpha1.Module{
+	modules["test-module1/test-flavour1"] = v1alpha1.Module{
 		Version: "1.0.0",
 		Weight:  4,
 	}
@@ -78,7 +88,7 @@ func TestSyncModules(t *testing.T) {
 		Version: "1.0.0",
 		Weight:  1,
 	}
-	modules["test-module2/test-flavour1"] = v1alpha1.Module{
+	modules["test-module3/test-flavour3"] = v1alpha1.Module{
 		Version: "1.0.0",
 		Weight:  3,
 		Disable: true,
@@ -112,7 +122,7 @@ func TestUpdateBasesAllGroups(t *testing.T) {
 	targetPath := path.Join(testDirPath, utils.AllGroupsDirPath)
 	os.MkdirAll(targetPath, os.ModePerm)
 	modules := make(map[string]v1alpha1.Module)
-	modules["test-module1/test-flavour3"] = v1alpha1.Module{
+	modules["test-module3/test-flavour3"] = v1alpha1.Module{
 		Version: "1.0.0",
 		Weight:  4,
 	}
@@ -120,10 +130,9 @@ func TestUpdateBasesAllGroups(t *testing.T) {
 		Version: "1.0.0",
 		Weight:  1,
 	}
-	modules["test-module2/test-flavour1"] = v1alpha1.Module{
+	modules["test-module1/test-flavour1"] = v1alpha1.Module{
 		Version: "1.0.0",
 		Weight:  3,
-		Disable: true,
 	}
 	addons := make(map[string]v1alpha1.AddOn)
 	addons["test-addon1"] = v1alpha1.AddOn{
@@ -131,12 +140,14 @@ func TestUpdateBasesAllGroups(t *testing.T) {
 	}
 	addons["test-addon2"] = v1alpha1.AddOn{
 		Version: "1.0.0",
-		Disable: true,
 	}
 	err := UpdateBases(targetPath, modules, addons)
 	if !assert.NoError(t, err) {
 		return
 	}
+	file, _ := os.ReadFile(path.Join(targetPath, "bases", utils.KustomizationFileName))
+	t.Log(string(file))
+	compareFile(t, []byte(expectedKustomizationAllGroups), path.Join(targetPath, "bases", utils.KustomizationFileName))
 }
 
 func TestUpdateBasesCluster(t *testing.T) {
@@ -147,7 +158,77 @@ func TestUpdateBasesCluster(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	file, _ := os.ReadFile(path.Join(targetPath, "bases", utils.KustomizationFileName))
-	t.Log(string(file))
 	compareFile(t, []byte(expectedKustomization), path.Join(targetPath, "bases", utils.KustomizationFileName))
+}
+
+func TestCreateClusterPath(t *testing.T) {
+	testDirPath := t.TempDir()
+	clusterPath, err := GetClusterPath(clusterName, testDirPath)
+	if !assert.NoError(t, err) {
+		return
+	}
+	expectedPath := path.Join(testDirPath, utils.ClustersDirName, clusterName)
+	assert.Equal(t, expectedPath, clusterPath, "wrong path to cluster")
+}
+
+func TestExistingClusterPath(t *testing.T) {
+	testDirPath := t.TempDir()
+	expectedPath := path.Join(testDirPath, utils.ClustersDirName, clusterName)
+	os.MkdirAll(expectedPath, os.ModePerm)
+	clusterPath, err := GetClusterPath(clusterName, testDirPath)
+	if !assert.NoError(t, err) {
+		return
+	}
+	assert.Equal(t, expectedPath, clusterPath, "wrong path to cluster")
+}
+
+func TestSyncClusters(t *testing.T) {
+	testGroups := []v1alpha1.Group{
+		{
+			Name: "group-1",
+			Clusters: []v1alpha1.Cluster{
+				{
+					Name: "cluster-1",
+				},
+				{
+					Name: "cluster-2",
+				},
+			},
+		},
+		{
+			Name: "group-2",
+			Clusters: []v1alpha1.Cluster{
+				{
+					Name: "cluster-3",
+				},
+				{
+					Name: "cluster-4",
+				},
+			},
+		},
+	}
+	testDirPath := t.TempDir()
+	err := SyncClusters(&testGroups, testDirPath)
+	if !assert.NoError(t, err) {
+		return
+	}
+	compareFile(t, []byte(expectedKustomization), path.Join(testDirPath, "clusters/group-1/cluster-1/bases", utils.KustomizationFileName))
+	compareFile(t, []byte(expectedKustomization), path.Join(testDirPath, "clusters/group-1/cluster-2/bases", utils.KustomizationFileName))
+	compareFile(t, []byte(expectedKustomization), path.Join(testDirPath, "clusters/group-2/cluster-3/bases", utils.KustomizationFileName))
+	compareFile(t, []byte(expectedKustomization), path.Join(testDirPath, "clusters/group-2/cluster-4/bases", utils.KustomizationFileName))
+}
+
+func TestSync(t *testing.T) {
+	logger := logger.DisabledLogger{}
+	testDirPath := t.TempDir()
+	configPath := testutils.GetTestFile("utils", "test_sync.yaml")
+	err := Sync(logger, testutils.FakeFilesGetter{Testing: t}, configPath, testDirPath)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	compareFile(t, []byte(expectedKustomization), path.Join(testDirPath, "clusters/group-1/cluster-1/bases", utils.KustomizationFileName))
+	compareFile(t, []byte(expectedKustomization), path.Join(testDirPath, "clusters/group-1/cluster-2/bases", utils.KustomizationFileName))
+	compareFile(t, []byte(expectedKustomization), path.Join(testDirPath, "clusters/group-2/cluster-3/bases", utils.KustomizationFileName))
+	compareFile(t, []byte(expectedKustomization), path.Join(testDirPath, "clusters/group-2/cluster-4/bases", utils.KustomizationFileName))
 }

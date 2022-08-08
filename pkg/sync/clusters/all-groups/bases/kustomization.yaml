@@ -1,0 +1,11 @@
+kind: Kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+resources:
+  - vendors/modules/test-module1/test-flavour1
+  - vendors/modules/test-module2/test-flavour1
+  - vendors/add-ons/test-addon1
+  - vendors/add-ons/test-addon2
+  - test-module2/test-flavour1
+  - test-module1/test-flavour1
+  - test-addon1
+  - test-addon2
