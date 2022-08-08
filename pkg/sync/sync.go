@@ -20,12 +20,14 @@ import (
 	"io/fs"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/mia-platform/vab/internal/git"
 	kustomizehelper "github.com/mia-platform/vab/internal/kustomize"
 	"github.com/mia-platform/vab/internal/utils"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"github.com/mia-platform/vab/pkg/logger"
+	"sigs.k8s.io/kustomize/api/types"
 )
 
 // Sync synchronizes modules and add-ons to the latest configuration
@@ -46,37 +48,13 @@ func Sync(logger logger.LogInterface, filesGetter git.FilesGetter, configPath st
 	if err := SyncAddons(logger, defaultAddons, basePath, filesGetter); err != nil {
 		return fmt.Errorf("error syncing default add-ons %+v: %w", defaultAddons, err)
 	}
+	// update the default bases in the all-groups directory
 	if err := UpdateBases(utils.AllGroupsDirPath, defaultModules, defaultAddons); err != nil {
 		return fmt.Errorf("error updating kustomize bases for all-groups: %w", err)
 	}
-
-	// loop on all clusters
-	// SyncPackages + SyncResources + WriteKustomization
-	// TODO: optimize loops with concurrency
-	for _, group := range config.Spec.Groups {
-		for _, cluster := range group.Clusters {
-
-			clusterPath, err := GetClusterPath(cluster.Name, basePath)
-			if err != nil {
-				return fmt.Errorf("error retrieving path for cluster %s: %w", cluster.Name, err)
-			}
-			// TODO: sync modules and add-ons patches for each cluster
-			// if err := SyncPackages(logger, cluster.Modules); err != nil {
-			// 	return fmt.Errorf("error syncing modules for cluster %s, %+v: %w", cluster.Name, cluster.Modules, err)
-			// }
-			// if err := SyncPackages(logger, cluster.AddOns); err != nil {
-			// 	return fmt.Errorf("error syncing add-ons for cluster %s, %+v: %w", cluster.Name, cluster.AddOns, err)
-			// }
-
-			kustomizationPath := path.Join(clusterPath, "bases", utils.KustomizationFileName)
-			// TODO: check if file exists
-			kustomization, err := kustomizehelper.ReadKustomization(kustomizationPath)
-			if err != nil {
-				return fmt.Errorf("error reading kustomization file for %s/%s: %w", group.Name, cluster.Name, err)
-			}
-			syncedKustomization := kustomizehelper.SyncKustomizeResources(&defaultModules, &defaultAddons, *kustomization)
-			utils.WriteKustomization(syncedKustomization, kustomizationPath)
-		}
+	// synchronize clusters to the latest configuration
+	if err := SyncClusters(&config.Spec.Groups, basePath); err != nil {
+		return fmt.Errorf("error syncing clusters: %w", err)
 	}
 
 	return nil
@@ -152,11 +130,23 @@ func MoveToDisk(logger logger.LogInterface, files []*git.File, packageName strin
 func UpdateBases(targetPath string, modules map[string]v1alpha1.Module, addons map[string]v1alpha1.AddOn) error {
 	targetKustomizationPath := path.Join(targetPath, "bases", utils.KustomizationFileName)
 	kustomization, err := kustomizehelper.ReadKustomization(targetKustomizationPath)
+	var syncedKustomization types.Kustomization
 	if err != nil {
 		return fmt.Errorf("error reading kustomization file for %s: %w", targetPath, err)
 	}
-	syncedAllGroupsKustomization := kustomizehelper.SyncKustomizeResources(&modules, &addons, *kustomization)
-	utils.WriteKustomization(syncedAllGroupsKustomization, targetKustomizationPath)
+	// if the path contains "clusters/all-groups", it is the path to the default configurations
+	// otherwise, it is the path to a single cluster
+	if strings.Contains(targetPath, utils.AllGroupsDirPath) {
+		syncedKustomization = kustomizehelper.SyncKustomizeResources(&modules, &addons, *kustomization)
+	} else {
+		// case in which the cluster does not override the default configuration
+		if modules == nil && addons == nil {
+			// overwrite the kustomization to contain only the path to all-groups
+			syncedKustomization = utils.EmptyKustomization()
+			kustomization.Resources = []string{"../../../all-groups"}
+		}
+	}
+	utils.WriteKustomization(syncedKustomization, targetKustomizationPath)
 	return nil
 }
 
@@ -173,26 +163,20 @@ func GetClusterPath(clusterName string, basePath string) (string, error) {
 	return clusterPath, nil
 }
 
-func SyncClusters(groups *[]v1alpha1.Group, basePath string) {
-	// func SyncClusters(groups *[]v1alpha1.Group, basePath string) error {
-	// 	for _, group := range *groups {
-	// 		for _, cluster := range group.Clusters {
-
-	// 			clusterPath, err := GetClusterPath(cluster.Name, basePath)
-	// 			if err != nil {
-	// 				return fmt.Errorf("error getting path for cluster %s: %w", cluster.Name, basePath)
-	// 			}
-
-	// 			kustomizationPath := path.Join(clusterPath, "bases", utils.KustomizationFileName)
-	// 			// TODO: check if file exists
-
-	// 			// kustomization, err := kustomizehelper.ReadKustomization(kustomizationPath)
-	// 			// if err != nil {
-	// 			// 	return fmt.Errorf("error reading kustomization file for %s/%s: %w", group.Name, cluster.Name, err)
-	// 			// }
-	// 			// syncedKustomization := kustomizehelper.SyncKustomizeResources(&defaultModules, &defaultAddons, *kustomization)
-	// 			// utils.WriteKustomization(syncedKustomization, kustomizationPath)
-	// 		}
-	// 	}
-	// }
+// SyncClusters synchronizes the clusters to the latest configuration
+// Currently this function does not handle cluster overrides
+func SyncClusters(groups *[]v1alpha1.Group, basePath string) error {
+	for _, group := range *groups {
+		for _, cluster := range group.Clusters {
+			clusterPath, err := GetClusterPath(cluster.Name, basePath)
+			if err != nil {
+				return fmt.Errorf("error retrieving path for cluster %s: %w", cluster.Name, err)
+			}
+			// TODO: handle cluster overrides
+			if err := UpdateBases(clusterPath, cluster.Modules, cluster.AddOns); err != nil {
+				return fmt.Errorf("error updating kustomize bases for all-groups: %w", err)
+			}
+		}
+	}
+	return nil
 }
