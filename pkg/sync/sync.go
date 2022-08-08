@@ -128,7 +128,7 @@ func MoveToDisk(logger logger.LogInterface, files []*git.File, packageName strin
 
 // UpdateBases updates the kustomize bases in the target path
 func UpdateBases(targetPath string, modules map[string]v1alpha1.Module, addons map[string]v1alpha1.AddOn) error {
-	targetKustomizationPath := path.Join(targetPath, "bases", utils.KustomizationFileName)
+	targetKustomizationPath := path.Join(targetPath, "bases")
 	kustomization, err := kustomizehelper.ReadKustomization(targetKustomizationPath)
 	var syncedKustomization types.Kustomization
 	if err != nil {
@@ -143,7 +143,7 @@ func UpdateBases(targetPath string, modules map[string]v1alpha1.Module, addons m
 		if modules == nil && addons == nil {
 			// overwrite the kustomization to contain only the path to all-groups
 			syncedKustomization = utils.EmptyKustomization()
-			kustomization.Resources = []string{"../../../all-groups"}
+			syncedKustomization.Resources = append(syncedKustomization.Resources, "../../../all-groups")
 		}
 	}
 	utils.WriteKustomization(syncedKustomization, targetKustomizationPath)
