@@ -49,7 +49,7 @@ func Sync(logger logger.LogInterface, filesGetter git.FilesGetter, configPath st
 		return fmt.Errorf("error syncing default add-ons %+v: %w", defaultAddons, err)
 	}
 	// update the default bases in the all-groups directory
-	if err := UpdateBases(utils.AllGroupsDirPath, defaultModules, defaultAddons); err != nil {
+	if err := UpdateBases(path.Join(basePath, utils.AllGroupsDirPath), defaultModules, defaultAddons); err != nil {
 		return fmt.Errorf("error updating kustomize bases for all-groups: %w", err)
 	}
 	// synchronize clusters to the latest configuration

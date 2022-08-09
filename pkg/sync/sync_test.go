@@ -33,11 +33,11 @@ const (
 	expectedKustomizationAllGroups = `kind: Kustomization
 apiVersion: kustomize.config.k8s.io/v1beta1
 resources:
-	- ./vendors/modules/test-module2/test-flavour2
-	- ./vendors/modules/test-module3/test-flavour3
-	- ./vendors/modules/test-module1/test-flavour1
-	- ./vendors/add-ons/test-addon1
-	- ./vendors/add-ons/test-addon2
+  - vendors/modules/test-module2/test-flavour2
+  - vendors/modules/test-module1/test-flavour1
+  - vendors/modules/test-module3/test-flavour3
+  - vendors/add-ons/test-addon1
+  - vendors/add-ons/test-addon2
 `
 	expectedKustomization = `kind: Kustomization
 apiVersion: kustomize.config.k8s.io/v1beta1
@@ -145,8 +145,6 @@ func TestUpdateBasesAllGroups(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	file, _ := os.ReadFile(path.Join(targetPath, "bases", utils.KustomizationFileName))
-	t.Log(string(file))
 	compareFile(t, []byte(expectedKustomizationAllGroups), path.Join(targetPath, "bases", utils.KustomizationFileName))
 }
 
@@ -226,7 +224,6 @@ func TestSync(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-
 	compareFile(t, []byte(expectedKustomization), path.Join(testDirPath, "clusters/group-1/cluster-1/bases", utils.KustomizationFileName))
 	compareFile(t, []byte(expectedKustomization), path.Join(testDirPath, "clusters/group-1/cluster-2/bases", utils.KustomizationFileName))
 	compareFile(t, []byte(expectedKustomization), path.Join(testDirPath, "clusters/group-2/cluster-3/bases", utils.KustomizationFileName))
