@@ -47,8 +47,7 @@ func SyncKustomizeResources(modules *map[string]v1alpha1.Module, addons *map[str
 		}
 	}
 
-	k.Resources = []string{}
-	k.Resources = append(k.Resources, resourcesList...)
+	k.Resources = resourcesList
 
 	return &k
 }
@@ -60,8 +59,8 @@ func getSortedModulesList(modules *map[string]v1alpha1.Module) []string {
 
 	for m := range *modules {
 		if !(*modules)[m].Disable {
-			modulePath := path.Join(utils.VendorsModulesPath, m)
-			modulesList = append(modulesList, modulePath)
+			// modulePath := path.Join(utils.VendorsModulesPath, m)
+			modulesList = append(modulesList, m)
 		}
 	}
 
@@ -74,7 +73,7 @@ func getSortedModulesList(modules *map[string]v1alpha1.Module) []string {
 		return (*modules)[modulesList[i]].Weight < (*modules)[modulesList[j]].Weight
 	})
 
-	return modulesList
+	return *fixResourcesPath(modulesList, true)
 }
 
 // getAddOnsList returns the list of addons names in lexicographic order
@@ -83,8 +82,7 @@ func getAddOnsList(addons *map[string]v1alpha1.AddOn) []string {
 
 	for ao := range *addons {
 		if !(*addons)[ao].Disable {
-			addonPath := path.Join(utils.VendorsAddonsPath, ao)
-			addonsList = append(addonsList, addonPath)
+			addonsList = append(addonsList, ao)
 		}
 	}
 
@@ -92,7 +90,7 @@ func getAddOnsList(addons *map[string]v1alpha1.AddOn) []string {
 		return addonsList[i] < addonsList[j]
 	})
 
-	return addonsList
+	return *fixResourcesPath(addonsList, false)
 }
 
 // ReadKustomization reads a kustomization file given its path
@@ -125,4 +123,17 @@ func ReadKustomization(targetPath string) (*kustomize.Kustomization, error) {
 	}
 
 	return output, nil
+}
+
+// fixResourcesPath returns the list of resources with the actual path
+func fixResourcesPath(resourcesList []string, isModulesList bool) *[]string {
+	fixedResourcesList := make([]string, 0, len(resourcesList))
+	for _, res := range resourcesList {
+		if isModulesList {
+			fixedResourcesList = append(fixedResourcesList, path.Join(utils.VendorsModulesPath, res))
+		} else {
+			fixedResourcesList = append(fixedResourcesList, path.Join(utils.VendorsAddonsPath, res))
+		}
+	}
+	return &fixedResourcesList
 }
