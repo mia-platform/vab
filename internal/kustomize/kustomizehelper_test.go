@@ -25,11 +25,11 @@ import (
 // getSortedModules returns the list of modules sorted correctly
 func TestSortedModulesList(t *testing.T) {
 	modules := make(map[string]v1alpha1.Module)
-	modules["m4"] = v1alpha1.Module{
+	modules["m1"] = v1alpha1.Module{
 		Version: "1.0.0",
 		Weight:  4,
 	}
-	modules["m1"] = v1alpha1.Module{
+	modules["m2"] = v1alpha1.Module{
 		Version: "1.0.0",
 		Weight:  1,
 	}
@@ -37,11 +37,11 @@ func TestSortedModulesList(t *testing.T) {
 		Version: "1.0.0",
 		Weight:  3,
 	}
-	modules["m2b"] = v1alpha1.Module{
+	modules["m4b"] = v1alpha1.Module{
 		Version: "1.0.0",
 		Weight:  2,
 	}
-	modules["m2a"] = v1alpha1.Module{
+	modules["m4a"] = v1alpha1.Module{
 		Version: "1.0.0",
 		Weight:  2,
 	}
@@ -51,7 +51,7 @@ func TestSortedModulesList(t *testing.T) {
 		Disable: true,
 	}
 
-	expectedList := []string{"vendors/modules/m1", "vendors/modules/m2a", "vendors/modules/m2b", "vendors/modules/m3", "vendors/modules/m4"}
+	expectedList := []string{"vendors/modules/m2", "vendors/modules/m4a", "vendors/modules/m4b", "vendors/modules/m3", "vendors/modules/m1"}
 	list := getSortedModulesList(&modules)
 
 	assert.Equal(t, expectedList, list, "Unexpected modules list.")
@@ -68,11 +68,11 @@ func TestSyncEmptyKustomization(t *testing.T) {
 	}
 	modules["m3"] = v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  3,
+		Weight:  2,
 	}
 	modules["m2"] = v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  2,
+		Weight:  3,
 	}
 	modules["m0"] = v1alpha1.Module{
 		Version: "1.0.0",
@@ -92,7 +92,7 @@ func TestSyncEmptyKustomization(t *testing.T) {
 	}
 
 	finalKustomization := SyncKustomizeResources(&modules, &addons, emptyKustomization)
-	expectedResources := []string{"vendors/modules/m1", "vendors/modules/m2", "vendors/modules/m3", "vendors/add-ons/ao1", "vendors/add-ons/ao2"}
+	expectedResources := []string{"vendors/modules/m1", "vendors/modules/m3", "vendors/modules/m2", "vendors/add-ons/ao1", "vendors/add-ons/ao2"}
 
 	assert.Equal(t, expectedResources, finalKustomization.Resources, "Unexpected resources in Kustomization.")
 	assert.NotEqual(t, emptyKustomization, expectedResources, "The original Kustomization struct should remain unchanged.")
@@ -116,7 +116,7 @@ func TestSyncExistingKustomization(t *testing.T) {
 	// change mod1 version
 	modules["mod1-2.0.0"] = v1alpha1.Module{
 		Version: "2.0.0",
-		Weight:  1,
+		Weight:  3,
 	}
 	// disable mod2
 	modules["mod2-1.0.0"] = v1alpha1.Module{
@@ -127,7 +127,7 @@ func TestSyncExistingKustomization(t *testing.T) {
 	// unchanged module
 	modules["mod3-1.0.0"] = v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  3,
+		Weight:  1,
 	}
 	addons := make(map[string]v1alpha1.AddOn)
 	// change ao1 version
@@ -146,8 +146,8 @@ func TestSyncExistingKustomization(t *testing.T) {
 
 	finalKustomization := SyncKustomizeResources(&modules, &addons, kustomization)
 	expectedResources := []string{
-		"vendors/modules/mod1-2.0.0",
 		"vendors/modules/mod3-1.0.0",
+		"vendors/modules/mod1-2.0.0",
 		"vendors/add-ons/ao1-2.0.0",
 		"vendors/add-ons/ao3-1.0.0",
 		"./local/mod-1.0.0",
