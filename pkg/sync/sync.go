@@ -27,6 +27,7 @@ import (
 	"github.com/mia-platform/vab/internal/utils"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"github.com/mia-platform/vab/pkg/logger"
+	"sigs.k8s.io/kustomize/api/types"
 )
 
 // Sync synchronizes modules and add-ons to the latest configuration
@@ -129,23 +130,23 @@ func MoveToDisk(logger logger.LogInterface, files []*git.File, packageName strin
 func UpdateBases(targetPath string, modules map[string]v1alpha1.Module, addons map[string]v1alpha1.AddOn) error {
 	targetKustomizationPath := path.Join(targetPath, "bases")
 	kustomization, err := kustomizehelper.ReadKustomization(targetKustomizationPath)
+	var syncedKustomization types.Kustomization
 	if err != nil {
 		return fmt.Errorf("error reading kustomization file for %s: %w", targetPath, err)
 	}
 	// if the path contains "clusters/all-groups", it is the path to the default configurations
 	// otherwise, it is the path to a single cluster
 	if strings.Contains(targetPath, utils.AllGroupsDirPath) {
-		syncedKustomization := kustomizehelper.SyncKustomizeResources(&modules, &addons, *kustomization)
-		utils.WriteKustomization(*syncedKustomization, targetKustomizationPath)
+		syncedKustomization = *kustomizehelper.SyncKustomizeResources(&modules, &addons, *kustomization)
 	} else {
 		// case in which the cluster does not override the default configuration
 		if modules == nil && addons == nil {
 			// overwrite the kustomization to contain only the path to all-groups
-			syncedKustomization := utils.EmptyKustomization()
+			syncedKustomization = utils.EmptyKustomization()
 			syncedKustomization.Resources = append(syncedKustomization.Resources, "../../../all-groups")
-			utils.WriteKustomization(syncedKustomization, targetKustomizationPath)
 		}
 	}
+	utils.WriteKustomization(syncedKustomization, targetKustomizationPath)
 	return nil
 }
 
