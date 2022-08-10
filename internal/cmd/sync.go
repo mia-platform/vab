@@ -33,7 +33,7 @@ already present), and the directory structure inside the clusters folder will be
 configuration.`,
 		RunE: func(_ *cobra.Command, _ []string) error {
 			logger.V(0).Writef("Synchronizing configuration at %s...", flags.Config)
-			gitFilesGetter := git.GitFilesGetter{}
+			gitFilesGetter := git.RealFilesGetter{}
 			return sync.Sync(logger, gitFilesGetter, flags.Config, ".")
 		},
 	}

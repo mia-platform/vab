@@ -72,8 +72,8 @@ type FilesGetter interface {
 	WorkTreeForPackage(pkgName string, pkg v1alpha1.Package) (*billy.Filesystem, error)
 }
 
-type GitFilesGetter struct{}
+type RealFilesGetter struct{}
 
-func (filesGetter GitFilesGetter) WorkTreeForPackage(pkgName string, pkg v1alpha1.Package) (*billy.Filesystem, error) {
+func (filesGetter RealFilesGetter) WorkTreeForPackage(pkgName string, pkg v1alpha1.Package) (*billy.Filesystem, error) {
 	return worktreeForPackage(pkgName, pkg)
 }

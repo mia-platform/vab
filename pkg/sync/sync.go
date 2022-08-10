@@ -15,10 +15,7 @@
 package sync
 
 import (
-	"errors"
 	"fmt"
-	"io/fs"
-	"os"
 	"path"
 	"strings"
 
@@ -32,7 +29,6 @@ import (
 
 // Sync synchronizes modules and add-ons to the latest configuration
 func Sync(logger logger.LogInterface, filesGetter git.FilesGetter, configPath string, basePath string) error {
-
 	// ReadConfig -> get default modules and addons
 	config, err := utils.ReadConfig(configPath)
 	if err != nil {
@@ -42,10 +38,10 @@ func Sync(logger logger.LogInterface, filesGetter git.FilesGetter, configPath st
 	defaultAddons := config.Spec.AddOns
 
 	// sync default modules and add-ons in all-groups "bases" folder
-	if err := SyncModules(logger, defaultModules, basePath, filesGetter); err != nil {
+	if err := UpdateModules(logger, defaultModules, basePath, filesGetter); err != nil {
 		return fmt.Errorf("error syncing default modules %+v: %w", defaultModules, err)
 	}
-	if err := SyncAddons(logger, defaultAddons, basePath, filesGetter); err != nil {
+	if err := UpdateAddons(logger, defaultAddons, basePath, filesGetter); err != nil {
 		return fmt.Errorf("error syncing default add-ons %+v: %w", defaultAddons, err)
 	}
 	// update the default bases in the all-groups directory
@@ -53,16 +49,16 @@ func Sync(logger logger.LogInterface, filesGetter git.FilesGetter, configPath st
 		return fmt.Errorf("error updating kustomize bases for all-groups: %w", err)
 	}
 	// synchronize clusters to the latest configuration
-	if err := SyncClusters(&config.Spec.Groups, basePath); err != nil {
+	if err := UpdateClusters(&config.Spec.Groups, basePath); err != nil {
 		return fmt.Errorf("error syncing clusters: %w", err)
 	}
 
 	return nil
 }
 
-// SyncModules synchronizes modules to the latest configuration
+// UpdateModules synchronizes modules to the latest configuration
 // TODO: merge duplicate functions
-func SyncModules(logger logger.LogInterface, modules map[string]v1alpha1.Module, basePath string, filesGetter git.FilesGetter) error {
+func UpdateModules(logger logger.LogInterface, modules map[string]v1alpha1.Module, basePath string, filesGetter git.FilesGetter) error {
 	for name, v := range modules {
 		if v.IsDisabled() {
 			continue
@@ -82,7 +78,7 @@ func SyncModules(logger logger.LogInterface, modules map[string]v1alpha1.Module,
 
 // SyncModules synchronizes add-ons to the latest configuration
 // TODO: merge duplicate functions
-func SyncAddons(logger logger.LogInterface, addons map[string]v1alpha1.AddOn, basePath string, filesGetter git.FilesGetter) error {
+func UpdateAddons(logger logger.LogInterface, addons map[string]v1alpha1.AddOn, basePath string, filesGetter git.FilesGetter) error {
 	for name, v := range addons {
 		if v.IsDisabled() {
 			continue
@@ -102,7 +98,6 @@ func SyncAddons(logger logger.LogInterface, addons map[string]v1alpha1.AddOn, ba
 
 // ClonePackages clones and writes package repos to disk
 func ClonePackages(logger logger.LogInterface, packageName string, pkg v1alpha1.Package, filesGetter git.FilesGetter) ([]*git.File, error) {
-
 	files, err := git.GetFilesForPackage(logger, filesGetter, packageName, pkg)
 
 	if err != nil {
@@ -110,12 +105,10 @@ func ClonePackages(logger logger.LogInterface, packageName string, pkg v1alpha1.
 	}
 
 	return files, nil
-
 }
 
 // MoveToDisk moves the cloned packages from memory to disk
 func MoveToDisk(logger logger.LogInterface, files []*git.File, packageName string, targetPath string) error {
-
 	logger.V(10).Writef("Path for module %s: %s", packageName, targetPath)
 
 	if err := WritePkgToDir(files, targetPath); err != nil {
@@ -123,7 +116,6 @@ func MoveToDisk(logger logger.LogInterface, files []*git.File, packageName strin
 	}
 
 	return nil
-
 }
 
 // UpdateBases updates the kustomize bases in the target path
@@ -138,15 +130,14 @@ func UpdateBases(targetPath string, modules map[string]v1alpha1.Module, addons m
 	// otherwise, it is the path to a single cluster
 	if strings.Contains(targetPath, utils.AllGroupsDirPath) {
 		syncedKustomization = *kustomizehelper.SyncKustomizeResources(&modules, &addons, *kustomization)
-	} else {
-		// case in which the cluster does not override the default configuration
-		if modules == nil && addons == nil {
-			// overwrite the kustomization to contain only the path to all-groups
-			syncedKustomization = utils.EmptyKustomization()
-			syncedKustomization.Resources = append(syncedKustomization.Resources, "../../../all-groups")
-		}
+	} else if modules == nil && addons == nil {
+		// overwrite the kustomization to contain only the path to all-groups
+		syncedKustomization = utils.EmptyKustomization()
+		syncedKustomization.Resources = append(syncedKustomization.Resources, "../../../all-groups")
 	}
-	utils.WriteKustomization(syncedKustomization, targetKustomizationPath)
+	if err := utils.WriteKustomization(syncedKustomization, targetKustomizationPath); err != nil {
+		return fmt.Errorf("error writing kustomization in path %s: %w", targetKustomizationPath, err)
+	}
 	return nil
 }
 
@@ -154,19 +145,15 @@ func UpdateBases(targetPath string, modules map[string]v1alpha1.Module, addons m
 // clusterName must be <group-name>/<cluster-name>
 func GetClusterPath(clusterName string, basePath string) (string, error) {
 	clusterPath := path.Join(basePath, utils.ClustersDirName, clusterName)
-	if _, err := os.Stat(clusterPath); err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			os.MkdirAll(clusterPath, fs.ModePerm)
-		} else {
-			return "", fmt.Errorf("error getting cluster path for %s: %w", clusterName, err)
-		}
+	if err := utils.ValidatePath(clusterPath); err != nil {
+		return "", fmt.Errorf("error validating cluster path %s: %w", clusterPath, err)
 	}
 	return clusterPath, nil
 }
 
-// SyncClusters synchronizes the clusters to the latest configuration
+// UpdateClusters synchronizes the clusters to the latest configuration
 // Currently this function does not handle cluster overrides
-func SyncClusters(groups *[]v1alpha1.Group, basePath string) error {
+func UpdateClusters(groups *[]v1alpha1.Group, basePath string) error {
 	for _, group := range *groups {
 		for _, cluster := range group.Clusters {
 			fullClusterName := path.Join(group.Name, cluster.Name)

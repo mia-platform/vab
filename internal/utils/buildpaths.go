@@ -65,7 +65,9 @@ func BuildPaths(configPath string, groupName string, clusterName string) ([]stri
 func ValidatePath(targetPath string) error {
 	if _, err := os.Stat(targetPath); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			os.MkdirAll(targetPath, os.ModePerm)
+			if err := os.MkdirAll(targetPath, os.ModePerm); err != nil {
+				return fmt.Errorf("error creating directories for path %s: %w", targetPath, err)
+			}
 		} else {
 			return fmt.Errorf("error accessing path %s: %w", targetPath, err)
 		}

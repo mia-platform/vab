@@ -94,7 +94,7 @@ func TestSyncModules(t *testing.T) {
 		Disable: true,
 	}
 	testDirPath := t.TempDir()
-	err := SyncModules(logger, modules, testDirPath, testutils.FakeFilesGetter{Testing: t})
+	err := UpdateModules(logger, modules, testDirPath, testutils.FakeFilesGetter{Testing: t})
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -111,7 +111,7 @@ func TestSyncAddons(t *testing.T) {
 		Disable: true,
 	}
 	testDirPath := t.TempDir()
-	err := SyncAddons(logger, addons, testDirPath, testutils.FakeFilesGetter{Testing: t})
+	err := UpdateAddons(logger, addons, testDirPath, testutils.FakeFilesGetter{Testing: t})
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -120,7 +120,9 @@ func TestSyncAddons(t *testing.T) {
 func TestUpdateBasesAllGroups(t *testing.T) {
 	testDirPath := t.TempDir()
 	targetPath := path.Join(testDirPath, utils.AllGroupsDirPath)
-	os.MkdirAll(targetPath, os.ModePerm)
+	if err := os.MkdirAll(targetPath, os.ModePerm); err != nil {
+		return
+	}
 	modules := make(map[string]v1alpha1.Module)
 	modules["test-module3/test-flavour3"] = v1alpha1.Module{
 		Version: "1.0.0",
@@ -151,7 +153,9 @@ func TestUpdateBasesAllGroups(t *testing.T) {
 func TestUpdateBasesCluster(t *testing.T) {
 	testDirPath := t.TempDir()
 	targetPath := path.Join(testDirPath, "groups/group-1/cluster-1")
-	os.MkdirAll(targetPath, os.ModePerm)
+	if err := os.MkdirAll(targetPath, os.ModePerm); err != nil {
+		return
+	}
 	err := UpdateBases(targetPath, nil, nil)
 	if !assert.NoError(t, err) {
 		return
@@ -172,7 +176,9 @@ func TestCreateClusterPath(t *testing.T) {
 func TestExistingClusterPath(t *testing.T) {
 	testDirPath := t.TempDir()
 	expectedPath := path.Join(testDirPath, utils.ClustersDirName, clusterName)
-	os.MkdirAll(expectedPath, os.ModePerm)
+	if err := os.MkdirAll(expectedPath, os.ModePerm); err != nil {
+		return
+	}
 	clusterPath, err := GetClusterPath(clusterName, testDirPath)
 	if !assert.NoError(t, err) {
 		return
@@ -206,7 +212,7 @@ func TestSyncClusters(t *testing.T) {
 		},
 	}
 	testDirPath := t.TempDir()
-	err := SyncClusters(&testGroups, testDirPath)
+	err := UpdateClusters(&testGroups, testDirPath)
 	if !assert.NoError(t, err) {
 		return
 	}
