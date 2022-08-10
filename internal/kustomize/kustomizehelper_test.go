@@ -162,6 +162,7 @@ func TestSyncExistingKustomization(t *testing.T) {
 	assert.Equal(t, expectedResources, finalKustomization.Resources, "Unexpected resources in Kustomization.")
 }
 
+// fixResourcesPath appends the correct prefix to modules
 func TestFixModulesPath(t *testing.T) {
 	modulesList := []string{
 		"test-module1/test-flavour1",
@@ -177,6 +178,7 @@ func TestFixModulesPath(t *testing.T) {
 	assert.Equal(t, expectedList, *fixedList, "Unexpected elements in the resulting list of paths")
 }
 
+// fixResourcesPath appends the correct prefix to add-ons
 func TestFixAddOnsPath(t *testing.T) {
 	modulesList := []string{
 		"test-addon1",
@@ -190,6 +192,7 @@ func TestFixAddOnsPath(t *testing.T) {
 	assert.Equal(t, expectedList, *fixedList, "Unexpected elements in the resulting list of paths")
 }
 
+// ReadKustomization creates the empty kustomization file if missing
 func TestReadKustomizationCreatePath(t *testing.T) {
 	testDirPath := t.TempDir()
 	basesPath := path.Join(testDirPath, "bases")
@@ -206,6 +209,7 @@ func TestReadKustomizationCreatePath(t *testing.T) {
 	assert.Equal(t, expectedKustomization, actualKustomization, "Unexpected file content")
 }
 
+// getKustomizationFilePath returns the correct path to the valid kustomization
 func TestGetExistingKustomizationFilePath(t *testing.T) {
 	testDirPath := t.TempDir()
 	// existing file name: kustomization.yaml
@@ -248,6 +252,7 @@ func TestGetExistingKustomizationFilePath(t *testing.T) {
 	os.Remove(expectedPaths[2])
 }
 
+// getKustomizationFilePath creates the file if missing and returns the correct path
 func TestGetMissingKustomizationPath(t *testing.T) {
 	testDirPath := t.TempDir()
 	expectedPath := path.Join(testDirPath, konfig.DefaultKustomizationFileName())

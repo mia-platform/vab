@@ -47,6 +47,7 @@ resources:
 `
 )
 
+// ClonePackages returns a list of mocked file pointers w/o errors
 func TestClonePackage(t *testing.T) {
 	logger := logger.DisabledLogger{}
 	testModule := v1alpha1.Module{
@@ -60,6 +61,7 @@ func TestClonePackage(t *testing.T) {
 	assert.NotNil(t, outputFiles, "The returned array of mocked file pointers is empty")
 }
 
+// MoveToDisk correctly moves the files from the worktree to disk
 func TestMoveToDisk(t *testing.T) {
 	logger := logger.DisabledLogger{}
 	fakeWorktree := testutils.PrepareFakeWorktree(t)
@@ -78,7 +80,8 @@ func TestMoveToDisk(t *testing.T) {
 	assert.FileExists(t, path.Join(testDirPath, "test-flavour2/file1.yaml"), "Mock file 3 does not exist on disk")
 }
 
-func TestSyncModules(t *testing.T) {
+// UpdateModules syncs new modules without errors
+func TestUpdateModules(t *testing.T) {
 	logger := logger.DisabledLogger{}
 	modules := make(map[string]v1alpha1.Module)
 	modules["test-module1/test-flavour1"] = v1alpha1.Module{
@@ -101,7 +104,8 @@ func TestSyncModules(t *testing.T) {
 	}
 }
 
-func TestSyncAddons(t *testing.T) {
+// UpdateAddons syncs new modules without errors
+func TestUpdateAddons(t *testing.T) {
 	logger := logger.DisabledLogger{}
 	addons := make(map[string]v1alpha1.AddOn)
 	addons["test-addon1"] = v1alpha1.AddOn{
@@ -118,6 +122,7 @@ func TestSyncAddons(t *testing.T) {
 	}
 }
 
+// UpdateBases correctly updates the resources list in the all-groups kustomization
 func TestUpdateBasesAllGroups(t *testing.T) {
 	testDirPath := t.TempDir()
 	targetPath := path.Join(testDirPath, utils.AllGroupsDirPath)
@@ -151,6 +156,7 @@ func TestUpdateBasesAllGroups(t *testing.T) {
 	compareFile(t, []byte(expectedKustomizationAllGroups), path.Join(targetPath, "bases", konfig.DefaultKustomizationFileName()))
 }
 
+// UpdateBases correctly updates the resources list in a cluster's kustomization
 func TestUpdateBasesCluster(t *testing.T) {
 	testDirPath := t.TempDir()
 	targetPath := path.Join(testDirPath, "groups/group-1/cluster-1")
@@ -164,6 +170,7 @@ func TestUpdateBasesCluster(t *testing.T) {
 	compareFile(t, []byte(expectedKustomization), path.Join(targetPath, "bases", konfig.DefaultKustomizationFileName()))
 }
 
+// GetClusterPath creates and returns the correct path to a missing cluster folder
 func TestCreateClusterPath(t *testing.T) {
 	testDirPath := t.TempDir()
 	clusterPath, err := GetClusterPath(clusterName, testDirPath)
@@ -174,6 +181,7 @@ func TestCreateClusterPath(t *testing.T) {
 	assert.Equal(t, expectedPath, clusterPath, "wrong path to cluster")
 }
 
+// GetClusterPath returns the correct path to an existing cluster folder
 func TestExistingClusterPath(t *testing.T) {
 	testDirPath := t.TempDir()
 	expectedPath := path.Join(testDirPath, utils.ClustersDirName, clusterName)
@@ -187,7 +195,8 @@ func TestExistingClusterPath(t *testing.T) {
 	assert.Equal(t, expectedPath, clusterPath, "wrong path to cluster")
 }
 
-func TestSyncClusters(t *testing.T) {
+// UpdateClusters correctly syncs the clusters' directories according to the config file
+func TestUpdateClusters(t *testing.T) {
 	testGroups := []v1alpha1.Group{
 		{
 			Name: "group-1",
@@ -223,6 +232,7 @@ func TestSyncClusters(t *testing.T) {
 	compareFile(t, []byte(expectedKustomization), path.Join(testDirPath, "clusters/group-2/cluster-4/bases", konfig.DefaultKustomizationFileName()))
 }
 
+// Sync correctly updates the project according to the configuration file
 func TestSync(t *testing.T) {
 	logger := logger.DisabledLogger{}
 	testDirPath := t.TempDir()
