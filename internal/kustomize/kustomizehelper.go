@@ -138,12 +138,12 @@ func getKustomizationFilePath(targetPath string) (string, error) {
 	for _, validFileName := range konfig.RecognizedKustomizationFileNames() {
 		kustomizationPath := path.Join(targetPath, validFileName)
 		_, err := os.Stat(kustomizationPath)
-		if err == nil {
-			// if there is a match, return the valid path to the kustomization file
-			return kustomizationPath, nil
-		} else if errors.Is(err, os.ErrNotExist) {
+		switch {
+		case err == nil:
+			return kustomizationPath, nil // if there is a match, return the valid path to the kustomization file
+		case errors.Is(err, os.ErrNotExist):
 			continue
-		} else {
+		default:
 			return "", fmt.Errorf("error while checking kustomization path %s: %w", kustomizationPath, err)
 		}
 	}
