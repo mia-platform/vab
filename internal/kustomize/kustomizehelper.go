@@ -25,6 +25,7 @@ import (
 	"github.com/mia-platform/vab/internal/utils"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"gopkg.in/yaml.v3"
+	"sigs.k8s.io/kustomize/api/konfig"
 	kustomize "sigs.k8s.io/kustomize/api/types"
 )
 
@@ -101,9 +102,9 @@ func ReadKustomization(targetPath string) (*kustomize.Kustomization, error) {
 		return nil, err
 	}
 	// create the kustomization file if it does not exist
-	kustomizationPath := path.Join(targetPath, utils.KustomizationFileName)
-	if err := checkIfKustomizationExists(kustomizationPath); err != nil {
-		return nil, err
+	kustomizationPath, err := getKustomizationFilePath(targetPath)
+	if err != nil {
+		return nil, fmt.Errorf("error getting kustomization file path for %s: %w", targetPath, err)
 	}
 	kustomization, err := os.ReadFile(kustomizationPath)
 	if err != nil {
@@ -131,23 +132,31 @@ func fixResourcesPath(resourcesList []string, isModulesList bool) *[]string {
 	return &fixedResourcesList
 }
 
-// checkIfKustomizationExists checks if the kustomization file exists and creates it if needed,
+// getKustomizationFilePath checks if a kustomization file exists and creates it if missing,
 // initializing the TypeMeta fields
-func checkIfKustomizationExists(targetPath string) error {
-	if _, err := os.Stat(targetPath); err != nil {
-		// initialize a new kustomization if it does not exist
-		if errors.Is(err, os.ErrNotExist) {
-			newKustomization := utils.EmptyKustomization()
-			newKustomization.TypeMeta = kustomize.TypeMeta{
-				Kind:       kustomize.KustomizationKind,
-				APIVersion: kustomize.KustomizationVersion,
-			}
-			if err := utils.WriteKustomization(newKustomization, targetPath); err != nil {
-				return fmt.Errorf("error writing kustomization file %s: %w", targetPath, err)
-			}
+func getKustomizationFilePath(targetPath string) (string, error) {
+	for _, validFileName := range konfig.RecognizedKustomizationFileNames() {
+		kustomizationPath := path.Join(targetPath, validFileName)
+		_, err := os.Stat(kustomizationPath)
+		if err == nil {
+			// if there is a match, return the valid path to the kustomization file
+			return kustomizationPath, nil
+		} else if errors.Is(err, os.ErrNotExist) {
+			continue
 		} else {
-			return fmt.Errorf("error accessing kustomization file %s: %w", targetPath, err)
+			return "", fmt.Errorf("error while checking kustomization path %s: %w", kustomizationPath, err)
 		}
 	}
-	return nil
+	// If the execution gets here, it means that no kustomization file with a valid name
+	// was found. A new kustomization file is created (with initialized TypeMeta)
+	kustomizationPath := path.Join(targetPath, konfig.DefaultKustomizationFileName())
+	newKustomization := utils.EmptyKustomization()
+	newKustomization.TypeMeta = kustomize.TypeMeta{
+		Kind:       kustomize.KustomizationKind,
+		APIVersion: kustomize.KustomizationVersion,
+	}
+	if err := utils.WriteKustomization(newKustomization, kustomizationPath); err != nil {
+		return "", fmt.Errorf("error writing kustomization file %s: %w", targetPath, err)
+	}
+	return kustomizationPath, nil
 }

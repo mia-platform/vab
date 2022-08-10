@@ -23,6 +23,7 @@ import (
 	"github.com/mia-platform/vab/internal/utils"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"github.com/stretchr/testify/assert"
+	"sigs.k8s.io/kustomize/api/konfig"
 	kustomize "sigs.k8s.io/kustomize/api/types"
 )
 
@@ -191,14 +192,72 @@ func TestFixAddOnsPath(t *testing.T) {
 
 func TestReadKustomizationCreatePath(t *testing.T) {
 	testDirPath := t.TempDir()
-	kustomizationPath := path.Join(testDirPath, "bases")
-	kustomization, err := ReadKustomization(kustomizationPath)
+	basesPath := path.Join(testDirPath, "bases")
+	kustomization, err := ReadKustomization(basesPath)
 	if !assert.NoError(t, err) {
 		return
 	}
 	expectedKustomizationObject := utils.EmptyKustomization()
+	kustomizationFilePath := path.Join(basesPath, konfig.DefaultKustomizationFileName())
 	assert.Equal(t, expectedKustomizationObject, *kustomization, "Unexpected kustomization object")
-	actualKustomization, _ := os.ReadFile(path.Join(kustomizationPath, utils.KustomizationFileName))
+	assert.FileExists(t, kustomizationFilePath, "Missing kustomization file")
+	actualKustomization, _ := os.ReadFile(kustomizationFilePath)
+	expectedKustomization, _ := os.ReadFile(testutils.GetTestFile("utils", "empty_kustomization.yaml"))
+	assert.Equal(t, expectedKustomization, actualKustomization, "Unexpected file content")
+}
+
+func TestGetExistingKustomizationFilePath(t *testing.T) {
+	testDirPath := t.TempDir()
+	// existing file name: kustomization.yaml
+	expectedPaths := []string{
+		path.Join(testDirPath, konfig.RecognizedKustomizationFileNames()[0]),
+		path.Join(testDirPath, konfig.RecognizedKustomizationFileNames()[1]),
+		path.Join(testDirPath, konfig.RecognizedKustomizationFileNames()[2]),
+	}
+	_, err := os.Create(expectedPaths[0])
+	if err != nil {
+		return
+	}
+	kustomizationPath, err := getKustomizationFilePath(testDirPath)
+	if !assert.NoError(t, err) {
+		return
+	}
+	assert.Equal(t, expectedPaths[0], kustomizationPath, "Unexpected kustomization path")
+	os.Remove(expectedPaths[0])
+	// existing file name: kustomization.yml
+	_, err = os.Create(expectedPaths[1])
+	if err != nil {
+		return
+	}
+	kustomizationPath, err = getKustomizationFilePath(testDirPath)
+	if !assert.NoError(t, err) {
+		return
+	}
+	assert.Equal(t, expectedPaths[1], kustomizationPath, "Unexpected kustomization path")
+	os.Remove(expectedPaths[1])
+	// existing file name: Kustomization
+	_, err = os.Create(expectedPaths[2])
+	if err != nil {
+		return
+	}
+	kustomizationPath, err = getKustomizationFilePath(testDirPath)
+	if !assert.NoError(t, err) {
+		return
+	}
+	assert.Equal(t, expectedPaths[2], kustomizationPath, "Unexpected kustomization path")
+	os.Remove(expectedPaths[2])
+}
+
+func TestGetMissingKustomizationPath(t *testing.T) {
+	testDirPath := t.TempDir()
+	expectedPath := path.Join(testDirPath, konfig.DefaultKustomizationFileName())
+	kustomizationPath, err := getKustomizationFilePath(testDirPath)
+	if assert.NoError(t, err) {
+		return
+	}
+	assert.Equal(t, expectedPath, kustomizationPath, "Unexpected kustomization path")
+	assert.FileExists(t, kustomizationPath, "Missing kustomization file")
+	actualKustomization, _ := os.ReadFile(path.Join(kustomizationPath, konfig.DefaultKustomizationFileName()))
 	expectedKustomization, _ := os.ReadFile(testutils.GetTestFile("utils", "empty_kustomization.yaml"))
 	assert.Equal(t, expectedKustomization, actualKustomization, "Unexpected file content")
 }
