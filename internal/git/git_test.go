@@ -137,3 +137,17 @@ func TestFilterError(t *testing.T) {
 	assert.ErrorIs(t, err, os.ErrNotExist)
 	assert.Nil(t, files)
 }
+
+func TestGetFilesForPackage(t *testing.T) {
+	logger := logger.DisabledLogger{}
+	moduleName := "test-module1/test-flavour1"
+	module := v1alpha1.Module{
+		Version: "1.0.0",
+	}
+
+	files, err := GetFilesForPackage(logger, testutils.FakeFilesGetter{Testing: t}, moduleName, module)
+	if !assert.NoError(t, err) {
+		return
+	}
+	assert.NotNil(t, files, "Nil output file references")
+}
