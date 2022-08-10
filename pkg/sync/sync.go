@@ -65,12 +65,11 @@ func UpdateModules(logger logger.LogInterface, modules map[string]v1alpha1.Modul
 		}
 		files, err := ClonePackages(logger, name, v, filesGetter)
 		if err != nil {
-			return err
+			return fmt.Errorf("error cloning packages for module %s: %w", name, err)
 		}
 		modulePath := path.Join(basePath, utils.VendorsModulesPath, name)
-		err = MoveToDisk(logger, files, name, modulePath)
-		if err != nil {
-			return err
+		if err := MoveToDisk(logger, files, name, modulePath); err != nil {
+			return fmt.Errorf("error moving packages to disk for module %s: %w", name, err)
 		}
 	}
 	return nil
@@ -85,12 +84,11 @@ func UpdateAddons(logger logger.LogInterface, addons map[string]v1alpha1.AddOn, 
 		}
 		files, err := ClonePackages(logger, name, v, filesGetter)
 		if err != nil {
-			return err
+			return fmt.Errorf("error cloning packages for add-on %s: %w", name, err)
 		}
 		addonPath := path.Join(basePath, utils.VendorsAddonsPath, name)
-		err = MoveToDisk(logger, files, name, addonPath)
-		if err != nil {
-			return err
+		if err := MoveToDisk(logger, files, name, addonPath); err != nil {
+			return fmt.Errorf("error moving packages to disk for add-on %s: %w", name, err)
 		}
 	}
 	return nil
