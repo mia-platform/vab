@@ -25,6 +25,7 @@ import (
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"github.com/mia-platform/vab/pkg/logger"
 	"github.com/stretchr/testify/assert"
+	"sigs.k8s.io/kustomize/api/konfig"
 )
 
 const (
@@ -147,7 +148,7 @@ func TestUpdateBasesAllGroups(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	compareFile(t, []byte(expectedKustomizationAllGroups), path.Join(targetPath, "bases", utils.KustomizationFileName))
+	compareFile(t, []byte(expectedKustomizationAllGroups), path.Join(targetPath, "bases", konfig.DefaultKustomizationFileName()))
 }
 
 func TestUpdateBasesCluster(t *testing.T) {
@@ -160,7 +161,7 @@ func TestUpdateBasesCluster(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	compareFile(t, []byte(expectedKustomization), path.Join(targetPath, "bases", utils.KustomizationFileName))
+	compareFile(t, []byte(expectedKustomization), path.Join(targetPath, "bases", konfig.DefaultKustomizationFileName()))
 }
 
 func TestCreateClusterPath(t *testing.T) {
@@ -216,10 +217,10 @@ func TestSyncClusters(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	compareFile(t, []byte(expectedKustomization), path.Join(testDirPath, "clusters/group-1/cluster-1/bases", utils.KustomizationFileName))
-	compareFile(t, []byte(expectedKustomization), path.Join(testDirPath, "clusters/group-1/cluster-2/bases", utils.KustomizationFileName))
-	compareFile(t, []byte(expectedKustomization), path.Join(testDirPath, "clusters/group-2/cluster-3/bases", utils.KustomizationFileName))
-	compareFile(t, []byte(expectedKustomization), path.Join(testDirPath, "clusters/group-2/cluster-4/bases", utils.KustomizationFileName))
+	compareFile(t, []byte(expectedKustomization), path.Join(testDirPath, "clusters/group-1/cluster-1/bases", konfig.DefaultKustomizationFileName()))
+	compareFile(t, []byte(expectedKustomization), path.Join(testDirPath, "clusters/group-1/cluster-2/bases", konfig.DefaultKustomizationFileName()))
+	compareFile(t, []byte(expectedKustomization), path.Join(testDirPath, "clusters/group-2/cluster-3/bases", konfig.DefaultKustomizationFileName()))
+	compareFile(t, []byte(expectedKustomization), path.Join(testDirPath, "clusters/group-2/cluster-4/bases", konfig.DefaultKustomizationFileName()))
 }
 
 func TestSync(t *testing.T) {
@@ -230,8 +231,8 @@ func TestSync(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	compareFile(t, []byte(expectedKustomization), path.Join(testDirPath, "clusters/group-1/cluster-1/bases", utils.KustomizationFileName))
-	compareFile(t, []byte(expectedKustomization), path.Join(testDirPath, "clusters/group-1/cluster-2/bases", utils.KustomizationFileName))
-	compareFile(t, []byte(expectedKustomization), path.Join(testDirPath, "clusters/group-2/cluster-3/bases", utils.KustomizationFileName))
-	compareFile(t, []byte(expectedKustomization), path.Join(testDirPath, "clusters/group-2/cluster-4/bases", utils.KustomizationFileName))
+	compareFile(t, []byte(expectedKustomization), path.Join(testDirPath, "clusters/group-1/cluster-1/bases", konfig.DefaultKustomizationFileName()))
+	compareFile(t, []byte(expectedKustomization), path.Join(testDirPath, "clusters/group-1/cluster-2/bases", konfig.DefaultKustomizationFileName()))
+	compareFile(t, []byte(expectedKustomization), path.Join(testDirPath, "clusters/group-2/cluster-3/bases", konfig.DefaultKustomizationFileName()))
+	compareFile(t, []byte(expectedKustomization), path.Join(testDirPath, "clusters/group-2/cluster-4/bases", konfig.DefaultKustomizationFileName()))
 }

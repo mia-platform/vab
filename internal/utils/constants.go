@@ -16,7 +16,6 @@ package utils
 
 const (
 	DefaultConfigFilename = "config.yaml"
-	KustomizationFileName = "kustomization.yaml"
 	ClustersDirName       = "clusters"
 	AllGroupsDirPath      = "clusters/all-groups"
 	VendorsModulesPath    = "vendors/modules"
