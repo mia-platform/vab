@@ -95,25 +95,18 @@ func getAddOnsList(addons *map[string]v1alpha1.AddOn) []string {
 
 // ReadKustomization reads a kustomization file given its path
 func ReadKustomization(targetPath string) (*kustomize.Kustomization, error) {
-	// create the kustomization file if it does not exist
-	_, err := os.Stat(targetPath)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			os.MkdirAll(targetPath, os.ModePerm)
-			utils.WriteKustomization(utils.EmptyKustomization(), targetPath)
-		} else {
-			return nil, fmt.Errorf("error accessing kustomization file %s: %w", targetPath, err)
-		}
+	// create the path to the kustomization file if it does not exist
+	// useful when creating clusters' sub-directories
+	if err := utils.ValidatePath(targetPath); err != nil {
+		return nil, err
 	}
-	// read the kustomization file and return its content
+	// create the kustomization file if it does not exist
 	kustomizationPath := path.Join(targetPath, utils.KustomizationFileName)
+	if err := checkIfKustomizationExists(kustomizationPath); err != nil {
+		return nil, err
+	}
 	kustomization, err := os.ReadFile(kustomizationPath)
 	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			utils.WriteKustomization(utils.EmptyKustomization(), targetPath)
-		} else {
-			return nil, fmt.Errorf("error accessing kustomization file %s: %w", kustomizationPath, err)
-		}
 		return nil, fmt.Errorf("error reading kustomization file %s: %w", kustomizationPath, err)
 	}
 	output := &kustomize.Kustomization{}
@@ -136,4 +129,25 @@ func fixResourcesPath(resourcesList []string, isModulesList bool) *[]string {
 		}
 	}
 	return &fixedResourcesList
+}
+
+// checkIfKustomizationExists checks if the kustomization file exists and creates it if needed,
+// initializing the TypeMeta fields
+func checkIfKustomizationExists(targetPath string) error {
+	if _, err := os.Stat(targetPath); err != nil {
+		// initialize a new kustomization if it does not exist
+		if errors.Is(err, os.ErrNotExist) {
+			newKustomization := utils.EmptyKustomization()
+			newKustomization.TypeMeta = kustomize.TypeMeta{
+				Kind:       kustomize.KustomizationKind,
+				APIVersion: kustomize.KustomizationVersion,
+			}
+			if err := utils.WriteKustomization(newKustomization, targetPath); err != nil {
+				return fmt.Errorf("error writing kustomization file %s: %w", targetPath, err)
+			}
+		} else {
+			return fmt.Errorf("error accessing kustomization file %s: %w", targetPath, err)
+		}
+	}
+	return nil
 }

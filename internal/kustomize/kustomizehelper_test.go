@@ -15,8 +15,12 @@
 package kustomizehelper
 
 import (
+	"os"
+	"path"
 	"testing"
 
+	"github.com/mia-platform/vab/internal/testutils"
+	"github.com/mia-platform/vab/internal/utils"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	kustomize "sigs.k8s.io/kustomize/api/types"
@@ -155,4 +159,46 @@ func TestSyncExistingKustomization(t *testing.T) {
 	}
 
 	assert.Equal(t, expectedResources, finalKustomization.Resources, "Unexpected resources in Kustomization.")
+}
+
+func TestFixModulesPath(t *testing.T) {
+	modulesList := []string{
+		"test-module1/test-flavour1",
+		"test-module2/test-flavour2",
+		"test-module3/test-flavour3",
+	}
+	fixedList := fixResourcesPath(modulesList, true)
+	expectedList := []string{
+		"vendors/modules/test-module1/test-flavour1",
+		"vendors/modules/test-module2/test-flavour2",
+		"vendors/modules/test-module3/test-flavour3",
+	}
+	assert.Equal(t, expectedList, *fixedList, "Unexpected elements in the resulting list of paths")
+}
+
+func TestFixAddOnsPath(t *testing.T) {
+	modulesList := []string{
+		"test-addon1",
+		"test-addon2",
+	}
+	fixedList := fixResourcesPath(modulesList, false)
+	expectedList := []string{
+		"vendors/add-ons/test-addon1",
+		"vendors/add-ons/test-addon2",
+	}
+	assert.Equal(t, expectedList, *fixedList, "Unexpected elements in the resulting list of paths")
+}
+
+func TestReadKustomizationCreatePath(t *testing.T) {
+	testDirPath := t.TempDir()
+	kustomizationPath := path.Join(testDirPath, "bases")
+	kustomization, err := ReadKustomization(kustomizationPath)
+	if !assert.NoError(t, err) {
+		return
+	}
+	expectedKustomizationObject := utils.EmptyKustomization()
+	assert.Equal(t, expectedKustomizationObject, *kustomization, "Unexpected kustomization object")
+	actualKustomization, _ := os.ReadFile(path.Join(kustomizationPath, utils.KustomizationFileName))
+	expectedKustomization, _ := os.ReadFile(testutils.GetTestFile("utils", "empty_kustomization.yaml"))
+	assert.Equal(t, expectedKustomization, actualKustomization, "Unexpected file content")
 }
