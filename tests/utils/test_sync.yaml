@@ -1,0 +1,25 @@
+kind: ClustersConfiguration
+apiVersion: vab.mia-platform.eu/v1alpha1
+name: empty-test
+spec:
+  modules:
+    test-module1/test-flavour1:
+      version: 1.0.0
+      weight: 2
+    test-module2/test-flavour1:
+      version: 1.0.0
+      weight: 1
+  addOns:
+    test-addon1:
+      version: 1.0.0
+    test-addon2:
+      version: 1.0.0
+  groups:
+  - name: group-1
+    clusters:
+    - name: cluster-1
+    - name: cluster-2
+  - name: group-2
+    clusters:
+    - name: cluster-3
+    - name: cluster-4

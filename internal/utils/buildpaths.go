@@ -16,6 +16,8 @@ package utils
 
 import (
 	"errors"
+	"fmt"
+	"os"
 	"path"
 
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
@@ -57,4 +59,18 @@ func BuildPaths(configPath string, groupName string, clusterName string) ([]stri
 	}
 
 	return targetPaths, nil
+}
+
+// ValidatePath checks if the path exists and creates it eventually
+func ValidatePath(targetPath string) error {
+	if _, err := os.Stat(targetPath); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			if err := os.MkdirAll(targetPath, os.ModePerm); err != nil {
+				return fmt.Errorf("error creating directories for path %s: %w", targetPath, err)
+			}
+		} else {
+			return fmt.Errorf("error accessing path %s: %w", targetPath, err)
+		}
+	}
+	return nil
 }
