@@ -1,6 +1,6 @@
 kind: ClustersConfiguration
 apiVersion: vab.mia-platform.eu/v1alpha1
-name: empty-test
+name: basic-sync
 spec:
   modules:
     test-module1/test-flavour1:

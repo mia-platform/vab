@@ -20,31 +20,13 @@ import (
 	"testing"
 
 	"github.com/mia-platform/vab/internal/git"
+	kustomizehelper "github.com/mia-platform/vab/internal/kustomize"
 	"github.com/mia-platform/vab/internal/testutils"
 	"github.com/mia-platform/vab/internal/utils"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"github.com/mia-platform/vab/pkg/logger"
 	"github.com/stretchr/testify/assert"
 	"sigs.k8s.io/kustomize/api/konfig"
-)
-
-const (
-	testPackageName                = "test-module1/test-flavour1"
-	clusterName                    = "test-cluster"
-	expectedKustomizationAllGroups = `kind: Kustomization
-apiVersion: kustomize.config.k8s.io/v1beta1
-resources:
-  - vendors/modules/test-module2/test-flavour2
-  - vendors/modules/test-module1/test-flavour1
-  - vendors/modules/test-module3/test-flavour3
-  - vendors/add-ons/test-addon1
-  - vendors/add-ons/test-addon2
-`
-	expectedKustomization = `kind: Kustomization
-apiVersion: kustomize.config.k8s.io/v1beta1
-resources:
-  - ../../../all-groups
-`
 )
 
 // ClonePackages returns a list of mocked file pointers w/o errors
@@ -54,7 +36,7 @@ func TestClonePackage(t *testing.T) {
 		Version: "1.0.0",
 		Weight:  2,
 	}
-	outputFiles, err := ClonePackages(logger, testPackageName, testModule, testutils.FakeFilesGetter{Testing: t})
+	outputFiles, err := ClonePackages(logger, "test-module1/test-flavour1", testModule, testutils.FakeFilesGetter{Testing: t})
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -68,16 +50,16 @@ func TestMoveToDisk(t *testing.T) {
 	input := []*git.File{
 		git.NewFile("./modules/test-module1/test-flavour1/file1.yaml", "./modules/test-module1", *fakeWorktree),
 		git.NewFile("./modules/test-module1/test-flavour1/file2.yaml", "./modules/test-module1", *fakeWorktree),
-		git.NewFile("./modules/test-module1/test-flavour2/file1.yaml", "./modules/test-module1", *fakeWorktree),
+		git.NewFile("./modules/test-module1/test-flavour1/file1.yaml", "./modules/test-module1", *fakeWorktree),
 	}
 	testDirPath := t.TempDir()
-	err := MoveToDisk(logger, input, testPackageName, testDirPath)
+	err := MoveToDisk(logger, input, "test-module1/test-flavour1", testDirPath)
 	if !assert.NoError(t, err) {
 		return
 	}
 	assert.FileExists(t, path.Join(testDirPath, "test-flavour1/file1.yaml"), "Mock file 1 does not exist on disk")
 	assert.FileExists(t, path.Join(testDirPath, "test-flavour1/file2.yaml"), "Mock file 2 does not exist on disk")
-	assert.FileExists(t, path.Join(testDirPath, "test-flavour2/file1.yaml"), "Mock file 3 does not exist on disk")
+	assert.FileExists(t, path.Join(testDirPath, "test-flavour1/file1.yaml"), "Mock file 3 does not exist on disk")
 }
 
 // UpdateModules syncs new modules without errors
@@ -88,11 +70,11 @@ func TestUpdateModules(t *testing.T) {
 		Version: "1.0.0",
 		Weight:  4,
 	}
-	modules["test-module2/test-flavour2"] = v1alpha1.Module{
+	modules["test-module2/test-flavour1"] = v1alpha1.Module{
 		Version: "1.0.0",
 		Weight:  1,
 	}
-	modules["test-module3/test-flavour3"] = v1alpha1.Module{
+	modules["test-module3/test-flavour1"] = v1alpha1.Module{
 		Version: "1.0.0",
 		Weight:  3,
 		Disable: true,
@@ -104,8 +86,8 @@ func TestUpdateModules(t *testing.T) {
 	}
 }
 
-// UpdateAddons syncs new modules without errors
-func TestUpdateAddons(t *testing.T) {
+// UpdateAddOns syncs new modules without errors
+func TestUpdateAddOns(t *testing.T) {
 	logger := logger.DisabledLogger{}
 	addons := make(map[string]v1alpha1.AddOn)
 	addons["test-addon1"] = v1alpha1.AddOn{
@@ -116,7 +98,7 @@ func TestUpdateAddons(t *testing.T) {
 		Disable: true,
 	}
 	testDirPath := t.TempDir()
-	err := UpdateAddons(logger, addons, testDirPath, testutils.FakeFilesGetter{Testing: t})
+	err := UpdateAddOns(logger, addons, testDirPath, testutils.FakeFilesGetter{Testing: t})
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -130,11 +112,11 @@ func TestUpdateBasesAllGroups(t *testing.T) {
 		return
 	}
 	modules := make(map[string]v1alpha1.Module)
-	modules["test-module3/test-flavour3"] = v1alpha1.Module{
+	modules["test-module3/test-flavour1"] = v1alpha1.Module{
 		Version: "1.0.0",
 		Weight:  4,
 	}
-	modules["test-module2/test-flavour2"] = v1alpha1.Module{
+	modules["test-module2/test-flavour1"] = v1alpha1.Module{
 		Version: "1.0.0",
 		Weight:  1,
 	}
@@ -149,50 +131,136 @@ func TestUpdateBasesAllGroups(t *testing.T) {
 	addons["test-addon2"] = v1alpha1.AddOn{
 		Version: "1.0.0",
 	}
-	err := UpdateBases(targetPath, modules, addons)
+	config := v1alpha1.ClustersConfiguration{}
+	config.Spec.Modules = modules
+	config.Spec.AddOns = addons
+	err := UpdateBases(targetPath, modules, addons, &config)
 	if !assert.NoError(t, err) {
 		return
 	}
-	compareFile(t, []byte(expectedKustomizationAllGroups), path.Join(targetPath, "bases", konfig.DefaultKustomizationFileName()))
+	expectedKustomization, err := os.ReadFile(testutils.GetTestFile("sync", "outputs", "all_groups.yaml"))
+	if !assert.NoError(t, err) {
+		return
+	}
+	compareFile(t, []byte(expectedKustomization), path.Join(targetPath, utils.BasesDir, konfig.DefaultKustomizationFileName()))
 }
 
-// UpdateBases correctly updates the resources list in a cluster's kustomization
+// UpdateBases correctly initializes the resources list in a cluster's kustomization
 func TestUpdateBasesCluster(t *testing.T) {
 	testDirPath := t.TempDir()
 	targetPath := path.Join(testDirPath, "groups/group-1/cluster-1")
 	if err := os.MkdirAll(targetPath, os.ModePerm); err != nil {
 		return
 	}
-	err := UpdateBases(targetPath, nil, nil)
+	config := v1alpha1.ClustersConfiguration{}
+	err := UpdateBases(targetPath, nil, nil, &config)
 	if !assert.NoError(t, err) {
 		return
 	}
-	compareFile(t, []byte(expectedKustomization), path.Join(targetPath, "bases", konfig.DefaultKustomizationFileName()))
+	expectedKustomization, err := os.ReadFile(testutils.GetTestFile("sync", "outputs", "default_import.yaml"))
+	if !assert.NoError(t, err) {
+		return
+	}
+	compareFile(t, []byte(expectedKustomization), path.Join(targetPath, utils.BasesDir, konfig.DefaultKustomizationFileName()))
 }
 
-// GetClusterPath creates and returns the correct path to a missing cluster folder
+// CheckClusterPath creates and returns the correct path to a missing cluster folder
+// and creates the missing kustomization file
 func TestCreateClusterPath(t *testing.T) {
 	testDirPath := t.TempDir()
-	clusterPath, err := GetClusterPath(clusterName, testDirPath)
+	clusterPath, err := CheckClusterPath("test-cluster", testDirPath)
 	if !assert.NoError(t, err) {
 		return
 	}
-	expectedPath := path.Join(testDirPath, utils.ClustersDirName, clusterName)
-	assert.Equal(t, expectedPath, clusterPath, "wrong path to cluster")
+	expectedPath := path.Join(testDirPath, utils.ClustersDirName, "test-cluster")
+	assert.Equal(t, expectedPath, clusterPath, "Wrong path to cluster")
+	assert.DirExists(t, clusterPath, "The cluster directory does not exist")
+	kustomizationPath := path.Join(clusterPath, konfig.DefaultKustomizationFileName())
+	assert.FileExists(t, kustomizationPath, "The kustomization file does not exist")
+	expectedKustomization, err := os.ReadFile(testutils.GetTestFile("sync", "misc", "simple_cluster_kustomization.yaml"))
+	if !assert.NoError(t, err) {
+		return
+	}
+	compareFile(t, []byte(expectedKustomization), kustomizationPath)
 }
 
-// GetClusterPath returns the correct path to an existing cluster folder
+// CheckClusterPath returns the correct path to an existing cluster folder
+// and creates the missing kustomization file
 func TestExistingClusterPath(t *testing.T) {
 	testDirPath := t.TempDir()
-	expectedPath := path.Join(testDirPath, utils.ClustersDirName, clusterName)
+	expectedPath := path.Join(testDirPath, utils.ClustersDirName, "test-cluster")
 	if err := os.MkdirAll(expectedPath, os.ModePerm); err != nil {
 		return
 	}
-	clusterPath, err := GetClusterPath(clusterName, testDirPath)
+	clusterPath, err := CheckClusterPath("test-cluster", testDirPath)
 	if !assert.NoError(t, err) {
 		return
 	}
-	assert.Equal(t, expectedPath, clusterPath, "wrong path to cluster")
+	assert.Equal(t, expectedPath, clusterPath, "Wrong path to cluster")
+	kustomizationPath := path.Join(clusterPath, konfig.DefaultKustomizationFileName())
+	assert.FileExists(t, kustomizationPath, "The kustomization file does not exist")
+	expectedKustomization, err := os.ReadFile(testutils.GetTestFile("sync", "misc", "simple_cluster_kustomization.yaml"))
+	if !assert.NoError(t, err) {
+		return
+	}
+	compareFile(t, []byte(expectedKustomization), kustomizationPath)
+}
+
+// CheckClusterPath returns the correct path to an existing cluster folder
+// and does not alter the existing (and well-formed) kustomization file
+func TestExistingClusterPathWithKustomization(t *testing.T) {
+	testDirPath := t.TempDir()
+	expectedPath := path.Join(testDirPath, utils.ClustersDirName, "test-cluster")
+	if err := os.MkdirAll(expectedPath, os.ModePerm); err != nil {
+		return
+	}
+	kustomizationPath := path.Join(expectedPath, konfig.DefaultKustomizationFileName())
+	expectedKustomization, err := os.ReadFile(testutils.GetTestFile("sync", "misc", "cluster_kustomization.yaml"))
+	if !assert.NoError(t, err) {
+		return
+	}
+	err = os.WriteFile(kustomizationPath, []byte(expectedKustomization), os.ModePerm)
+	if !assert.NoError(t, err) {
+		return
+	}
+	clusterPath, err := CheckClusterPath("test-cluster", testDirPath)
+	if !assert.NoError(t, err) {
+		return
+	}
+	assert.Equal(t, expectedPath, clusterPath, "Wrong path to cluster")
+	compareFile(t, []byte(expectedKustomization), kustomizationPath)
+}
+
+// CheckClusterPath returns the correct path to an existing cluster folder
+// and prepends "bases" to the kustomization resources when missing
+func TestExistingClusterPathMissingBases(t *testing.T) {
+	testDirPath := t.TempDir()
+	expectedPath := path.Join(testDirPath, utils.ClustersDirName, "test-cluster")
+	if err := os.MkdirAll(expectedPath, os.ModePerm); err != nil {
+		return
+	}
+	// create a kustomization file without "bases" among the resources
+	kustomizationPath := path.Join(expectedPath, konfig.DefaultKustomizationFileName())
+	kustomization, err := os.ReadFile(testutils.GetTestFile("sync", "misc", "missing_bases.yaml"))
+	if !assert.NoError(t, err) {
+		return
+	}
+	err = os.WriteFile(kustomizationPath, []byte(kustomization), os.ModePerm)
+	if !assert.NoError(t, err) {
+		return
+	}
+	clusterPath, err := CheckClusterPath("test-cluster", testDirPath)
+	if !assert.NoError(t, err) {
+		return
+	}
+	assert.Equal(t, expectedPath, clusterPath, "Wrong path to cluster")
+	// read the resulting kustomization file and check if the "bases" directory was added to the resources
+	resultingKustomization, err := kustomizehelper.ReadKustomization(expectedPath)
+	if !assert.NoError(t, err) {
+		return
+	}
+	expectedResources := []string{"bases", "deployments", "services"}
+	assert.Equal(t, expectedResources, resultingKustomization.Resources, "Unexpected kustomization resources")
 }
 
 // UpdateClusters correctly syncs the clusters' directories according to the config file
@@ -221,8 +289,14 @@ func TestUpdateClusters(t *testing.T) {
 			},
 		},
 	}
+	config := v1alpha1.ClustersConfiguration{}
+	config.Spec.Groups = testGroups
 	testDirPath := t.TempDir()
-	err := UpdateClusters(&testGroups, testDirPath)
+	err := UpdateClusters(&config, testDirPath)
+	if !assert.NoError(t, err) {
+		return
+	}
+	expectedKustomization, err := os.ReadFile(testutils.GetTestFile("sync", "outputs", "default_import.yaml"))
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -232,12 +306,114 @@ func TestUpdateClusters(t *testing.T) {
 	compareFile(t, []byte(expectedKustomization), path.Join(testDirPath, "clusters/group-2/cluster-4/bases", konfig.DefaultKustomizationFileName()))
 }
 
-// Sync correctly updates the project according to the configuration file
-func TestSync(t *testing.T) {
+// UpdateClusterModules returns the correct map of modules (w/o overrides)
+func TestUpdateClusterModulesNoOverrides(t *testing.T) {
+	defaultModules := make(map[string]v1alpha1.Module)
+	defaultModules["test-module3/test-flavour1"] = v1alpha1.Module{
+		Version: "1.0.0",
+		Weight:  4,
+	}
+	defaultModules["test-module2/test-flavour1"] = v1alpha1.Module{
+		Version: "1.0.0",
+		Weight:  1,
+	}
+	defaultModules["test-module1/test-flavour1"] = v1alpha1.Module{
+		Version: "1.0.0",
+		Weight:  3,
+	}
+	overrides := make(map[string]v1alpha1.Module)
+	output := UpdateClusterModules(overrides, defaultModules)
+	assert.Nil(t, output, "The output should be nil")
+}
+
+// UpdateClusterModules returns the correct map of modules (w/ overrides)
+func TestUpdateClusterModules(t *testing.T) {
+	defaultModules := make(map[string]v1alpha1.Module)
+	defaultModules["test-module3/test-flavour1"] = v1alpha1.Module{
+		Version: "1.0.0",
+		Weight:  4,
+	}
+	defaultModules["test-module2/test-flavour1"] = v1alpha1.Module{
+		Version: "1.0.0",
+		Weight:  1,
+	}
+	defaultModules["test-module1/test-flavour1"] = v1alpha1.Module{
+		Version: "1.0.0",
+		Weight:  3,
+	}
+	overrides := make(map[string]v1alpha1.Module)
+	overrides["test-module3/test-flavour1"] = v1alpha1.Module{
+		Version: "1.0.1",
+		Weight:  4,
+	}
+	overrides["test-module2/test-flavour1"] = v1alpha1.Module{
+		Disable: true,
+	}
+	overrides["test-module1/test-flavour1"] = v1alpha1.Module{
+		Version: "1.0.0",
+		Weight:  1,
+	}
+	output := UpdateClusterModules(overrides, defaultModules)
+	expectedOutput := make(map[string]v1alpha1.Module)
+	expectedOutput["test-module1/test-flavour1"] = v1alpha1.Module{
+		Version: "1.0.0",
+		Weight:  1,
+	}
+	expectedOutput["test-module3/test-flavour1"] = v1alpha1.Module{
+		Version: "1.0.1",
+		Weight:  4,
+	}
+	assert.Equal(t, expectedOutput, output, "Unexpected map of modules")
+}
+
+// UpdateClusterAddOns returns the correct map of add-ons (w/o overrides)
+func TestUpdateClusterAddOnsNoOverrides(t *testing.T) {
+	defaultAddOns := make(map[string]v1alpha1.AddOn)
+	defaultAddOns["test-addon1"] = v1alpha1.AddOn{
+		Version: "1.0.0",
+	}
+	defaultAddOns["test-addon2"] = v1alpha1.AddOn{
+		Version: "1.0.0",
+	}
+	overrides := make(map[string]v1alpha1.AddOn)
+	output := UpdateClusterAddOns(overrides, defaultAddOns)
+	assert.Nil(t, output, "The output should be nil")
+}
+
+// UpdateClusterAddOns returns the correct map of add-ons (w/ overrides)
+func TestUpdateClusterAddOns(t *testing.T) {
+	defaultAddOns := make(map[string]v1alpha1.AddOn)
+	defaultAddOns["test-addon1"] = v1alpha1.AddOn{
+		Version: "1.0.0",
+	}
+	defaultAddOns["test-addon2"] = v1alpha1.AddOn{
+		Version: "1.0.0",
+	}
+	overrides := make(map[string]v1alpha1.AddOn)
+	overrides["test-addon1"] = v1alpha1.AddOn{
+		Version: "1.0.1",
+	}
+	overrides["test-addon2"] = v1alpha1.AddOn{
+		Disable: true,
+	}
+	output := UpdateClusterAddOns(overrides, defaultAddOns)
+	expectedOutput := make(map[string]v1alpha1.AddOn)
+	expectedOutput["test-addon1"] = v1alpha1.AddOn{
+		Version: "1.0.1",
+	}
+	assert.Equal(t, expectedOutput, output, "Unexpected map of add-ons")
+}
+
+// Sync correctly updates the project according to the configuration file (w/o overrides)
+func TestSyncNoOverrides(t *testing.T) {
 	logger := logger.DisabledLogger{}
 	testDirPath := t.TempDir()
-	configPath := testutils.GetTestFile("utils", "test_sync.yaml")
+	configPath := testutils.GetTestFile("sync", "inputs", "basic.yaml")
 	err := Sync(logger, testutils.FakeFilesGetter{Testing: t}, configPath, testDirPath)
+	if !assert.NoError(t, err) {
+		return
+	}
+	expectedKustomization, err := os.ReadFile(testutils.GetTestFile("sync", "outputs", "default_import.yaml"))
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -245,4 +421,46 @@ func TestSync(t *testing.T) {
 	compareFile(t, []byte(expectedKustomization), path.Join(testDirPath, "clusters/group-1/cluster-2/bases", konfig.DefaultKustomizationFileName()))
 	compareFile(t, []byte(expectedKustomization), path.Join(testDirPath, "clusters/group-2/cluster-3/bases", konfig.DefaultKustomizationFileName()))
 	compareFile(t, []byte(expectedKustomization), path.Join(testDirPath, "clusters/group-2/cluster-4/bases", konfig.DefaultKustomizationFileName()))
+}
+
+// Sync correctly updates the project according to the configuration file (w/ overrides)
+func TestSync(t *testing.T) {
+	logger := logger.DisabledLogger{}
+	testDirPath := t.TempDir()
+	configPath := testutils.GetTestFile("sync", "inputs", "advanced.yaml")
+	config, err := utils.ReadConfig(configPath)
+	if !assert.NoError(t, err) {
+		return
+	}
+	defaultSpec := *config.Spec.DeepCopy()
+	err = Sync(logger, testutils.FakeFilesGetter{Testing: t}, configPath, testDirPath)
+	if !assert.NoError(t, err) {
+		return
+	}
+	assert.Equal(t, defaultSpec, config.Spec, "The config spec has changed: EXPECTED %+v\n ACTUAL %+v\n", defaultSpec, config.Spec)
+	allGroups, err := os.ReadFile(testutils.GetTestFile("sync", "outputs", "all_groups.yaml"))
+	if !assert.NoError(t, err) {
+		return
+	}
+	compareFile(t, []byte(allGroups), path.Join(testDirPath, utils.AllGroupsDirPath, utils.BasesDir, konfig.DefaultKustomizationFileName()))
+	cluster1, err := os.ReadFile(testutils.GetTestFile("sync", "outputs", "advanced_g1c1.yaml"))
+	if !assert.NoError(t, err) {
+		return
+	}
+	compareFile(t, []byte(cluster1), path.Join(testDirPath, "clusters/group-1/cluster-1/bases", konfig.DefaultKustomizationFileName()))
+	cluster2, err := os.ReadFile(testutils.GetTestFile("sync", "outputs", "advanced_g1c2.yaml"))
+	if !assert.NoError(t, err) {
+		return
+	}
+	compareFile(t, []byte(cluster2), path.Join(testDirPath, "clusters/group-1/cluster-2/bases", konfig.DefaultKustomizationFileName()))
+	cluster3, err := os.ReadFile(testutils.GetTestFile("sync", "outputs", "advanced_g2c3.yaml"))
+	if !assert.NoError(t, err) {
+		return
+	}
+	compareFile(t, []byte(cluster3), path.Join(testDirPath, "clusters/group-2/cluster-3/bases", konfig.DefaultKustomizationFileName()))
+	cluster4, err := os.ReadFile(testutils.GetTestFile("sync", "outputs", "default_import.yaml"))
+	if !assert.NoError(t, err) {
+		return
+	}
+	compareFile(t, []byte(cluster4), path.Join(testDirPath, "clusters/group-2/cluster-4/bases", konfig.DefaultKustomizationFileName()))
 }

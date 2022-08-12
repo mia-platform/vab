@@ -19,5 +19,7 @@ const (
 	ClustersDirName       = "clusters"
 	AllGroupsDirPath      = "clusters/all-groups"
 	VendorsModulesPath    = "vendors/modules"
-	VendorsAddonsPath     = "vendors/add-ons"
+	VendorsAddOnsPath     = "vendors/add-ons"
+	BasesDir              = "bases"
+	CustomResourcesDir    = "custom-resources"
 )

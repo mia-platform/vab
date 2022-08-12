@@ -16,6 +16,7 @@ package init
 
 import (
 	"errors"
+	"fmt"
 	"io/fs"
 	"os"
 	"path"
@@ -43,8 +44,8 @@ func NewProject(logger logger.LogInterface, currentPath string, optionalName str
 		return err
 	}
 
-	logger.V(10).Write("Creating an empty kustomization for all groups...")
-	if err := createClusterOverride(configPath, "all-groups"); err != nil {
+	logger.V(10).Write("Initializing the all-groups directory...")
+	if err := initAllGroups(configPath); err != nil {
 		logger.V(10).Write("Error while writing the kustomize file")
 		return err
 	}
@@ -79,5 +80,34 @@ func createClusterOverride(configPath string, clusterName string) error {
 		return err
 	}
 
+	return nil
+}
+
+// initAllGroups initializes the all-groups directory
+func initAllGroups(configPath string) error {
+	cleanedConfigPath := path.Clean(configPath)
+	allGroupsDir := path.Join(cleanedConfigPath, utils.AllGroupsDirPath)
+	if err := os.MkdirAll(allGroupsDir, os.ModePerm); err != nil {
+		return fmt.Errorf("error creating path %s: %w", allGroupsDir, err)
+	}
+	basesDir := path.Join(allGroupsDir, utils.BasesDir)
+	customResourcesDir := path.Join(allGroupsDir, utils.CustomResourcesDir)
+	if err := os.Mkdir(basesDir, os.ModePerm); err != nil {
+		return fmt.Errorf("error creating directory %s: %w", basesDir, err)
+	}
+	if err := os.Mkdir(customResourcesDir, os.ModePerm); err != nil {
+		return fmt.Errorf("error creating directory %s: %w", customResourcesDir, err)
+	}
+	if err := utils.WriteKustomization(utils.EmptyKustomization(), basesDir); err != nil {
+		return fmt.Errorf("error writing kustomization file in %s: %w", basesDir, err)
+	}
+	if err := utils.WriteKustomization(utils.EmptyKustomization(), customResourcesDir); err != nil {
+		return fmt.Errorf("error writing kustomization file in %s: %w", customResourcesDir, err)
+	}
+	allGroupsKustomization := utils.EmptyKustomization()
+	allGroupsKustomization.Resources = append(allGroupsKustomization.Resources, utils.BasesDir, utils.CustomResourcesDir)
+	if err := utils.WriteKustomization(allGroupsKustomization, allGroupsDir); err != nil {
+		return fmt.Errorf("error writing kustomization file in %s: %w", allGroupsDir, err)
+	}
 	return nil
 }

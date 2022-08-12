@@ -1,0 +1,57 @@
+kind: ClustersConfiguration
+apiVersion: vab.mia-platform.eu/v1alpha1
+name: advanced-sync
+spec:
+  modules:
+    test-module1/test-flavour1:
+      version: 1.0.0
+      weight: 3
+    test-module2/test-flavour1:
+      version: 1.0.0
+      weight: 1
+    test-module3/test-flavour1:
+      version: 1.0.0
+      weight: 5
+  addOns:
+    test-addon1:
+      version: 1.0.0
+    test-addon2:
+      version: 1.0.0
+  groups:
+  - name: group-1
+    clusters:
+    # cluster-1 only overrides modules
+    - name: cluster-1
+      context: context-1
+      modules:
+        test-module1/test-flavour1: # override module version
+          version: 1.0.1
+          weight: 3
+        test-module2/test-flavour1: # disable module
+          disable: true
+        test-module3/test-flavour1: # override module weight (change order)
+          version: 1.0.0
+          weight: 1
+    # cluster-2 only overrides add-ons
+    - name: cluster-2
+      context: context-2
+      addOns:
+        test-addon1:  # disable add-on
+          disable: true
+        test-addon2:  # change add-on version
+          version: 1.0.1
+  - name: group-2
+    clusters:
+    # cluster-3 overrides both modules and add-ons
+    - name: cluster-3
+      context: context-3
+      modules:
+        test-module2/test-flavour1:
+          version: 1.0.0
+          weight: 7
+      addOns:
+        test-addon1:
+          version: 1.0.1
+    # cluster-4 overrides nothing
+    - name: cluster-4
+      context: context-4

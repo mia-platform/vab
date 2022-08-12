@@ -61,6 +61,8 @@ func populateWorktree(t *testing.T, fsys billy.Filesystem) {
 	assert.NoError(t, err)
 	err = fsys.MkdirAll("modules/test-module2/test-flavour1", fs.ModePerm)
 	assert.NoError(t, err)
+	err = fsys.MkdirAll("modules/test-module3/test-flavour1", fs.ModePerm)
+	assert.NoError(t, err)
 	err = fsys.MkdirAll("add-ons/test-addon1/subdir", fs.ModePerm)
 	assert.NoError(t, err)
 	err = fsys.MkdirAll("add-ons/test-addon2/", fs.ModePerm)

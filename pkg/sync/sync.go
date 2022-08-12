@@ -24,6 +24,7 @@ import (
 	"github.com/mia-platform/vab/internal/utils"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"github.com/mia-platform/vab/pkg/logger"
+	"golang.org/x/exp/slices"
 	"sigs.k8s.io/kustomize/api/types"
 )
 
@@ -35,21 +36,21 @@ func Sync(logger logger.LogInterface, filesGetter git.FilesGetter, configPath st
 		return fmt.Errorf("sync error: %w", err)
 	}
 	defaultModules := config.Spec.Modules
-	defaultAddons := config.Spec.AddOns
+	defaultAddOns := config.Spec.AddOns
 
 	// sync default modules and add-ons in all-groups "bases" folder
 	if err := UpdateModules(logger, defaultModules, basePath, filesGetter); err != nil {
 		return fmt.Errorf("error syncing default modules %+v: %w", defaultModules, err)
 	}
-	if err := UpdateAddons(logger, defaultAddons, basePath, filesGetter); err != nil {
-		return fmt.Errorf("error syncing default add-ons %+v: %w", defaultAddons, err)
+	if err := UpdateAddOns(logger, defaultAddOns, basePath, filesGetter); err != nil {
+		return fmt.Errorf("error syncing default add-ons %+v: %w", defaultAddOns, err)
 	}
 	// update the default bases in the all-groups directory
-	if err := UpdateBases(path.Join(basePath, utils.AllGroupsDirPath), defaultModules, defaultAddons); err != nil {
+	if err := UpdateBases(path.Join(basePath, utils.AllGroupsDirPath), defaultModules, defaultAddOns, config); err != nil {
 		return fmt.Errorf("error updating kustomize bases for all-groups: %w", err)
 	}
 	// synchronize clusters to the latest configuration
-	if err := UpdateClusters(&config.Spec.Groups, basePath); err != nil {
+	if err := UpdateClusters(config, basePath); err != nil {
 		return fmt.Errorf("error syncing clusters: %w", err)
 	}
 
@@ -77,7 +78,7 @@ func UpdateModules(logger logger.LogInterface, modules map[string]v1alpha1.Modul
 
 // SyncModules synchronizes add-ons to the latest configuration
 // TODO: merge duplicate functions
-func UpdateAddons(logger logger.LogInterface, addons map[string]v1alpha1.AddOn, basePath string, filesGetter git.FilesGetter) error {
+func UpdateAddOns(logger logger.LogInterface, addons map[string]v1alpha1.AddOn, basePath string, filesGetter git.FilesGetter) error {
 	for name, v := range addons {
 		if v.IsDisabled() {
 			continue
@@ -86,7 +87,7 @@ func UpdateAddons(logger logger.LogInterface, addons map[string]v1alpha1.AddOn, 
 		if err != nil {
 			return fmt.Errorf("error cloning packages for add-on %s: %w", name, err)
 		}
-		addonPath := path.Join(basePath, utils.VendorsAddonsPath, name)
+		addonPath := path.Join(basePath, utils.VendorsAddOnsPath, name)
 		if err := MoveToDisk(logger, files, name, addonPath); err != nil {
 			return fmt.Errorf("error moving packages to disk for add-on %s: %w", name, err)
 		}
@@ -117,21 +118,32 @@ func MoveToDisk(logger logger.LogInterface, files []*git.File, packageName strin
 }
 
 // UpdateBases updates the kustomize bases in the target path
-func UpdateBases(targetPath string, modules map[string]v1alpha1.Module, addons map[string]v1alpha1.AddOn) error {
-	targetKustomizationPath := path.Join(targetPath, "bases")
+func UpdateBases(targetPath string, modules map[string]v1alpha1.Module, addons map[string]v1alpha1.AddOn, config *v1alpha1.ClustersConfiguration) error {
+	targetKustomizationPath := path.Join(targetPath, utils.BasesDir)
 	kustomization, err := kustomizehelper.ReadKustomization(targetKustomizationPath)
 	var syncedKustomization types.Kustomization
 	if err != nil {
 		return fmt.Errorf("error reading kustomization file for %s: %w", targetPath, err)
 	}
-	// if the path contains "clusters/all-groups", it is the path to the default configurations
-	// otherwise, it is the path to a single cluster
-	if strings.Contains(targetPath, utils.AllGroupsDirPath) {
-		syncedKustomization = *kustomizehelper.SyncKustomizeResources(&modules, &addons, *kustomization)
-	} else if modules == nil && addons == nil {
+	// if modules and add-ons are empty and the path does not contains "clusters/all-groups",
+	// the target is a cluster that does not override the default configuration
+	if len(modules) == 0 && len(addons) == 0 && !strings.Contains(targetPath, utils.AllGroupsDirPath) {
 		// overwrite the kustomization to contain only the path to all-groups
 		syncedKustomization = utils.EmptyKustomization()
 		syncedKustomization.Resources = append(syncedKustomization.Resources, "../../../all-groups")
+		// in any other case we need to explicitly list the resources,
+		// whether it is the all-groups configuration or a single cluster override
+	} else {
+		// NB: one between the lists of modules and add-ons overrides may still be empty.
+		// If that's the case, assign the default list of relative packages to
+		// overwrite the corresponding kustomization
+		if len(modules) == 0 {
+			modules = config.Spec.DeepCopy().Modules
+		}
+		if len(addons) == 0 {
+			addons = config.Spec.DeepCopy().AddOns
+		}
+		syncedKustomization = *kustomizehelper.SyncKustomizeResources(&modules, &addons, *kustomization)
 	}
 	if err := utils.WriteKustomization(syncedKustomization, targetKustomizationPath); err != nil {
 		return fmt.Errorf("error writing kustomization in path %s: %w", targetKustomizationPath, err)
@@ -139,31 +151,92 @@ func UpdateBases(targetPath string, modules map[string]v1alpha1.Module, addons m
 	return nil
 }
 
-// GetClusterPath returns the path to the cluster folder, or creates it if it does not exist
+// CheckClusterPath returns the path to the cluster folder, or creates it if it does not exist;
+// it also initializes the cluster kustomization file for the user
 // clusterName must be <group-name>/<cluster-name>
-func GetClusterPath(clusterName string, basePath string) (string, error) {
+func CheckClusterPath(clusterName string, basePath string) (string, error) {
 	clusterPath := path.Join(basePath, utils.ClustersDirName, clusterName)
 	if err := utils.ValidatePath(clusterPath); err != nil {
 		return "", fmt.Errorf("error validating cluster path %s: %w", clusterPath, err)
+	}
+	// initialize cluster kustomization if not present, importing the "bases" directory by default
+	clusterKustomization, err := kustomizehelper.ReadKustomization(clusterPath)
+	if err != nil {
+		return "", fmt.Errorf("error getting kustomization for cluster %s: %w", clusterName, err)
+	}
+	if !slices.Contains(clusterKustomization.Resources, utils.BasesDir) {
+		clusterKustomization.Resources = append([]string{utils.BasesDir}, clusterKustomization.Resources...)
+		if err := utils.WriteKustomization(*clusterKustomization, clusterPath); err != nil {
+			return "", fmt.Errorf("error writing kustomization file for cluster %s: %w", clusterName, err)
+		}
 	}
 	return clusterPath, nil
 }
 
 // UpdateClusters synchronizes the clusters to the latest configuration
-// Currently this function does not handle cluster overrides
-func UpdateClusters(groups *[]v1alpha1.Group, basePath string) error {
-	for _, group := range *groups {
+func UpdateClusters(config *v1alpha1.ClustersConfiguration, basePath string) error {
+	groups := config.Spec.Groups
+	for _, group := range groups {
 		for _, cluster := range group.Clusters {
 			fullClusterName := path.Join(group.Name, cluster.Name)
-			clusterPath, err := GetClusterPath(fullClusterName, basePath)
+			clusterPath, err := CheckClusterPath(fullClusterName, basePath)
 			if err != nil {
 				return fmt.Errorf("error retrieving path for cluster %s: %w", fullClusterName, err)
 			}
-			// TODO: handle cluster overrides
-			if err := UpdateBases(clusterPath, cluster.Modules, cluster.AddOns); err != nil {
-				return fmt.Errorf("error updating kustomize bases for all-groups: %w", err)
+			syncedModules := UpdateClusterModules(cluster.Modules, config.Spec.DeepCopy().Modules)
+			syncedAddOns := UpdateClusterAddOns(cluster.AddOns, config.Spec.DeepCopy().AddOns)
+			if err := UpdateBases(clusterPath, syncedModules, syncedAddOns, config); err != nil {
+				return fmt.Errorf("error updating kustomize bases for cluster %s: %w", fullClusterName, err)
 			}
 		}
 	}
 	return nil
+}
+
+// UpdateClusterModules returns the complete map of modules of the given cluster
+// TODO: refactor (duplicate of UpdateClusterAddOns)
+func UpdateClusterModules(modulesOverrides map[string]v1alpha1.Module, defaultModules map[string]v1alpha1.Module) map[string]v1alpha1.Module {
+	// if the cluster does not provide any override, return nil to apply the default configuration
+	if len(modulesOverrides) == 0 {
+		return nil
+	}
+	// loop over the cluster modules
+	for name, clusterModule := range modulesOverrides {
+		// if the cluster module exists in the default modules dictionary
+		// and the disable flag is set, delete the it from the list
+		if _, exists := defaultModules[name]; exists && clusterModule.Disable {
+			delete(defaultModules, name)
+		} else {
+			// this directive reassigns the clusterModule to its corresponding element
+			// in defaultModules if it exists and is enabled, or adds the module to the
+			// list if it is not present
+			defaultModules[name] = clusterModule
+		}
+	}
+	// return the updated copy of defaultModules
+	return defaultModules
+}
+
+// UpdateClusterAddOns returns the complete map of add-ons of the given cluster
+// TODO: refactor (duplicate of UpdateClusterModules)
+func UpdateClusterAddOns(addonsOverrides map[string]v1alpha1.AddOn, defaultAddOns map[string]v1alpha1.AddOn) map[string]v1alpha1.AddOn {
+	// if the cluster does not provide any override, return nil to apply the default configuration
+	if len(addonsOverrides) == 0 {
+		return nil
+	}
+	// loop over the cluster add-ons
+	for name, clusterAddOn := range addonsOverrides {
+		// if the cluster add-on exists in the default add-ons dictionary
+		// and the disable flag is set, delete the it from the list
+		if _, exists := defaultAddOns[name]; exists && clusterAddOn.Disable {
+			delete(defaultAddOns, name)
+		} else {
+			// this directive reassigns the clusterAddOn to its corresponding element
+			// in defaultAddOns if it exists and is enabled, or adds the add-on to the
+			// list if it is not present
+			defaultAddOns[name] = clusterAddOn
+		}
+	}
+	// return the updated copy of defaultAddOns
+	return defaultAddOns
 }

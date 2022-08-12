@@ -126,7 +126,7 @@ func fixResourcesPath(resourcesList []string, isModulesList bool) *[]string {
 		if isModulesList {
 			fixedResourcesList = append(fixedResourcesList, path.Join(utils.VendorsModulesPath, res))
 		} else {
-			fixedResourcesList = append(fixedResourcesList, path.Join(utils.VendorsAddonsPath, res))
+			fixedResourcesList = append(fixedResourcesList, path.Join(utils.VendorsAddOnsPath, res))
 		}
 	}
 	return &fixedResourcesList

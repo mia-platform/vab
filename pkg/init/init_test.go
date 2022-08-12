@@ -169,3 +169,34 @@ func TestInitProject(t *testing.T) {
 		assert.NoError(t, err)
 	}
 }
+
+// initAllGroups initializes the all-groups directory correctly
+func TestInitAllGroups(t *testing.T) {
+	testDirPath := t.TempDir()
+	err := initAllGroups(testDirPath)
+	if !assert.NoError(t, err) {
+		return
+	}
+	basesDir := path.Join(testDirPath, utils.AllGroupsDirPath, utils.BasesDir)
+	customResourcesDir := path.Join(testDirPath, utils.AllGroupsDirPath, utils.CustomResourcesDir)
+	assert.DirExists(t, basesDir, "The bases directory does not exist")
+	assert.DirExists(t, customResourcesDir, "The custom-resources directory does not exist")
+
+	allGroupsKustomizationPath := path.Join(testDirPath, utils.AllGroupsDirPath, konfig.DefaultKustomizationFileName())
+	assert.FileExists(t, allGroupsKustomizationPath, "Missing kustomization file in the all-groups directory")
+	expectedKustomization, err := os.ReadFile(testutils.GetTestFile("init", "all_groups_kustomization.yaml"))
+	if !assert.NoError(t, err) {
+		return
+	}
+	actualKustomization, err := os.ReadFile(allGroupsKustomizationPath)
+	if !assert.NoError(t, err) {
+		return
+	}
+	assert.Equal(t, []byte(expectedKustomization), []byte(actualKustomization), "Unexpected file content")
+
+	basesDirKustomizationPath := path.Join(basesDir, konfig.DefaultKustomizationFileName())
+	assert.FileExists(t, basesDirKustomizationPath, "Missing kustomization file in the bases directory")
+
+	customResourcesKustomizationPath := path.Join(customResourcesDir, konfig.DefaultKustomizationFileName())
+	assert.FileExists(t, customResourcesKustomizationPath, "Missing kustomization file in the custom-resources directory")
+}

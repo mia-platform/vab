@@ -195,7 +195,7 @@ func TestFixAddOnsPath(t *testing.T) {
 // ReadKustomization creates the empty kustomization file if missing
 func TestReadKustomizationCreatePath(t *testing.T) {
 	testDirPath := t.TempDir()
-	basesPath := path.Join(testDirPath, "bases")
+	basesPath := path.Join(testDirPath, utils.BasesDir)
 	kustomization, err := ReadKustomization(basesPath)
 	if !assert.NoError(t, err) {
 		return
