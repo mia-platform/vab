@@ -56,7 +56,7 @@ func TestSortedModulesList(t *testing.T) {
 		Disable: true,
 	}
 
-	expectedList := []string{"vendors/modules/m2", "vendors/modules/m4a", "vendors/modules/m4b", "vendors/modules/m3", "vendors/modules/m1"}
+	expectedList := []string{"../../../vendors/modules/m2", "../../../vendors/modules/m4a", "../../../vendors/modules/m4b", "../../../vendors/modules/m3", "../../../vendors/modules/m1"}
 	list := getSortedModulesList(&modules)
 
 	assert.Equal(t, expectedList, list, "Unexpected modules list.")
@@ -97,7 +97,7 @@ func TestSyncEmptyKustomization(t *testing.T) {
 	}
 
 	finalKustomization := SyncKustomizeResources(&modules, &addons, emptyKustomization)
-	expectedResources := []string{"vendors/modules/m1", "vendors/modules/m3", "vendors/modules/m2", "vendors/add-ons/ao1", "vendors/add-ons/ao2"}
+	expectedResources := []string{"../../../vendors/modules/m1", "../../../vendors/modules/m3", "../../../vendors/modules/m2", "../../../vendors/add-ons/ao1", "../../../vendors/add-ons/ao2"}
 
 	assert.Equal(t, expectedResources, finalKustomization.Resources, "Unexpected resources in Kustomization.")
 	assert.NotEqual(t, emptyKustomization, expectedResources, "The original Kustomization struct should remain unchanged.")
@@ -108,13 +108,13 @@ func TestSyncEmptyKustomization(t *testing.T) {
 func TestSyncExistingKustomization(t *testing.T) {
 	kustomization := kustomize.Kustomization{}
 	kustomization.Resources = []string{
-		"vendors/modules/mod1-1.0.0",
-		"vendors/modules/mod2-1.0.0",
-		"vendors/modules/mod3-1.0.0",
+		"../../../vendors/modules/mod1-1.0.0",
+		"../../../vendors/modules/mod2-1.0.0",
+		"../../../vendors/modules/mod3-1.0.0",
 		"./local/mod-1.0.0",
-		"vendors/add-ons/ao1-1.0.0",
-		"vendors/add-ons/ao2-1.0.0",
-		"vendors/add-ons/ao3-1.0.0",
+		"../../../vendors/add-ons/ao1-1.0.0",
+		"../../../vendors/add-ons/ao2-1.0.0",
+		"../../../vendors/add-ons/ao3-1.0.0",
 		"./local/ao-1.0.0",
 	}
 	modules := make(map[string]v1alpha1.Module)
@@ -151,10 +151,10 @@ func TestSyncExistingKustomization(t *testing.T) {
 
 	finalKustomization := SyncKustomizeResources(&modules, &addons, kustomization)
 	expectedResources := []string{
-		"vendors/modules/mod3-1.0.0",
-		"vendors/modules/mod1-2.0.0",
-		"vendors/add-ons/ao1-2.0.0",
-		"vendors/add-ons/ao3-1.0.0",
+		"../../../vendors/modules/mod3-1.0.0",
+		"../../../vendors/modules/mod1-2.0.0",
+		"../../../vendors/add-ons/ao1-2.0.0",
+		"../../../vendors/add-ons/ao3-1.0.0",
 		"./local/mod-1.0.0",
 		"./local/ao-1.0.0",
 	}
@@ -171,9 +171,9 @@ func TestFixModulesPath(t *testing.T) {
 	}
 	fixedList := fixResourcesPath(modulesList, true)
 	expectedList := []string{
-		"vendors/modules/test-module1/test-flavour1",
-		"vendors/modules/test-module2/test-flavour2",
-		"vendors/modules/test-module3/test-flavour3",
+		"../../../vendors/modules/test-module1/test-flavour1",
+		"../../../vendors/modules/test-module2/test-flavour2",
+		"../../../vendors/modules/test-module3/test-flavour3",
 	}
 	assert.Equal(t, expectedList, *fixedList, "Unexpected elements in the resulting list of paths")
 }
@@ -186,8 +186,8 @@ func TestFixAddOnsPath(t *testing.T) {
 	}
 	fixedList := fixResourcesPath(modulesList, false)
 	expectedList := []string{
-		"vendors/add-ons/test-addon1",
-		"vendors/add-ons/test-addon2",
+		"../../../vendors/add-ons/test-addon1",
+		"../../../vendors/add-ons/test-addon2",
 	}
 	assert.Equal(t, expectedList, *fixedList, "Unexpected elements in the resulting list of paths")
 }
