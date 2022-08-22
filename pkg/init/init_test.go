@@ -192,7 +192,7 @@ func TestInitAllGroups(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	assert.Equal(t, []byte(expectedKustomization), []byte(actualKustomization), "Unexpected file content")
+	assert.Equal(t, expectedKustomization, actualKustomization, "Unexpected file content")
 
 	basesDirKustomizationPath := path.Join(basesDir, konfig.DefaultKustomizationFileName())
 	assert.FileExists(t, basesDirKustomizationPath, "Missing kustomization file in the bases directory")
