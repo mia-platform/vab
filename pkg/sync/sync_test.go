@@ -107,6 +107,7 @@ func TestUpdateAddOns(t *testing.T) {
 // UpdateBases correctly updates the resources list in the all-groups kustomization
 func TestUpdateBasesAllGroups(t *testing.T) {
 	testDirPath := t.TempDir()
+	logger := logger.DisabledLogger{}
 	targetPath := path.Join(testDirPath, utils.AllGroupsDirPath)
 	if err := os.MkdirAll(targetPath, os.ModePerm); err != nil {
 		return
@@ -134,7 +135,7 @@ func TestUpdateBasesAllGroups(t *testing.T) {
 	config := v1alpha1.ClustersConfiguration{}
 	config.Spec.Modules = modules
 	config.Spec.AddOns = addons
-	err := UpdateBases(targetPath, modules, addons, &config)
+	err := UpdateBases(logger, testutils.FakeFilesGetter{Testing: t}, testDirPath, targetPath, modules, addons, &config, true)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -148,12 +149,13 @@ func TestUpdateBasesAllGroups(t *testing.T) {
 // UpdateBases correctly initializes the resources list in a cluster's kustomization
 func TestUpdateBasesCluster(t *testing.T) {
 	testDirPath := t.TempDir()
+	logger := logger.DisabledLogger{}
 	targetPath := path.Join(testDirPath, "groups/group-1/cluster-1")
 	if err := os.MkdirAll(targetPath, os.ModePerm); err != nil {
 		return
 	}
 	config := v1alpha1.ClustersConfiguration{}
-	err := UpdateBases(targetPath, nil, nil, &config)
+	err := UpdateBases(logger, testutils.FakeFilesGetter{Testing: t}, testDirPath, targetPath, nil, nil, &config, true)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -265,6 +267,7 @@ func TestExistingClusterPathMissingBases(t *testing.T) {
 
 // UpdateClusters correctly syncs the clusters' directories according to the config file
 func TestUpdateClusters(t *testing.T) {
+	logger := logger.DisabledLogger{}
 	testGroups := []v1alpha1.Group{
 		{
 			Name: "group-1",
@@ -292,7 +295,7 @@ func TestUpdateClusters(t *testing.T) {
 	config := v1alpha1.ClustersConfiguration{}
 	config.Spec.Groups = testGroups
 	testDirPath := t.TempDir()
-	err := UpdateClusters(&config, testDirPath)
+	err := UpdateClusters(logger, testutils.FakeFilesGetter{Testing: t}, &config, testDirPath, true)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -323,7 +326,7 @@ func TestUpdateClusterModulesNoOverrides(t *testing.T) {
 	}
 	overrides := make(map[string]v1alpha1.Module)
 	output := UpdateClusterModules(overrides, defaultModules)
-	assert.Nil(t, output, "The output should be nil")
+	assert.Equal(t, 0, len(output), "The output should be nil")
 }
 
 // UpdateClusterModules returns the correct map of modules (w/ overrides)
@@ -377,7 +380,7 @@ func TestUpdateClusterAddOnsNoOverrides(t *testing.T) {
 	}
 	overrides := make(map[string]v1alpha1.AddOn)
 	output := UpdateClusterAddOns(overrides, defaultAddOns)
-	assert.Nil(t, output, "The output should be nil")
+	assert.Equal(t, 0, len(output), "The output should be nil")
 }
 
 // UpdateClusterAddOns returns the correct map of add-ons (w/ overrides)
@@ -409,7 +412,7 @@ func TestSyncNoOverrides(t *testing.T) {
 	logger := logger.DisabledLogger{}
 	testDirPath := t.TempDir()
 	configPath := testutils.GetTestFile("sync", "inputs", "basic.yaml")
-	err := Sync(logger, testutils.FakeFilesGetter{Testing: t}, configPath, testDirPath)
+	err := Sync(logger, testutils.FakeFilesGetter{Testing: t}, configPath, testDirPath, true)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -433,7 +436,7 @@ func TestSync(t *testing.T) {
 		return
 	}
 	defaultSpec := *config.Spec.DeepCopy()
-	err = Sync(logger, testutils.FakeFilesGetter{Testing: t}, configPath, testDirPath)
+	err = Sync(logger, testutils.FakeFilesGetter{Testing: t}, configPath, testDirPath, true)
 	if !assert.NoError(t, err) {
 		return
 	}
