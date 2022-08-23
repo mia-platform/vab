@@ -29,6 +29,8 @@ type FlagPole struct {
 	Config    string
 	Verbosity uint8
 	Output    string
+	DryRun    bool
+
 }
 
 var flags = &FlagPole{}

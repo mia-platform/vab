@@ -29,7 +29,7 @@ import (
 )
 
 // Sync synchronizes modules and add-ons to the latest configuration
-func Sync(logger logger.LogInterface, filesGetter git.FilesGetter, configPath string, basePath string) error {
+func Sync(logger logger.LogInterface, filesGetter git.FilesGetter, configPath string, basePath string, dryRun bool) error {
 	// ReadConfig -> get default modules and addons
 	config, err := utils.ReadConfig(configPath)
 	if err != nil {
@@ -38,19 +38,12 @@ func Sync(logger logger.LogInterface, filesGetter git.FilesGetter, configPath st
 	defaultModules := config.Spec.Modules
 	defaultAddOns := config.Spec.AddOns
 
-	// sync default modules and add-ons in all-groups "bases" folder
-	if err := UpdateModules(logger, defaultModules, basePath, filesGetter); err != nil {
-		return fmt.Errorf("error syncing default modules %+v: %w", defaultModules, err)
-	}
-	if err := UpdateAddOns(logger, defaultAddOns, basePath, filesGetter); err != nil {
-		return fmt.Errorf("error syncing default add-ons %+v: %w", defaultAddOns, err)
-	}
 	// update the default bases in the all-groups directory
-	if err := UpdateBases(path.Join(basePath, utils.AllGroupsDirPath), defaultModules, defaultAddOns, config); err != nil {
+	if err := UpdateBases(logger, filesGetter, basePath, path.Join(basePath, utils.AllGroupsDirPath), defaultModules, defaultAddOns, config, dryRun); err != nil {
 		return fmt.Errorf("error updating kustomize bases for all-groups: %w", err)
 	}
 	// synchronize clusters to the latest configuration
-	if err := UpdateClusters(config, basePath); err != nil {
+	if err := UpdateClusters(logger, filesGetter, config, basePath, dryRun); err != nil {
 		return fmt.Errorf("error syncing clusters: %w", err)
 	}
 
@@ -118,13 +111,13 @@ func MoveToDisk(logger logger.LogInterface, files []*git.File, packageName strin
 }
 
 // UpdateBases updates the kustomize bases in the target path
-func UpdateBases(targetPath string, modules map[string]v1alpha1.Module, addons map[string]v1alpha1.AddOn, config *v1alpha1.ClustersConfiguration) error {
+func UpdateBases(logger logger.LogInterface, filesGetter git.FilesGetter, basePath string, targetPath string, modules map[string]v1alpha1.Module, addons map[string]v1alpha1.AddOn, config *v1alpha1.ClustersConfiguration, dryRun bool) error {
 	targetKustomizationPath := path.Join(targetPath, utils.BasesDir)
 	kustomization, err := kustomizehelper.ReadKustomization(targetKustomizationPath)
-	var syncedKustomization types.Kustomization
 	if err != nil {
 		return fmt.Errorf("error reading kustomization file for %s: %w", targetPath, err)
 	}
+	var syncedKustomization types.Kustomization
 	// if modules and add-ons are empty and the path does not contains "clusters/all-groups",
 	// the target is a cluster that does not override the default configuration
 	if len(modules) == 0 && len(addons) == 0 && !strings.Contains(targetPath, utils.AllGroupsDirPath) {
@@ -144,6 +137,18 @@ func UpdateBases(targetPath string, modules map[string]v1alpha1.Module, addons m
 			addons = config.Spec.DeepCopy().AddOns
 		}
 		syncedKustomization = *kustomizehelper.SyncKustomizeResources(&modules, &addons, *kustomization)
+	}
+	// if dryRun is true, skip modules and addons update (ClonePackages + MoveToDisk)
+	if dryRun {
+		logger.V(0).Writef("[warn] Dry-run mode enabled, skipping package cloning for %s. The following packages may be missing in the vendors directory.\nSkipped modules: %+v\nSkipped add-ons: %+v",
+			targetPath, modules, addons)
+	} else {
+		if err := UpdateModules(logger, modules, basePath, filesGetter); err != nil {
+			return fmt.Errorf("error syncing default modules %+v: %w", modules, err)
+		}
+		if err := UpdateAddOns(logger, addons, basePath, filesGetter); err != nil {
+			return fmt.Errorf("error syncing default add-ons %+v: %w", addons, err)
+		}
 	}
 	if err := utils.WriteKustomization(syncedKustomization, targetKustomizationPath); err != nil {
 		return fmt.Errorf("error writing kustomization in path %s: %w", targetKustomizationPath, err)
@@ -174,7 +179,7 @@ func CheckClusterPath(clusterName string, basePath string) (string, error) {
 }
 
 // UpdateClusters synchronizes the clusters to the latest configuration
-func UpdateClusters(config *v1alpha1.ClustersConfiguration, basePath string) error {
+func UpdateClusters(logger logger.LogInterface, filesGetter git.FilesGetter, config *v1alpha1.ClustersConfiguration, basePath string, dryRun bool) error {
 	groups := config.Spec.Groups
 	for _, group := range groups {
 		for _, cluster := range group.Clusters {
@@ -185,7 +190,7 @@ func UpdateClusters(config *v1alpha1.ClustersConfiguration, basePath string) err
 			}
 			syncedModules := UpdateClusterModules(cluster.Modules, config.Spec.DeepCopy().Modules)
 			syncedAddOns := UpdateClusterAddOns(cluster.AddOns, config.Spec.DeepCopy().AddOns)
-			if err := UpdateBases(clusterPath, syncedModules, syncedAddOns, config); err != nil {
+			if err := UpdateBases(logger, filesGetter, basePath, clusterPath, syncedModules, syncedAddOns, config, dryRun); err != nil {
 				return fmt.Errorf("error updating kustomize bases for cluster %s: %w", fullClusterName, err)
 			}
 		}
@@ -196,9 +201,9 @@ func UpdateClusters(config *v1alpha1.ClustersConfiguration, basePath string) err
 // UpdateClusterModules returns the complete map of modules of the given cluster
 // TODO: refactor (duplicate of UpdateClusterAddOns)
 func UpdateClusterModules(modulesOverrides map[string]v1alpha1.Module, defaultModules map[string]v1alpha1.Module) map[string]v1alpha1.Module {
-	// if the cluster does not provide any override, return nil to apply the default configuration
+	// if the cluster does not provide any override, return the empty map to apply the default configuration
 	if len(modulesOverrides) == 0 {
-		return nil
+		return make(map[string]v1alpha1.Module)
 	}
 	// loop over the cluster modules
 	for name, clusterModule := range modulesOverrides {
@@ -220,9 +225,9 @@ func UpdateClusterModules(modulesOverrides map[string]v1alpha1.Module, defaultMo
 // UpdateClusterAddOns returns the complete map of add-ons of the given cluster
 // TODO: refactor (duplicate of UpdateClusterModules)
 func UpdateClusterAddOns(addonsOverrides map[string]v1alpha1.AddOn, defaultAddOns map[string]v1alpha1.AddOn) map[string]v1alpha1.AddOn {
-	// if the cluster does not provide any override, return nil to apply the default configuration
+	// if the cluster does not provide any override, return the empty map to apply the default configuration
 	if len(addonsOverrides) == 0 {
-		return nil
+		return make(map[string]v1alpha1.AddOn)
 	}
 	// loop over the cluster add-ons
 	for name, clusterAddOn := range addonsOverrides {
