@@ -15,22 +15,37 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
+	"fmt"
 
+	"github.com/mia-platform/vab/internal/utils"
+	"github.com/mia-platform/vab/pkg/apply"
 	"github.com/mia-platform/vab/pkg/logger"
+	"github.com/spf13/cobra"
 )
 
 // NewApplyCommand returns a new cobra.Command for building and applying the
 // clusters configuration
 func NewApplyCommand(logger logger.LogInterface) *cobra.Command {
 	applyCmd := &cobra.Command{
-		Use:   "apply",
+		Use:   "apply GROUP [CLUSTER] CONTEXT",
 		Short: "Build and apply the local configuration.",
 		Long:  `Builds and applies the local configuration to the specified cluster or group, or to all of them.`,
-		RunE: func(_ *cobra.Command, _ []string) error {
+		Args:  cobra.RangeArgs(minArgs, maxArgs),
+		RunE: func(cmd *cobra.Command, args []string) error {
 			logger.V(0).Write("Applying the configuration...")
-			return nil
+			cmd.SilenceUsage = true
+			group := args[0]
+			cluster := ""
+			context := args[len(args)-1]
+			fmt.Println(group, cluster, context)
+			if len(args) == maxArgs {
+				cluster = args[1]
+			}
+
+			return apply.Apply(logger, flags.Config, flags.Output, group, cluster, context)
 		},
 	}
+	applyCmd.PersistentFlags().StringVarP(&flags.Output, "output", "o", utils.DefaultOutputDir, "specify a different path for the applied files")
+
 	return applyCmd
 }

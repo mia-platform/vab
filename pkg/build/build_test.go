@@ -33,7 +33,7 @@ func TestRunKustomizeBuild(t *testing.T) {
 	targetPath := testutils.GetTestFile("build", testutils.KustomizeTestDirName)
 
 	buffer := new(bytes.Buffer)
-	if err := runKustomizeBuild(targetPath, buffer); assert.NoError(t, err) {
+	if err := RunKustomizeBuild(targetPath, buffer); assert.NoError(t, err) {
 		assert.Equal(t, buffer.String(), expectedKustomizeResult)
 	}
 }
@@ -41,7 +41,7 @@ func TestRunKustomizeBuild(t *testing.T) {
 // Returns an error if the path is invalid
 func TestInvalidKustomizeBuildPath(t *testing.T) {
 	buffer := new(bytes.Buffer)
-	err := runKustomizeBuild(testutils.InvalidFolderPath, buffer)
+	err := RunKustomizeBuild(testutils.InvalidFolderPath, buffer)
 	if assert.Error(t, err) {
 		assert.ErrorIs(t, err, fs.ErrNotExist)
 	}

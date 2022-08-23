@@ -1,0 +1,6 @@
+{
+    "makefile.extensionOutputFolder": "./.vscode",
+    "cSpell.enableFiletypes": [
+        "!go"
+    ]
+}

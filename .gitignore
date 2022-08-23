@@ -2,6 +2,7 @@
 bin/
 coverage.xml
 config.yaml
+.vscode/
 
 # End of Custom gitignore rules
 
