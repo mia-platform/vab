@@ -48,7 +48,7 @@ func Build(logger logger.LogInterface, configPath string, groupName string, clus
 	for _, clusterPath := range targetPaths {
 		fmt.Fprintf(writer, "### BUILD RESULTS FOR: %s ###\n", clusterPath)
 		targetPath := path.Join(cleanedContextPath, clusterPath)
-		if err := runKustomizeBuild(targetPath, writer); err != nil {
+		if err := RunKustomizeBuild(targetPath, writer); err != nil {
 			logger.V(5).Writef("Error building kustomize in %s", targetPath)
 			return err
 		}
@@ -60,7 +60,7 @@ func Build(logger logger.LogInterface, configPath string, groupName string, clus
 }
 
 // runKustomizeBuild runs the kustomize build command in targetPath
-func runKustomizeBuild(targetPath string, writer io.Writer) error {
+func RunKustomizeBuild(targetPath string, writer io.Writer) error {
 	kustomizeCmd := build.NewCmdBuild(
 		filesys.MakeFsOnDisk(),
 		&build.Help{},
