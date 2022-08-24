@@ -68,6 +68,8 @@ func TestWrongContextPath(t *testing.T) {
 	if assert.Error(t, err) {
 		assert.Equal(t, err.Error(), fmt.Sprintf("the target path %s is not a directory", configPath))
 	}
+
+	os.RemoveAll("./output")
 }
 
 func TestBuildInvalidConfigPath(t *testing.T) {
@@ -79,6 +81,7 @@ func TestBuildInvalidConfigPath(t *testing.T) {
 	if assert.Error(t, err) {
 		assert.ErrorIs(t, err, fs.ErrNotExist)
 	}
+	os.RemoveAll("./output")
 }
 
 func TestBuildInvalidKustomization(t *testing.T) {
@@ -87,6 +90,7 @@ func TestBuildInvalidKustomization(t *testing.T) {
 	outputDir := "./output"
 	err := Apply(log, configPath, outputDir, testutils.TestGroupName1, testutils.TestClusterName1, testutils.GetTestFile("build", testBuildFolder))
 	assert.Error(t, err)
+	os.RemoveAll("./output")
 }
 
 func TestGetContextError(t *testing.T) {

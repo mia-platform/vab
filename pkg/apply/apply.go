@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"path"
@@ -34,6 +35,9 @@ import (
 	"k8s.io/kubectl/pkg/cmd/apply"
 	"k8s.io/kubectl/pkg/cmd/util"
 )
+
+const filesPermissions fs.FileMode = 0600
+const folderPermissions fs.FileMode = 0700
 
 func Apply(logger logger.LogInterface, configPath string, outputDir string, groupName string, clusterName string, contextPath string) error {
 	cleanedContextPath := path.Clean(contextPath)
@@ -61,10 +65,13 @@ func Apply(logger logger.LogInterface, configPath string, outputDir string, grou
 			return err
 		}
 
-		os.MkdirAll(outputDir, 0700)
+		err := os.MkdirAll(outputDir, folderPermissions)
+		if err != nil {
+			return err
+		}
 		filePath := filepath.Join(outputDir, cluster)
 		fmt.Println("creating resources at ", filePath)
-		err = ioutil.WriteFile(filePath, buffer.Bytes(), 0644)
+		err = ioutil.WriteFile(filePath, buffer.Bytes(), filesPermissions)
 		if err != nil {
 			return err
 		}
@@ -80,7 +87,6 @@ func Apply(logger logger.LogInterface, configPath string, outputDir string, grou
 		}
 	}
 	return nil
-
 }
 
 func getContext(configPath string, groupName string, clusterName string) (string, error) {
@@ -100,13 +106,12 @@ func getContext(configPath string, groupName string, clusterName string) (string
 	}
 
 	return config.Spec.Groups[groupIdx].Clusters[clusterIdx].Context, nil
-
 }
 
 func runKubectlApply(logger logger.LogInterface, fileName string, context string) error {
-	//default configflags
+	// default configflags
 	configFlags := genericclioptions.NewConfigFlags(false)
-	//the kubeconfig context used is equal to the fileName
+	// the kubeconfig context used is equal to the fileName
 	configFlags.Context = &context
 
 	factory := util.NewFactory(configFlags)
@@ -122,7 +127,7 @@ func runKubectlApply(logger logger.LogInterface, fileName string, context string
 	cmd := apply.NewCmdApply("kubectl", factory, streams)
 	cmd.SetArgs(args)
 
-	//dry-run for testing purposes
+	// dry-run for testing purposes
 	test, _ := regexp.Match("test*", []byte(fileName))
 
 	if !test {
