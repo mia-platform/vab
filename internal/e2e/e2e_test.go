@@ -48,9 +48,10 @@ var _ = BeforeSuite(func() {
 
 	log = logger.DisabledLogger{}
 	testDirPath = GinkgoT().TempDir()
+	testDirPath = "."
 	rootCmd = cmd.NewRootCommand()
 	projectPath = path.Join(testDirPath, testProjectName)
-	configPath = path.Join(testDirPath, "config.yaml")
+	configPath = path.Join(projectPath, "config.yaml")
 	clustersDirPath = path.Join(projectPath, "clusters")
 	allGroupsDirPath = path.Join(clustersDirPath, "all-groups")
 	sampleModulePath = path.Join(projectPath, "vendors", "modules", "ingress", "traefik-base")
@@ -77,7 +78,7 @@ var _ = Describe("setup vab project", func() {
 			Expect(info.IsDir()).To(BeTrue())
 		})
 	})
-	Context("validate a sample configuration", func() {
+	Context("simple configuration (no overrides)", func() {
 		It("returns that the configuration is valid", func() {
 			config := `kind: ClustersConfiguration
 apiVersion: vab.mia-platform.eu/v1alpha1
@@ -102,9 +103,7 @@ spec:
 			err = rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
 		})
-	})
-	Context("sync and build", func() {
-		It("updates the directories according to the config", func() {
+		It("syncs the project without errors", func() {
 			rootCmd.SetArgs([]string{
 				"sync",
 				fmt.Sprintf("--path=%s", projectPath),
@@ -113,7 +112,7 @@ spec:
 			err = rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
 		})
-		It("builds the configuration", func() {
+		It("builds the configuration without errors", func() {
 			sampleFile := `apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -151,13 +150,61 @@ spec:
       restartPolicy: Always
       schedulerName: default-scheduler
       terminationGracePeriodSeconds: 30`
-
 			err = os.MkdirAll(sampleModulePath, os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 			err = os.WriteFile(path.Join(sampleModulePath, "example.yaml"), []byte(sampleFile), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 			err = os.WriteFile(path.Join(sampleModulePath, "kustomization.yaml"), []byte(sampleKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
+			rootCmd.SetArgs([]string{
+				"build",
+				"test-group1",
+				projectPath,
+				fmt.Sprintf("--path=%s", projectPath),
+			})
+			err = rootCmd.Execute()
+			Expect(err).NotTo(HaveOccurred())
+		})
+	})
+	Context("simple configuration with cluster override", func() {
+		It("validates the config without errors", func() {
+			config := `kind: ClustersConfiguration
+apiVersion: vab.mia-platform.eu/v1alpha1
+name: test-project
+spec:
+  modules:
+    ingress/traefik-base:
+      version: 0.1.0
+      weight: 1
+  addOns: {}
+  groups:
+  - name: test-group1
+    clusters:
+    - name: test-g1c1
+      context: kind-kind
+      modules:
+        ingress/traefik-base:
+          version: 0.1.1
+          weight: 1`
+			err = os.WriteFile(configPath, []byte(config), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			rootCmd.SetArgs([]string{
+				"validate",
+				fmt.Sprintf("--config=%s", configPath),
+			})
+			err = rootCmd.Execute()
+			Expect(err).NotTo(HaveOccurred())
+		})
+		It("syncs the project without errors", func() {
+			rootCmd.SetArgs([]string{
+				"sync",
+				fmt.Sprintf("--path=%s", projectPath),
+				"--dry-run",
+			})
+			err = rootCmd.Execute()
+			Expect(err).NotTo(HaveOccurred())
+		})
+		It("builds the configuration without errors", func() {
 			rootCmd.SetArgs([]string{
 				"build",
 				"test-group1",
