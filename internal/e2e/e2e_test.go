@@ -1,3 +1,6 @@
+//go:build e2e
+// +build e2e
+
 // Copyright 2022 Mia-Platform
 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,15 +18,23 @@
 package e2e_test
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path"
 
 	"github.com/mia-platform/vab/internal/cmd"
 	"github.com/mia-platform/vab/pkg/logger"
-	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/spf13/cobra"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/envtest"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
 const (
@@ -35,6 +46,9 @@ resources:
 )
 
 var log logger.LogInterface
+var cfg *rest.Config
+var dynamicClient dynamic.Interface
+var testEnv *envtest.Environment
 var testDirPath string
 var rootCmd *cobra.Command
 var configPath string
@@ -42,21 +56,63 @@ var projectPath string
 var clustersDirPath string
 var allGroupsDirPath string
 var sampleModulePath string
-var err error
 
 var _ = BeforeSuite(func() {
+	By("setting up the test environment...", func() {
+		logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
+		// initialize test environment
+		useCluster := true
+		testEnv = &envtest.Environment{
+			UseExistingCluster:       &useCluster,
+			AttachControlPlaneOutput: true,
+		}
+		var err error
+		fmt.Println("Starting test environment...")
+		cfg, err = testEnv.Start()
+		Expect(err).ToNot(HaveOccurred())
+		Expect(cfg).ToNot(BeNil())
 
-	log = logger.DisabledLogger{}
-	testDirPath = GinkgoT().TempDir()
-	testDirPath = "."
-	rootCmd = cmd.NewRootCommand()
-	projectPath = path.Join(testDirPath, testProjectName)
-	configPath = path.Join(projectPath, "config.yaml")
-	clustersDirPath = path.Join(projectPath, "clusters")
-	allGroupsDirPath = path.Join(clustersDirPath, "all-groups")
-	sampleModulePath = path.Join(projectPath, "vendors", "modules", "ingress", "traefik-base")
+		dynamicClient, err = dynamic.NewForConfig(cfg)
+		Expect(err).ToNot(HaveOccurred())
 
-})
+		nsGvr := schema.GroupVersionResource{
+			Group:    "",
+			Version:  "v1",
+			Resource: "namespaces",
+		}
+
+		nss, err := dynamicClient.Resource(nsGvr).List(context.Background(), v1.ListOptions{})
+		Expect(err).NotTo(HaveOccurred())
+
+		for _, ns := range nss.Items {
+			fmt.Printf(
+				"Name: %s\n",
+				ns.Object["metadata"].(map[string]interface{})["name"],
+			)
+		}
+
+		// initialize vab logger and root command
+		log = logger.DisabledLogger{}
+		rootCmd = cmd.NewRootCommand()
+
+		// initialize paths
+		testDirPath = os.TempDir()
+		projectPath = path.Join(testDirPath, testProjectName)
+		configPath = path.Join(projectPath, "config.yaml")
+		clustersDirPath = path.Join(projectPath, "clusters")
+		allGroupsDirPath = path.Join(clustersDirPath, "all-groups")
+		sampleModulePath = path.Join(projectPath, "vendors", "modules", "ingress", "traefik-base")
+	})
+}, 60)
+
+var _ = AfterSuite(func() {
+	By("tearing down the test environment...")
+	if testEnv != nil {
+		err := testEnv.Stop()
+		Expect(err).NotTo(HaveOccurred())
+	}
+	os.RemoveAll(testDirPath)
+}, 60)
 
 var _ = Describe("setup vab project", func() {
 	Context("initialize new project", func() {
@@ -66,7 +122,7 @@ var _ = Describe("setup vab project", func() {
 				fmt.Sprintf("--path=%s", testDirPath),
 				fmt.Sprintf("--name=%s", testProjectName),
 			})
-			err = rootCmd.Execute()
+			err := rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
 			// check that the path /tmpdir/test-e2e/clusters/all-groups/bases exists
 			info, err := os.Stat(path.Join(allGroupsDirPath, "bases"))
@@ -94,7 +150,7 @@ spec:
     clusters:
     - name: test-g1c1
       context: kind-kind`
-			err = os.WriteFile(configPath, []byte(config), os.ModePerm)
+			err := os.WriteFile(configPath, []byte(config), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 			rootCmd.SetArgs([]string{
 				"validate",
@@ -109,7 +165,7 @@ spec:
 				fmt.Sprintf("--path=%s", projectPath),
 				"--dry-run",
 			})
-			err = rootCmd.Execute()
+			err := rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
 		})
 		It("builds the configuration without errors", func() {
@@ -150,7 +206,7 @@ spec:
       restartPolicy: Always
       schedulerName: default-scheduler
       terminationGracePeriodSeconds: 30`
-			err = os.MkdirAll(sampleModulePath, os.ModePerm)
+			err := os.MkdirAll(sampleModulePath, os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 			err = os.WriteFile(path.Join(sampleModulePath, "example.yaml"), []byte(sampleFile), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
@@ -186,7 +242,7 @@ spec:
         ingress/traefik-base:
           version: 0.1.1
           weight: 1`
-			err = os.WriteFile(configPath, []byte(config), os.ModePerm)
+			err := os.WriteFile(configPath, []byte(config), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 			rootCmd.SetArgs([]string{
 				"validate",
@@ -201,7 +257,7 @@ spec:
 				fmt.Sprintf("--path=%s", projectPath),
 				"--dry-run",
 			})
-			err = rootCmd.Execute()
+			err := rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
 		})
 		It("builds the configuration without errors", func() {
@@ -211,7 +267,7 @@ spec:
 				projectPath,
 				fmt.Sprintf("--path=%s", projectPath),
 			})
-			err = rootCmd.Execute()
+			err := rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
