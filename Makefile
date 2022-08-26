@@ -22,6 +22,7 @@ endif
 CMDNAME := vab
 TOOLS_DIR := $(PROJECT_DIR)/tools
 TOOLS_BIN := $(TOOLS_DIR)/bin
+KIND_CLUSTER_NAME ?= vab-kind
 
 SUPPORTED_PLATFORMS := linux/386,linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6
 $(eval BUILD_PLATFORMS = $(shell echo "$(SUPPORTED_PLATFORMS)" | sed "s#,# #g;s#/#.#g"))
@@ -73,6 +74,19 @@ ifneq ($(TEST_VERBOSE), "false")
 	go test -test.v ./...
 else
 	go test ./...
+endif
+
+.PHONY: test-e2e
+test-e2e: kind-start
+	go test ./... -tags=e2e
+	kind delete cluster
+
+kind-start:
+ifeq (1, $(shell kind get clusters | grep ${KIND_CLUSTER_NAME} | wc -l))
+	@echo "Cluster already exists"
+else
+	@echo "Creating Cluster"
+	@kind create cluster --config internal/e2e/kind/kind-config.yaml --kubeconfig ~/.kube/config
 endif
 
 .PHONY: test-coverage
