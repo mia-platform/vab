@@ -78,15 +78,19 @@ endif
 
 .PHONY: test-e2e
 test-e2e: kind-start
-	go test ./... -tags=e2e
+ifneq ($(TEST_VERBOSE), "false")
+	go test -test.v -tags=e2e ./... || kind delete cluster
+else
+	go test ./... -tags=e2e || kind delete cluster
+endif
 	kind delete cluster
 
 kind-start:
 ifeq (1, $(shell kind get clusters | grep ${KIND_CLUSTER_NAME} | wc -l))
-	@echo "Cluster already exists"
+	@echo "Kind cluster already exists!"
 else
-	@echo "Creating Cluster"
-	@kind create cluster --config internal/e2e/kind/kind-config.yaml --kubeconfig ~/.kube/config
+	@echo "Creating Kind cluster..."
+	kind create cluster --config internal/e2e/kind/kind-config.yaml --kubeconfig ~/.kube/config
 endif
 
 .PHONY: test-coverage

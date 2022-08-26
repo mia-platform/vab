@@ -72,24 +72,7 @@ var _ = BeforeSuite(func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(cfg).ToNot(BeNil())
 
-		dynamicClient, err = dynamic.NewForConfig(cfg)
-		Expect(err).ToNot(HaveOccurred())
-
-		nsGvr := schema.GroupVersionResource{
-			Group:    "",
-			Version:  "v1",
-			Resource: "namespaces",
-		}
-
-		nss, err := dynamicClient.Resource(nsGvr).List(context.Background(), v1.ListOptions{})
-		Expect(err).NotTo(HaveOccurred())
-
-		for _, ns := range nss.Items {
-			fmt.Printf(
-				"Name: %s\n",
-				ns.Object["metadata"].(map[string]interface{})["name"],
-			)
-		}
+		dynamicClient = dynamic.NewForConfigOrDie(cfg)
 
 		// initialize vab logger and root command
 		log = logger.DisabledLogger{}
@@ -97,11 +80,12 @@ var _ = BeforeSuite(func() {
 
 		// initialize paths
 		testDirPath = os.TempDir()
+		defer os.RemoveAll(testDirPath)
 		projectPath = path.Join(testDirPath, testProjectName)
 		configPath = path.Join(projectPath, "config.yaml")
 		clustersDirPath = path.Join(projectPath, "clusters")
 		allGroupsDirPath = path.Join(clustersDirPath, "all-groups")
-		sampleModulePath = path.Join(projectPath, "vendors", "modules", "ingress", "traefik-base")
+		sampleModulePath = path.Join(projectPath, "vendors", "modules", "example", "echo")
 	})
 }, 60)
 
@@ -111,7 +95,6 @@ var _ = AfterSuite(func() {
 		err := testEnv.Stop()
 		Expect(err).NotTo(HaveOccurred())
 	}
-	os.RemoveAll(testDirPath)
 }, 60)
 
 var _ = Describe("setup vab project", func() {
@@ -141,14 +124,14 @@ apiVersion: vab.mia-platform.eu/v1alpha1
 name: test-project
 spec:
   modules:
-    ingress/traefik-base:
+    example/echo:
       version: 0.1.0
       weight: 1
   addOns: {}
   groups:
-  - name: test-group1
+  - name: group1
     clusters:
-    - name: test-g1c1
+    - name: g1c1
       context: kind-kind`
 			err := os.WriteFile(configPath, []byte(config), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
@@ -172,40 +155,23 @@ spec:
 			sampleFile := `apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    deployment.kubernetes.io/revision: "1"
-  labels:
-    app: ingress-traefik
-  name: ingress-traefik
+  name: echo-server
   namespace: default
 spec:
-  progressDeadlineSeconds: 600
   replicas: 1
-  revisionHistoryLimit: 10
   selector:
     matchLabels:
-      app: ingress-traefik
-  strategy:
-    rollingUpdate:
-      maxSurge: 25%
-      maxUnavailable: 25%
-    type: RollingUpdate
+      app: echo-server
   template:
     metadata:
-      creationTimestamp: null
       labels:
-        app: ingress-traefik
+        app: echo-server
     spec:
       containers:
       - image: k8s.gcr.io/echoserver:1.4
-        imagePullPolicy: IfNotPresent
         name: echoserver
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
-      dnsPolicy: ClusterFirst
-      restartPolicy: Always
-      schedulerName: default-scheduler
-      terminationGracePeriodSeconds: 30`
+        ports:
+        - containerPort: 8080`
 			err := os.MkdirAll(sampleModulePath, os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 			err = os.WriteFile(path.Join(sampleModulePath, "example.yaml"), []byte(sampleFile), os.ModePerm)
@@ -214,7 +180,7 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 			rootCmd.SetArgs([]string{
 				"build",
-				"test-group1",
+				"group1",
 				projectPath,
 				fmt.Sprintf("--path=%s", projectPath),
 			})
@@ -229,17 +195,17 @@ apiVersion: vab.mia-platform.eu/v1alpha1
 name: test-project
 spec:
   modules:
-    ingress/traefik-base:
+    example/echo:
       version: 0.1.0
       weight: 1
   addOns: {}
   groups:
-  - name: test-group1
+  - name: group1
     clusters:
-    - name: test-g1c1
+    - name: g1c1
       context: kind-kind
       modules:
-        ingress/traefik-base:
+        example/echo:
           version: 0.1.1
           weight: 1`
 			err := os.WriteFile(configPath, []byte(config), os.ModePerm)
@@ -263,11 +229,30 @@ spec:
 		It("builds the configuration without errors", func() {
 			rootCmd.SetArgs([]string{
 				"build",
-				"test-group1",
+				"group1",
+				"g1c1",
 				projectPath,
-				fmt.Sprintf("--path=%s", projectPath),
 			})
 			err := rootCmd.Execute()
+			Expect(err).NotTo(HaveOccurred())
+		})
+		It("applies the configuration to the kind cluster", func() {
+			rootCmd.SetArgs([]string{
+				"apply",
+				"group1",
+				"g1c1",
+				projectPath,
+			})
+			err := rootCmd.Execute()
+			Expect(err).NotTo(HaveOccurred())
+
+			depsGvr := schema.GroupVersionResource{
+				Group:    "apps",
+				Version:  "v1",
+				Resource: "deployments",
+			}
+			dep, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "echo-server", v1.GetOptions{})
+			Expect(dep).NotTo(BeNil())
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
