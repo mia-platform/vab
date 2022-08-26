@@ -57,7 +57,7 @@ func TestSortedModulesList(t *testing.T) {
 	}
 
 	expectedList := []string{"../../../vendors/modules/m2", "../../../vendors/modules/m4a", "../../../vendors/modules/m4b", "../../../vendors/modules/m3", "../../../vendors/modules/m1"}
-	list := getSortedModulesList(&modules)
+	list := getSortedModulesList(&modules, utils.AllGroupsDirPath)
 
 	assert.Equal(t, expectedList, list, "Unexpected modules list.")
 }
@@ -96,7 +96,7 @@ func TestSyncEmptyKustomization(t *testing.T) {
 		Disable: true,
 	}
 
-	finalKustomization := SyncKustomizeResources(&modules, &addons, emptyKustomization)
+	finalKustomization := SyncKustomizeResources(&modules, &addons, emptyKustomization, utils.AllGroupsDirPath)
 	expectedResources := []string{"../../../vendors/modules/m1", "../../../vendors/modules/m3", "../../../vendors/modules/m2", "../../../vendors/add-ons/ao1", "../../../vendors/add-ons/ao2"}
 
 	assert.Equal(t, expectedResources, finalKustomization.Resources, "Unexpected resources in Kustomization.")
@@ -149,7 +149,7 @@ func TestSyncExistingKustomization(t *testing.T) {
 		Version: "1.0.0",
 	}
 
-	finalKustomization := SyncKustomizeResources(&modules, &addons, kustomization)
+	finalKustomization := SyncKustomizeResources(&modules, &addons, kustomization, utils.AllGroupsDirPath)
 	expectedResources := []string{
 		"../../../vendors/modules/mod3-1.0.0",
 		"../../../vendors/modules/mod1-2.0.0",
@@ -169,7 +169,7 @@ func TestFixModulesPath(t *testing.T) {
 		"test-module2/test-flavour2",
 		"test-module3/test-flavour3",
 	}
-	fixedList := fixResourcesPath(modulesList, true)
+	fixedList := fixResourcesPath(modulesList, utils.AllGroupsDirPath, true)
 	expectedList := []string{
 		"../../../vendors/modules/test-module1/test-flavour1",
 		"../../../vendors/modules/test-module2/test-flavour2",
@@ -184,7 +184,7 @@ func TestFixAddOnsPath(t *testing.T) {
 		"test-addon1",
 		"test-addon2",
 	}
-	fixedList := fixResourcesPath(modulesList, false)
+	fixedList := fixResourcesPath(modulesList, utils.AllGroupsDirPath, false)
 	expectedList := []string{
 		"../../../vendors/add-ons/test-addon1",
 		"../../../vendors/add-ons/test-addon2",

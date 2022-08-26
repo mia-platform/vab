@@ -30,9 +30,9 @@ import (
 )
 
 // SyncKustomizeResources updates the clusters' kustomization resources to the latest sync
-func SyncKustomizeResources(modules *map[string]v1alpha1.Module, addons *map[string]v1alpha1.AddOn, k kustomize.Kustomization) *kustomize.Kustomization {
-	resourcesList := getSortedModulesList(modules)
-	addonsList := getAddOnsList(addons)
+func SyncKustomizeResources(modules *map[string]v1alpha1.Module, addons *map[string]v1alpha1.AddOn, k kustomize.Kustomization, targetPath string) *kustomize.Kustomization {
+	resourcesList := getSortedModulesList(modules, targetPath)
+	addonsList := getAddOnsList(addons, targetPath)
 	resourcesList = append(resourcesList, addonsList...)
 
 	// If the file already includes a non-empty list of resources, this function
@@ -41,6 +41,13 @@ func SyncKustomizeResources(modules *map[string]v1alpha1.Module, addons *map[str
 	// without "vendors" in their path). Then, the custom modules are appended
 	// to the updated modules list that will substitute the already existing one.
 	if k.Resources != nil {
+		// since we are overriding the vendors we need to drop the references to the
+		// vendors contained in all-groups/bases
+		// if the only resource in the kustomization is the whole all-groups directory,
+		// change it to point to the custom-resources directory only
+		if len(k.Resources) == 1 && k.Resources[0] == "../../../all-groups" {
+			k.Resources[0] = "../../../all-groups/custom-resources"
+		}
 		for _, r := range k.Resources {
 			if !strings.Contains(r, "vendors/") {
 				resourcesList = append(resourcesList, r)
@@ -55,7 +62,7 @@ func SyncKustomizeResources(modules *map[string]v1alpha1.Module, addons *map[str
 
 // getSortedModulesList returns the list of module names sorted by weight.
 // In case of equal weights, the modules are ordered lexicographically.
-func getSortedModulesList(modules *map[string]v1alpha1.Module) []string {
+func getSortedModulesList(modules *map[string]v1alpha1.Module, targetPath string) []string {
 	modulesList := make([]string, 0, len(*modules))
 
 	for m := range *modules {
@@ -74,11 +81,11 @@ func getSortedModulesList(modules *map[string]v1alpha1.Module) []string {
 		return (*modules)[modulesList[i]].Weight < (*modules)[modulesList[j]].Weight
 	})
 
-	return *fixResourcesPath(modulesList, true)
+	return *fixResourcesPath(modulesList, targetPath, true)
 }
 
 // getAddOnsList returns the list of addons names in lexicographic order
-func getAddOnsList(addons *map[string]v1alpha1.AddOn) []string {
+func getAddOnsList(addons *map[string]v1alpha1.AddOn, targetPath string) []string {
 	addonsList := make([]string, 0, len(*addons))
 
 	for ao := range *addons {
@@ -91,7 +98,7 @@ func getAddOnsList(addons *map[string]v1alpha1.AddOn) []string {
 		return addonsList[i] < addonsList[j]
 	})
 
-	return *fixResourcesPath(addonsList, false)
+	return *fixResourcesPath(addonsList, targetPath, false)
 }
 
 // ReadKustomization reads a kustomization file given its path
@@ -120,13 +127,13 @@ func ReadKustomization(targetPath string) (*kustomize.Kustomization, error) {
 }
 
 // fixResourcesPath returns the list of resources with the actual path
-func fixResourcesPath(resourcesList []string, isModulesList bool) *[]string {
+func fixResourcesPath(resourcesList []string, targetPath string, isModulesList bool) *[]string {
 	fixedResourcesList := make([]string, 0, len(resourcesList))
 	for _, res := range resourcesList {
 		if isModulesList {
-			fixedResourcesList = append(fixedResourcesList, path.Join("..", "..", "..", utils.VendorsModulesPath, res))
+			fixedResourcesList = append(fixedResourcesList, getVendorPackageRelativePath(targetPath, path.Join(utils.VendorsModulesPath, res)))
 		} else {
-			fixedResourcesList = append(fixedResourcesList, path.Join("..", "..", "..", utils.VendorsAddOnsPath, res))
+			fixedResourcesList = append(fixedResourcesList, getVendorPackageRelativePath(targetPath, path.Join(utils.VendorsAddOnsPath, res)))
 		}
 	}
 	return &fixedResourcesList
@@ -159,4 +166,14 @@ func getKustomizationFilePath(targetPath string) (string, error) {
 		return "", fmt.Errorf("error writing kustomization file %s: %w", targetPath, err)
 	}
 	return kustomizationPath, nil
+}
+
+func getVendorPackageRelativePath(targetPath string, pkgPath string) string {
+	var vendorPackageRelativePath string
+	if strings.Contains(targetPath, utils.AllGroupsDirPath) {
+		vendorPackageRelativePath = path.Join("..", "..", "..", pkgPath)
+	} else {
+		vendorPackageRelativePath = path.Join("..", "..", "..", "..", pkgPath)
+	}
+	return vendorPackageRelativePath
 }

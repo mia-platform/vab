@@ -136,7 +136,7 @@ func UpdateBases(logger logger.LogInterface, filesGetter git.FilesGetter, basePa
 		if len(addons) == 0 {
 			addons = config.Spec.DeepCopy().AddOns
 		}
-		syncedKustomization = *kustomizehelper.SyncKustomizeResources(&modules, &addons, *kustomization)
+		syncedKustomization = *kustomizehelper.SyncKustomizeResources(&modules, &addons, *kustomization, targetPath)
 	}
 	// if dryRun is true, skip modules and addons update (ClonePackages + MoveToDisk)
 	if dryRun {
