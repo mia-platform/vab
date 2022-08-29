@@ -62,6 +62,7 @@ var projectPath string
 var clustersDirPath string
 var allGroupsDirPath string
 var sampleModulePath string
+var sampleAddOnPath string
 
 var _ = BeforeSuite(func() {
 	By("setting up the test environment...", func() {
@@ -92,7 +93,8 @@ var _ = BeforeSuite(func() {
 		configPath = path.Join(projectPath, "config.yaml")
 		clustersDirPath = path.Join(projectPath, "clusters")
 		allGroupsDirPath = path.Join(clustersDirPath, "all-groups")
-		sampleModulePath = path.Join(projectPath, "vendors", "modules", "example", "echo")
+		sampleModulePath = path.Join(projectPath, "vendors", "modules", "example", "sample-module1")
+		sampleAddOnPath = path.Join(projectPath, "vendors", "add-ons", "sample-addon1")
 	})
 }, 60)
 
@@ -124,14 +126,14 @@ var _ = Describe("setup vab project", func() {
 			Expect(info.IsDir()).To(BeTrue())
 		})
 	})
-	Context("simple configuration (no overrides)", func() {
+	Context("simple configuration with module (no overrides)", func() {
 		It("returns that the configuration is valid", func() {
 			config := `kind: ClustersConfiguration
 apiVersion: vab.mia-platform.eu/v1alpha1
 name: test-project
 spec:
   modules:
-    example/echo:
+    example/sample-module1:
       version: 0.1.0
       weight: 1
   addOns: {}
@@ -162,17 +164,17 @@ spec:
 			sampleFile := `apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: echo-server
+  name: sample-module1
   namespace: default
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: echo-server
+      app: sample-module1
   template:
     metadata:
       labels:
-        app: echo-server
+        app: sample-module1
     spec:
       containers:
       - image: k8s.gcr.io/echoserver:1.4
@@ -195,14 +197,14 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
-	Context("simple configuration with cluster override", func() {
+	Context("simple configuration with module and cluster override", func() {
 		It("validates the config file without errors", func() {
 			config := `kind: ClustersConfiguration
 apiVersion: vab.mia-platform.eu/v1alpha1
 name: test-project
 spec:
   modules:
-    example/echo:
+    example/sample-module1:
       version: 0.1.0
       weight: 1
   addOns: {}
@@ -212,7 +214,7 @@ spec:
     - name: cluster1
       context: kind-kind
       modules:
-        example/echo:
+        example/sample-module1:
           version: 0.1.1
           weight: 1`
 			err := os.WriteFile(configPath, []byte(config), os.ModePerm)
@@ -258,17 +260,17 @@ spec:
 				Version:  "v1",
 				Resource: "deployments",
 			}
-			dep, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "echo-server", v1.GetOptions{})
+			dep, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "sample-module1", v1.GetOptions{})
 			Expect(dep).NotTo(BeNil())
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
-	Context("cluster override with patch", func() {
+	Context("cluster override with module patch", func() {
 		It("syncs the project without errors", func() {
 			patch := `apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: echo-server
+  name: sample-module1
 spec:
   replicas: 2`
 			pathToCluster := path.Join(clustersDirPath, "group1", "cluster1")
@@ -312,10 +314,88 @@ spec:
 				Version:  "v1",
 				Resource: "deployments",
 			}
-			dep, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "echo-server", v1.GetOptions{})
+			dep, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "sample-module1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dep).NotTo(BeNil())
 			Expect(dep.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 2))
 		})
+	})
+	Context("configuration with module (overridden) and addon", func() {
+		It("validates the config file without errors", func() {
+			config := `kind: ClustersConfiguration
+apiVersion: vab.mia-platform.eu/v1alpha1
+name: test-project
+spec:
+  modules:
+    example/sample-module1:
+      version: 0.1.0
+      weight: 1
+  addOns:
+    sample-addon1:
+      version: 0.1.0
+  groups:
+  - name: group1
+    clusters:
+    - name: cluster1
+      context: kind-kind
+      modules:
+        example/sample-module1:
+          version: 0.1.1
+          weight: 1`
+			err := os.WriteFile(configPath, []byte(config), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			rootCmd.SetArgs([]string{
+				"validate",
+				fmt.Sprintf("--config=%s", configPath),
+			})
+			err = rootCmd.Execute()
+			Expect(err).NotTo(HaveOccurred())
+		})
+		It("syncs the project without errors", func() {
+			rootCmd.SetArgs([]string{
+				"sync",
+				fmt.Sprintf("--path=%s", projectPath),
+				"--dry-run",
+			})
+			err := rootCmd.Execute()
+			Expect(err).NotTo(HaveOccurred())
+		})
+		It("builds the configuration without errors", func() {
+			sampleFile := `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-addon1
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sample-addon1
+  template:
+    metadata:
+      labels:
+        app: sample-addon1
+    spec:
+      containers:
+      - image: k8s.gcr.io/echoserver:1.4
+        name: echoserver
+        ports:
+        - containerPort: 8080`
+			err := os.MkdirAll(sampleAddOnPath, os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			err = os.WriteFile(path.Join(sampleAddOnPath, "example.yaml"), []byte(sampleFile), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			err = os.WriteFile(path.Join(sampleAddOnPath, "kustomization.yaml"), []byte(sampleKustomization), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			rootCmd.SetArgs([]string{
+				"build",
+				"group1",
+				"cluster1",
+				projectPath,
+			})
+			err = rootCmd.Execute()
+			Expect(err).NotTo(HaveOccurred())
+		})
+
 	})
 })
