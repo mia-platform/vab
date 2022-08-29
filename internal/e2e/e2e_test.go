@@ -43,6 +43,12 @@ const (
 apiVersion: kustomize.config.k8s.io/v1beta1
 resources:
   - example.yaml`
+	patchKustomization = `kind: Kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+resources:
+  - bases
+patches:
+  - path: patch.yaml`
 )
 
 var log logger.LogInterface
@@ -80,6 +86,7 @@ var _ = BeforeSuite(func() {
 
 		// initialize paths
 		testDirPath = os.TempDir()
+		// testDirPath = "."
 		defer os.RemoveAll(testDirPath)
 		projectPath = path.Join(testDirPath, testProjectName)
 		configPath = path.Join(projectPath, "config.yaml")
@@ -131,7 +138,7 @@ spec:
   groups:
   - name: group1
     clusters:
-    - name: g1c1
+    - name: cluster1
       context: kind-kind`
 			err := os.WriteFile(configPath, []byte(config), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
@@ -189,7 +196,7 @@ spec:
 		})
 	})
 	Context("simple configuration with cluster override", func() {
-		It("validates the config without errors", func() {
+		It("validates the config file without errors", func() {
 			config := `kind: ClustersConfiguration
 apiVersion: vab.mia-platform.eu/v1alpha1
 name: test-project
@@ -202,7 +209,7 @@ spec:
   groups:
   - name: group1
     clusters:
-    - name: g1c1
+    - name: cluster1
       context: kind-kind
       modules:
         example/echo:
@@ -230,7 +237,7 @@ spec:
 			rootCmd.SetArgs([]string{
 				"build",
 				"group1",
-				"g1c1",
+				"cluster1",
 				projectPath,
 			})
 			err := rootCmd.Execute()
@@ -240,7 +247,7 @@ spec:
 			rootCmd.SetArgs([]string{
 				"apply",
 				"group1",
-				"g1c1",
+				"cluster1",
 				projectPath,
 			})
 			err := rootCmd.Execute()
@@ -254,6 +261,61 @@ spec:
 			dep, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "echo-server", v1.GetOptions{})
 			Expect(dep).NotTo(BeNil())
 			Expect(err).NotTo(HaveOccurred())
+		})
+	})
+	Context("cluster override with patch", func() {
+		It("syncs the project without errors", func() {
+			patch := `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echo-server
+spec:
+  replicas: 2`
+			pathToCluster := path.Join(clustersDirPath, "group1", "cluster1")
+			err := os.WriteFile(path.Join(pathToCluster, "patch.yaml"), []byte(patch), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			err = os.WriteFile(path.Join(pathToCluster, "kustomization.yaml"), []byte(patchKustomization), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			rootCmd.SetArgs([]string{
+				"sync",
+				fmt.Sprintf("--path=%s", projectPath),
+				"--dry-run",
+			})
+			err = rootCmd.Execute()
+			Expect(err).NotTo(HaveOccurred())
+			k, err := os.ReadFile(path.Join(pathToCluster, "kustomization.yaml"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(k).To(BeEquivalentTo([]byte(patchKustomization)))
+		})
+		It("builds the configuration without errors", func() {
+			rootCmd.SetArgs([]string{
+				"build",
+				"group1",
+				"cluster1",
+				projectPath,
+			})
+			err := rootCmd.Execute()
+			Expect(err).NotTo(HaveOccurred())
+		})
+		It("updates the resources on the kind cluster", func() {
+			rootCmd.SetArgs([]string{
+				"apply",
+				"group1",
+				"cluster1",
+				projectPath,
+			})
+			err := rootCmd.Execute()
+			Expect(err).NotTo(HaveOccurred())
+
+			depsGvr := schema.GroupVersionResource{
+				Group:    "apps",
+				Version:  "v1",
+				Resource: "deployments",
+			}
+			dep, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "echo-server", v1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(dep).NotTo(BeNil())
+			Expect(dep.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 2))
 		})
 	})
 })
