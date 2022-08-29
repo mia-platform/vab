@@ -19,7 +19,6 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -36,8 +35,10 @@ import (
 	"k8s.io/kubectl/pkg/cmd/util"
 )
 
-const filesPermissions fs.FileMode = 0600
-const folderPermissions fs.FileMode = 0700
+const (
+	filesPermissions  fs.FileMode = 0600
+	folderPermissions fs.FileMode = 0700
+)
 
 func Apply(logger logger.LogInterface, configPath string, outputDir string, groupName string, clusterName string, contextPath string) error {
 	cleanedContextPath := path.Clean(contextPath)
@@ -65,23 +66,23 @@ func Apply(logger logger.LogInterface, configPath string, outputDir string, grou
 			return err
 		}
 
-		err := os.MkdirAll(outputDir, folderPermissions)
-		if err != nil {
-			return err
-		}
-		filePath := filepath.Join(outputDir, cluster)
-		fmt.Println("creating resources at ", filePath)
-		err = ioutil.WriteFile(filePath, buffer.Bytes(), filesPermissions)
-		if err != nil {
-			return err
-		}
+		crdFilename := cluster + "_crds"
+		resourcesFilename := cluster + "_res"
+		crdsFilePath := filepath.Join(outputDir, crdFilename)
+		resourcesFilepath := filepath.Join(outputDir, resourcesFilename)
+		createResourcesFiles(outputDir, crdsFilePath, resourcesFilepath, *buffer)
 
 		context, err := getContext(configPath, groupName, cluster)
 		if err != nil {
 			return err
 		}
 
-		err = runKubectlApply(logger, cluster, context)
+		err = runKubectlApply(logger, crdsFilePath, context)
+		if err != nil {
+			return err
+		}
+
+		err = runKubectlApply(logger, resourcesFilepath, context)
 		if err != nil {
 			return err
 		}
