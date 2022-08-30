@@ -43,12 +43,19 @@ const (
 apiVersion: kustomize.config.k8s.io/v1beta1
 resources:
   - example.yaml`
-	patchKustomization = `kind: Kustomization
+	kustomizationPatch1 = `kind: Kustomization
 apiVersion: kustomize.config.k8s.io/v1beta1
 resources:
   - bases
 patches:
-  - path: patch.yaml`
+  - path: module.patch.yaml`
+	kustomizationPatch2 = `kind: Kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+resources:
+  - bases
+patches:
+  - path: module.patch.yaml
+  - path: addon.patch.yaml`
 )
 
 var log logger.LogInterface
@@ -63,6 +70,7 @@ var clustersDirPath string
 var allGroupsDirPath string
 var sampleModulePath string
 var sampleAddOnPath string
+var depsGvr schema.GroupVersionResource
 
 var _ = BeforeSuite(func() {
 	By("setting up the test environment...", func() {
@@ -85,25 +93,32 @@ var _ = BeforeSuite(func() {
 		log = logger.DisabledLogger{}
 		rootCmd = cmd.NewRootCommand()
 
-		// initialize paths
+		// initialize global paths and vars
 		testDirPath = os.TempDir()
 		// testDirPath = "."
-		defer os.RemoveAll(testDirPath)
 		projectPath = path.Join(testDirPath, testProjectName)
 		configPath = path.Join(projectPath, "config.yaml")
 		clustersDirPath = path.Join(projectPath, "clusters")
 		allGroupsDirPath = path.Join(clustersDirPath, "all-groups")
 		sampleModulePath = path.Join(projectPath, "vendors", "modules", "example", "sample-module1")
 		sampleAddOnPath = path.Join(projectPath, "vendors", "add-ons", "sample-addon1")
+
+		depsGvr = schema.GroupVersionResource{
+			Group:    "apps",
+			Version:  "v1",
+			Resource: "deployments",
+		}
 	})
 }, 60)
 
 var _ = AfterSuite(func() {
-	By("tearing down the test environment...")
-	if testEnv != nil {
-		err := testEnv.Stop()
-		Expect(err).NotTo(HaveOccurred())
-	}
+	By("tearing down the test environment...", func() {
+		if testEnv != nil {
+			err := testEnv.Stop()
+			Expect(err).NotTo(HaveOccurred())
+		}
+		os.RemoveAll(testDirPath)
+	})
 }, 60)
 
 var _ = Describe("setup vab project", func() {
@@ -255,11 +270,6 @@ spec:
 			err := rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
 
-			depsGvr := schema.GroupVersionResource{
-				Group:    "apps",
-				Version:  "v1",
-				Resource: "deployments",
-			}
 			dep, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "sample-module1", v1.GetOptions{})
 			Expect(dep).NotTo(BeNil())
 			Expect(err).NotTo(HaveOccurred())
@@ -274,9 +284,9 @@ metadata:
 spec:
   replicas: 2`
 			pathToCluster := path.Join(clustersDirPath, "group1", "cluster1")
-			err := os.WriteFile(path.Join(pathToCluster, "patch.yaml"), []byte(patch), os.ModePerm)
+			err := os.WriteFile(path.Join(pathToCluster, "module.patch.yaml"), []byte(patch), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(pathToCluster, "kustomization.yaml"), []byte(patchKustomization), os.ModePerm)
+			err = os.WriteFile(path.Join(pathToCluster, "kustomization.yaml"), []byte(kustomizationPatch1), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 			rootCmd.SetArgs([]string{
 				"sync",
@@ -287,7 +297,7 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 			k, err := os.ReadFile(path.Join(pathToCluster, "kustomization.yaml"))
 			Expect(err).NotTo(HaveOccurred())
-			Expect(k).To(BeEquivalentTo([]byte(patchKustomization)))
+			Expect(k).To(BeEquivalentTo([]byte(kustomizationPatch1)))
 		})
 		It("builds the configuration without errors", func() {
 			rootCmd.SetArgs([]string{
@@ -309,11 +319,6 @@ spec:
 			err := rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
 
-			depsGvr := schema.GroupVersionResource{
-				Group:    "apps",
-				Version:  "v1",
-				Resource: "deployments",
-			}
 			dep, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "sample-module1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dep).NotTo(BeNil())
@@ -406,11 +411,6 @@ spec:
 			err := rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
 
-			depsGvr := schema.GroupVersionResource{
-				Group:    "apps",
-				Version:  "v1",
-				Resource: "deployments",
-			}
 			depMod, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "sample-module1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depMod).NotTo(BeNil())
@@ -481,11 +481,6 @@ spec:
 			err := rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
 
-			depsGvr := schema.GroupVersionResource{
-				Group:    "apps",
-				Version:  "v1",
-				Resource: "deployments",
-			}
 			depMod, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "sample-module1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depMod).NotTo(BeNil())
@@ -493,6 +488,60 @@ spec:
 			depAddOn, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "sample-addon1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depAddOn).NotTo(BeNil())
+		})
+	})
+	Context("config with module (w/ override and patch)", func() {
+		It("syncs the project without errors", func() {
+			patch := `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-addon1
+spec:
+  replicas: 3`
+			pathToCluster := path.Join(clustersDirPath, "group1", "cluster1")
+			err := os.WriteFile(path.Join(pathToCluster, "addon.patch.yaml"), []byte(patch), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			err = os.WriteFile(path.Join(pathToCluster, "kustomization.yaml"), []byte(kustomizationPatch2), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			rootCmd.SetArgs([]string{
+				"sync",
+				fmt.Sprintf("--path=%s", projectPath),
+				"--dry-run",
+			})
+			err = rootCmd.Execute()
+			Expect(err).NotTo(HaveOccurred())
+			k, err := os.ReadFile(path.Join(pathToCluster, "kustomization.yaml"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(k).To(BeEquivalentTo([]byte(kustomizationPatch2)))
+		})
+		It("builds the configuration without errors", func() {
+			rootCmd.SetArgs([]string{
+				"build",
+				"group1",
+				"cluster1",
+				projectPath,
+			})
+			err := rootCmd.Execute()
+			Expect(err).NotTo(HaveOccurred())
+		})
+		It("updates the resources on the kind cluster", func() {
+			rootCmd.SetArgs([]string{
+				"apply",
+				"group1",
+				"cluster1",
+				projectPath,
+			})
+			err := rootCmd.Execute()
+			Expect(err).NotTo(HaveOccurred())
+
+			depMod, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "sample-module1", v1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(depMod).NotTo(BeNil())
+			Expect(depMod.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 2))
+			depAddOn, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "sample-addon1", v1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(depAddOn).NotTo(BeNil())
+			Expect(depAddOn.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 3))
 		})
 	})
 })
