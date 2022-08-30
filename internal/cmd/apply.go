@@ -42,10 +42,11 @@ func NewApplyCommand(logger logger.LogInterface) *cobra.Command {
 				cluster = args[1]
 			}
 
-			return apply.Apply(logger, flags.Config, flags.Output, group, cluster, context)
+			return apply.Apply(logger, flags.Config, flags.Output, flags.DryRun, group, cluster, context)
 		},
 	}
-	applyCmd.PersistentFlags().StringVarP(&flags.Output, "output", "o", utils.DefaultOutputDir, "specify a different path for the applied files")
+	applyCmd.Flags().StringVarP(&flags.Output, "output", "o", utils.DefaultOutputDir, "specify a different path for the applied files")
+	applyCmd.Flags().BoolVar(&flags.DryRun, "dry-run", false, "sync the project files without downloading new packages")
 
 	return applyCmd
 }

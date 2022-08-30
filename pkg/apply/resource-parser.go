@@ -13,13 +13,11 @@ import (
 func createResourcesFiles(outputDir string, crdPath string, resourcesPath string, buffer bytes.Buffer) (err error) {
 	customResources := new(bytes.Buffer)
 	resources := new(bytes.Buffer)
-	fmt.Println(crdPath, resourcesPath)
 
 	fileContent, err := ioutil.ReadAll(&buffer)
 	if err != nil {
-		return err
+		return fmt.Errorf("error reading Kustomize output: %s", err)
 	}
-	fmt.Println(string(fileContent))
 
 	re := regexp.MustCompile(`\n---\n`)
 
@@ -27,7 +25,6 @@ func createResourcesFiles(outputDir string, crdPath string, resourcesPath string
 
 	for _, doc := range re.Split(string(fileContent), -1) {
 		yaml.Unmarshal([]byte(doc), &item)
-		fmt.Println(item)
 		if item["kind"] == "CustomResourceDefinition" {
 			crdYaml, err := yaml.Marshal(&item)
 			if err != nil {
@@ -42,23 +39,26 @@ func createResourcesFiles(outputDir string, crdPath string, resourcesPath string
 			fmt.Fprint(resources, string(resYaml), "---\n")
 		}
 	}
-	fmt.Println(resources)
 
 	err = os.MkdirAll(outputDir, folderPermissions)
 	if err != nil {
-		return err
+		return fmt.Errorf("error creating output folder (%s): %s", outputDir, err)
 	}
 
-	fmt.Println("creating Crds at ", crdPath)
-	err = ioutil.WriteFile(crdPath, customResources.Bytes(), filesPermissions)
-	if err != nil {
-		return err
+	if customResources.Len() != 0 {
+		fmt.Println("creating Crds at ", crdPath)
+		err = ioutil.WriteFile(crdPath, customResources.Bytes(), filesPermissions)
+		if err != nil {
+			return fmt.Errorf("error creating crd file (%s): %s", crdPath, err)
+		}
 	}
 
 	fmt.Println("creating Resources at ", resourcesPath)
-	err = ioutil.WriteFile(resourcesPath, resources.Bytes(), filesPermissions)
-	if err != nil {
-		return err
+	if resources.Len() != 0 {
+		err = ioutil.WriteFile(resourcesPath, resources.Bytes(), filesPermissions)
+		if err != nil {
+			return fmt.Errorf("error creating resources file (%s): %s", resourcesPath, err)
+		}
 	}
 
 	return

@@ -2,6 +2,7 @@ package apply
 
 import (
 	"bytes"
+	"os"
 	"testing"
 )
 
@@ -33,5 +34,7 @@ data:
 `
 
 	createResourcesFiles("./output", "./output/crds", "./output/res", *bytes.NewBuffer([]byte(s)))
+
+	os.RemoveAll("./output")
 
 }
