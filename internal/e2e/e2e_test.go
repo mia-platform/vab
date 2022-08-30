@@ -126,8 +126,8 @@ var _ = Describe("setup vab project", func() {
 			Expect(info.IsDir()).To(BeTrue())
 		})
 	})
-	Context("simple configuration with module (no overrides)", func() {
-		It("returns that the configuration is valid", func() {
+	Context("config with module (w/o overrides)", func() {
+		It("validates the config file without errors", func() {
 			config := `kind: ClustersConfiguration
 apiVersion: vab.mia-platform.eu/v1alpha1
 name: test-project
@@ -197,7 +197,7 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
-	Context("simple configuration with module and cluster override", func() {
+	Context("config with module (w/ override)", func() {
 		It("validates the config file without errors", func() {
 			config := `kind: ClustersConfiguration
 apiVersion: vab.mia-platform.eu/v1alpha1
@@ -265,7 +265,7 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
-	Context("cluster override with module patch", func() {
+	Context("config with module (w/ override and patch)", func() {
 		It("syncs the project without errors", func() {
 			patch := `apiVersion: apps/v1
 kind: Deployment
@@ -320,7 +320,7 @@ spec:
 			Expect(dep.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 2))
 		})
 	})
-	Context("configuration with module (overridden) and addon", func() {
+	Context("config with module (w/ override and patch) and add-on (w/o overrides)", func() {
 		It("validates the config file without errors", func() {
 			config := `kind: ClustersConfiguration
 apiVersion: vab.mia-platform.eu/v1alpha1
@@ -396,6 +396,103 @@ spec:
 			err = rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
 		})
+		It("updates the resources on the kind cluster", func() {
+			rootCmd.SetArgs([]string{
+				"apply",
+				"group1",
+				"cluster1",
+				projectPath,
+			})
+			err := rootCmd.Execute()
+			Expect(err).NotTo(HaveOccurred())
 
+			depsGvr := schema.GroupVersionResource{
+				Group:    "apps",
+				Version:  "v1",
+				Resource: "deployments",
+			}
+			depMod, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "sample-module1", v1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(depMod).NotTo(BeNil())
+			Expect(depMod.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 2))
+			depAddOn, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "sample-addon1", v1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(depAddOn).NotTo(BeNil())
+		})
+	})
+	Context("config with module (w/ override and patch) and add-on (w/ override)", func() {
+		It("validates the config file without errors", func() {
+			config := `kind: ClustersConfiguration
+apiVersion: vab.mia-platform.eu/v1alpha1
+name: test-project
+spec:
+  modules:
+    example/sample-module1:
+      version: 0.1.0
+      weight: 1
+  addOns: {}
+  groups:
+  - name: group1
+    clusters:
+    - name: cluster1
+      context: kind-kind
+      modules:
+        example/sample-module1:
+          version: 0.1.1
+          weight: 1
+      addOns:
+        sample-addon1:
+          version: 0.1.1`
+			err := os.WriteFile(configPath, []byte(config), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			rootCmd.SetArgs([]string{
+				"validate",
+				fmt.Sprintf("--config=%s", configPath),
+			})
+			err = rootCmd.Execute()
+			Expect(err).NotTo(HaveOccurred())
+		})
+		It("syncs the project without errors", func() {
+			rootCmd.SetArgs([]string{
+				"sync",
+				fmt.Sprintf("--path=%s", projectPath),
+				"--dry-run",
+			})
+			err := rootCmd.Execute()
+			Expect(err).NotTo(HaveOccurred())
+		})
+		It("builds the configuration without errors", func() {
+			rootCmd.SetArgs([]string{
+				"build",
+				"group1",
+				"cluster1",
+				projectPath,
+			})
+			err := rootCmd.Execute()
+			Expect(err).NotTo(HaveOccurred())
+		})
+		It("applies the configuration to the kind cluster", func() {
+			rootCmd.SetArgs([]string{
+				"apply",
+				"group1",
+				"cluster1",
+				projectPath,
+			})
+			err := rootCmd.Execute()
+			Expect(err).NotTo(HaveOccurred())
+
+			depsGvr := schema.GroupVersionResource{
+				Group:    "apps",
+				Version:  "v1",
+				Resource: "deployments",
+			}
+			depMod, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "sample-module1", v1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(depMod).NotTo(BeNil())
+			Expect(depMod.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 2))
+			depAddOn, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "sample-addon1", v1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(depAddOn).NotTo(BeNil())
+		})
 	})
 })
