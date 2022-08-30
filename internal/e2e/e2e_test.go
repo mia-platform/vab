@@ -68,7 +68,8 @@ var configPath string
 var projectPath string
 var clustersDirPath string
 var allGroupsDirPath string
-var sampleModulePath string
+var sampleModulePath1 string
+var sampleModulePath2 string
 var sampleAddOnPath string
 var depsGvr schema.GroupVersionResource
 
@@ -100,7 +101,8 @@ var _ = BeforeSuite(func() {
 		configPath = path.Join(projectPath, "config.yaml")
 		clustersDirPath = path.Join(projectPath, "clusters")
 		allGroupsDirPath = path.Join(clustersDirPath, "all-groups")
-		sampleModulePath = path.Join(projectPath, "vendors", "modules", "example", "sample-module1")
+		sampleModulePath1 = path.Join(projectPath, "vendors", "modules", "module1", "flavour1")
+		sampleModulePath2 = path.Join(projectPath, "vendors", "modules", "module2", "flavour1")
 		sampleAddOnPath = path.Join(projectPath, "vendors", "add-ons", "sample-addon1")
 
 		depsGvr = schema.GroupVersionResource{
@@ -141,14 +143,14 @@ var _ = Describe("setup vab project", func() {
 			Expect(info.IsDir()).To(BeTrue())
 		})
 	})
-	Context("config with module (w/o overrides)", func() {
+	Context("1 module (w/o overrides)", func() {
 		It("validates the config file without errors", func() {
 			config := `kind: ClustersConfiguration
 apiVersion: vab.mia-platform.eu/v1alpha1
 name: test-project
 spec:
   modules:
-    example/sample-module1:
+    module1/flavour1:
       version: 0.1.0
       weight: 1
   addOns: {}
@@ -179,28 +181,28 @@ spec:
 			sampleFile := `apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sample-module1
+  name: module1flavour1
   namespace: default
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: sample-module1
+      app: module1flavour1
   template:
     metadata:
       labels:
-        app: sample-module1
+        app: module1flavour1
     spec:
       containers:
       - image: k8s.gcr.io/echoserver:1.4
         name: echoserver
         ports:
         - containerPort: 8080`
-			err := os.MkdirAll(sampleModulePath, os.ModePerm)
+			err := os.MkdirAll(sampleModulePath1, os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(sampleModulePath, "example.yaml"), []byte(sampleFile), os.ModePerm)
+			err = os.WriteFile(path.Join(sampleModulePath1, "example.yaml"), []byte(sampleFile), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(sampleModulePath, "kustomization.yaml"), []byte(sampleKustomization), os.ModePerm)
+			err = os.WriteFile(path.Join(sampleModulePath1, "kustomization.yaml"), []byte(sampleKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 			rootCmd.SetArgs([]string{
 				"build",
@@ -212,14 +214,14 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
-	Context("config with module (w/ override)", func() {
+	Context("1 module (w/ override)", func() {
 		It("validates the config file without errors", func() {
 			config := `kind: ClustersConfiguration
 apiVersion: vab.mia-platform.eu/v1alpha1
 name: test-project
 spec:
   modules:
-    example/sample-module1:
+    module1/flavour1:
       version: 0.1.0
       weight: 1
   addOns: {}
@@ -229,7 +231,7 @@ spec:
     - name: cluster1
       context: kind-kind
       modules:
-        example/sample-module1:
+        module1/flavour1:
           version: 0.1.1
           weight: 1`
 			err := os.WriteFile(configPath, []byte(config), os.ModePerm)
@@ -270,17 +272,17 @@ spec:
 			err := rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
 
-			dep, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "sample-module1", v1.GetOptions{})
+			dep, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1flavour1", v1.GetOptions{})
 			Expect(dep).NotTo(BeNil())
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
-	Context("config with module (w/ override and patch)", func() {
+	Context("1 module (w/ override and patch)", func() {
 		It("syncs the project without errors", func() {
 			patch := `apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sample-module1
+  name: module1flavour1
 spec:
   replicas: 2`
 			pathToCluster := path.Join(clustersDirPath, "group1", "cluster1")
@@ -319,20 +321,20 @@ spec:
 			err := rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
 
-			dep, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "sample-module1", v1.GetOptions{})
+			dep, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1flavour1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dep).NotTo(BeNil())
 			Expect(dep.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 2))
 		})
 	})
-	Context("config with module (w/ override and patch) and add-on (w/o overrides)", func() {
+	Context("1 module (w/ override and patch), 1 add-on (w/o overrides)", func() {
 		It("validates the config file without errors", func() {
 			config := `kind: ClustersConfiguration
 apiVersion: vab.mia-platform.eu/v1alpha1
 name: test-project
 spec:
   modules:
-    example/sample-module1:
+    module1/flavour1:
       version: 0.1.0
       weight: 1
   addOns:
@@ -344,7 +346,7 @@ spec:
     - name: cluster1
       context: kind-kind
       modules:
-        example/sample-module1:
+        module1/flavour1:
           version: 0.1.1
           weight: 1`
 			err := os.WriteFile(configPath, []byte(config), os.ModePerm)
@@ -411,7 +413,7 @@ spec:
 			err := rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
 
-			depMod, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "sample-module1", v1.GetOptions{})
+			depMod, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1flavour1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depMod).NotTo(BeNil())
 			Expect(depMod.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 2))
@@ -420,14 +422,14 @@ spec:
 			Expect(depAddOn).NotTo(BeNil())
 		})
 	})
-	Context("config with module (w/ override and patch) and add-on (w/ override)", func() {
+	Context("1 module (w/ override and patch), 1 and add-on (w/ override)", func() {
 		It("validates the config file without errors", func() {
 			config := `kind: ClustersConfiguration
 apiVersion: vab.mia-platform.eu/v1alpha1
 name: test-project
 spec:
   modules:
-    example/sample-module1:
+    module1/flavour1:
       version: 0.1.0
       weight: 1
   addOns: {}
@@ -437,7 +439,7 @@ spec:
     - name: cluster1
       context: kind-kind
       modules:
-        example/sample-module1:
+        module1/flavour1:
           version: 0.1.1
           weight: 1
       addOns:
@@ -481,7 +483,7 @@ spec:
 			err := rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
 
-			depMod, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "sample-module1", v1.GetOptions{})
+			depMod, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1flavour1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depMod).NotTo(BeNil())
 			Expect(depMod.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 2))
@@ -490,7 +492,7 @@ spec:
 			Expect(depAddOn).NotTo(BeNil())
 		})
 	})
-	Context("config with module (w/ override and patch)", func() {
+	Context("1 module, 1 add-on (w/ overrides and patches)", func() {
 		It("syncs the project without errors", func() {
 			patch := `apiVersion: apps/v1
 kind: Deployment
@@ -534,7 +536,7 @@ spec:
 			err := rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
 
-			depMod, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "sample-module1", v1.GetOptions{})
+			depMod, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1flavour1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depMod).NotTo(BeNil())
 			Expect(depMod.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 2))
@@ -542,6 +544,89 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depAddOn).NotTo(BeNil())
 			Expect(depAddOn.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 3))
+		})
+	})
+	Context("2 modules, 1 add-on (w/ overrides and patches", func() {
+		It("validates the config file without errors", func() {
+			config := `kind: ClustersConfiguration
+apiVersion: vab.mia-platform.eu/v1alpha1
+name: test-project
+spec:
+  modules:
+    module1/flavour1:
+      version: 0.1.0
+      weight: 1
+    module2/flavour1:
+      version: 0.1.0
+      weight: 2
+  addOns:
+    sample-addon1:
+      version: 0.1.0
+  groups:
+  - name: group1
+    clusters:
+    - name: cluster1
+      context: kind-kind
+      modules:
+        module1/flavour1:
+          version: 0.1.1
+          weight: 1
+      addOns:
+        sample-addon1:
+          version: 0.1.1`
+			err := os.WriteFile(configPath, []byte(config), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			rootCmd.SetArgs([]string{
+				"validate",
+				fmt.Sprintf("--config=%s", configPath),
+			})
+			err = rootCmd.Execute()
+			Expect(err).NotTo(HaveOccurred())
+		})
+		It("syncs the project without errors", func() {
+			rootCmd.SetArgs([]string{
+				"sync",
+				fmt.Sprintf("--path=%s", projectPath),
+				"--dry-run",
+			})
+			err := rootCmd.Execute()
+			Expect(err).NotTo(HaveOccurred())
+		})
+		It("builds the configuration without errors", func() {
+			sampleFile := `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: module2flavour1
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: module2flavour1
+  template:
+    metadata:
+      labels:
+        app: module2flavour1
+    spec:
+      containers:
+      - image: k8s.gcr.io/echoserver:1.4
+        name: echoserver
+        ports:
+        - containerPort: 8080`
+			err := os.MkdirAll(sampleModulePath2, os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			err = os.WriteFile(path.Join(sampleModulePath2, "example.yaml"), []byte(sampleFile), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			err = os.WriteFile(path.Join(sampleModulePath2, "kustomization.yaml"), []byte(sampleKustomization), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			rootCmd.SetArgs([]string{
+				"build",
+				"group1",
+				projectPath,
+				fmt.Sprintf("--path=%s", projectPath),
+			})
+			err = rootCmd.Execute()
+			Expect(err).NotTo(HaveOccurred())
 		})
 	})
 })
