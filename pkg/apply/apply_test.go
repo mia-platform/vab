@@ -108,5 +108,5 @@ func TestGetContextError(t *testing.T) {
 
 const (
 	testBuildFolder    = "apply-test"
-	testConfigFileName = "config.yaml"
+	testConfigFileName = "testconfig.yaml"
 )

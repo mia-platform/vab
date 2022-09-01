@@ -11,4 +11,6 @@ spec:
   - name: test-group2
     clusters:
     - name: test-cluster
+      context: context-1
     - name: test-cluster2
+      context: context-2
