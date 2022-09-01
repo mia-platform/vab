@@ -70,26 +70,27 @@ func Apply(logger logger.LogInterface, configPath string, outputDir string, isDr
 		resourcesFilename := cluster + "-res"
 		crdsFilePath := filepath.Join(outputDir, crdFilename)
 		resourcesFilepath := filepath.Join(outputDir, resourcesFilename)
-		createResourcesFiles(outputDir, crdsFilePath, resourcesFilepath, *buffer)
+
+		err := createResourcesFiles(outputDir, crdsFilePath, resourcesFilepath, *buffer)
+		if err != nil {
+			return fmt.Errorf("error creating resource files: %s", err)
+		}
 
 		context, err := getContext(configPath, groupName, cluster)
 		if err != nil {
 			return fmt.Errorf("error searching for context: %s", err)
-
 		}
 
 		if _, err := os.Stat(crdsFilePath); err == nil {
 			err = runKubectlApply(logger, crdsFilePath, context, isDryRun)
 			if err != nil {
 				return fmt.Errorf("error applying crds at %s: %s", crdsFilePath, err)
-
 			}
 		}
 
 		if _, err := os.Stat(resourcesFilepath); err == nil {
 			err = runKubectlApply(logger, resourcesFilepath, context, isDryRun)
 			if err != nil {
-
 				return fmt.Errorf("error applying resources at %s: %s", resourcesFilepath, err)
 			}
 		}
@@ -119,7 +120,6 @@ func getContext(configPath string, groupName string, clusterName string) (string
 
 // runKubectlApply instantiates and executes the kubectl Apply command, with the correct parameters.
 func runKubectlApply(logger logger.LogInterface, fileName string, context string, isDryRun bool) error {
-
 	// default configflags
 	configFlags := genericclioptions.NewConfigFlags(false)
 	// the kubeconfig context used is equal to the fileName

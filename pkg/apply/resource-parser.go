@@ -24,17 +24,21 @@ func createResourcesFiles(outputDir string, crdPath string, resourcesPath string
 	for _, doc := range re.Split(string(fileContent), -1) {
 		item := make(map[string]interface{})
 
-		yaml.Unmarshal([]byte(doc), &item)
+		err := yaml.Unmarshal([]byte(doc), &item)
+		if err != nil {
+			return fmt.Errorf("error with Kustomize output: %s", err)
+		}
+
 		if item["kind"] == "CustomResourceDefinition" {
 			crdYaml, err := yaml.Marshal(&item)
 			if err != nil {
-				return err
+				return fmt.Errorf("error with Kustomize outpu: %s", err)
 			}
 			fmt.Fprint(customResources, string(crdYaml), "---\n")
 		} else if len(item) != 0 {
 			resYaml, err := yaml.Marshal(&item)
 			if err != nil {
-				return err
+				return fmt.Errorf("error with Kustomize outpu: %s", err)
 			}
 			fmt.Fprint(resources, string(resYaml), "---\n")
 		}

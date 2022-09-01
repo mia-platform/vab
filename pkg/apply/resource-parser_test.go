@@ -14,7 +14,8 @@ func TestGetResources(t *testing.T) {
 	contentFile, err := os.ReadFile(testPath)
 	assert.NoError(t, err)
 
-	createResourcesFiles("./output", "./output/crds", "./output/res", *bytes.NewBuffer(contentFile))
+	err = createResourcesFiles("./output", "./output/crds", "./output/res", *bytes.NewBuffer(contentFile))
+	assert.NoError(t, err)
 
 	assert.FileExists(t, "./output/crds")
 	assert.FileExists(t, "./output/res")
