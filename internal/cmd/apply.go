@@ -46,7 +46,7 @@ func NewApplyCommand(logger logger.LogInterface) *cobra.Command {
 		},
 	}
 	applyCmd.Flags().StringVarP(&flags.Output, "output", "o", utils.DefaultOutputDir, "specify a different path for the applied files")
-	applyCmd.Flags().BoolVar(&flags.DryRun, "dry-run", false, "sync the project files without downloading new packages")
+	applyCmd.Flags().BoolVar(&flags.DryRun, "dry-run", false, "if true does not apply the configurations")
 
 	return applyCmd
 }

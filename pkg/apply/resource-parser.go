@@ -21,9 +21,9 @@ func createResourcesFiles(outputDir string, crdPath string, resourcesPath string
 
 	re := regexp.MustCompile(`\n---\n`)
 
-	item := make(map[string]interface{})
-
 	for _, doc := range re.Split(string(fileContent), -1) {
+		item := make(map[string]interface{})
+
 		yaml.Unmarshal([]byte(doc), &item)
 		if item["kind"] == "CustomResourceDefinition" {
 			crdYaml, err := yaml.Marshal(&item)
@@ -31,7 +31,7 @@ func createResourcesFiles(outputDir string, crdPath string, resourcesPath string
 				return err
 			}
 			fmt.Fprint(customResources, string(crdYaml), "---\n")
-		} else {
+		} else if len(item) != 0 {
 			resYaml, err := yaml.Marshal(&item)
 			if err != nil {
 				return err

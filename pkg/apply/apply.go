@@ -39,6 +39,7 @@ const (
 	folderPermissions fs.FileMode = 0700
 )
 
+// Apply builds the selected Kustomize resources and apply them in the context specified. The resources built are saved in files at the specified path.
 func Apply(logger logger.LogInterface, configPath string, outputDir string, isDryRun bool, groupName string, clusterName string, contextPath string) error {
 	cleanedContextPath := path.Clean(contextPath)
 	contextInfo, err := os.Stat(cleanedContextPath)
@@ -85,9 +86,10 @@ func Apply(logger logger.LogInterface, configPath string, outputDir string, isDr
 			}
 		}
 
-		if _, err := os.Stat(crdsFilePath); err == nil {
+		if _, err := os.Stat(resourcesFilepath); err == nil {
 			err = runKubectlApply(logger, resourcesFilepath, context, isDryRun)
 			if err != nil {
+
 				return fmt.Errorf("error applying resources at %s: %s", resourcesFilepath, err)
 			}
 		}
@@ -95,6 +97,7 @@ func Apply(logger logger.LogInterface, configPath string, outputDir string, isDr
 	return nil
 }
 
+// getContext retrieves the context for the cluster/group from the config file.
 func getContext(configPath string, groupName string, clusterName string) (string, error) {
 	config, err := utils.ReadConfig(configPath)
 	if err != nil {
@@ -114,7 +117,9 @@ func getContext(configPath string, groupName string, clusterName string) (string
 	return config.Spec.Groups[groupIdx].Clusters[clusterIdx].Context, nil
 }
 
+// runKubectlApply instantiates and executes the kubectl Apply command, with the correct parameters.
 func runKubectlApply(logger logger.LogInterface, fileName string, context string, isDryRun bool) error {
+
 	// default configflags
 	configFlags := genericclioptions.NewConfigFlags(false)
 	// the kubeconfig context used is equal to the fileName
@@ -129,11 +134,13 @@ func runKubectlApply(logger logger.LogInterface, fileName string, context string
 	args := []string{
 		"-f",
 		fileName,
+		"--wait",
 	}
 	cmd := apply.NewCmdApply("kubectl", factory, streams)
 	cmd.SetArgs(args)
 
 	if !isDryRun {
+		fmt.Println("Apply")
 		err := cmd.Execute()
 		if err != nil {
 			return err

@@ -98,7 +98,7 @@ func TestGetContextError(t *testing.T) {
 	_, err := getContext(configPath, "notExistent", "test-cluster")
 	assert.Error(t, err)
 
-	_, err = getContext(configPath, "test-group", "notExistent")
+	_, err = getContext(configPath, "test-group2", "notExistent")
 	assert.Error(t, err)
 
 	configPathError := "notExistent"
