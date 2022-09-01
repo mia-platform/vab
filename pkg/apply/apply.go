@@ -19,11 +19,9 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/mia-platform/vab/internal/utils"
@@ -36,10 +34,13 @@ import (
 	"k8s.io/kubectl/pkg/cmd/util"
 )
 
-const filesPermissions fs.FileMode = 0600
-const folderPermissions fs.FileMode = 0700
+const (
+	filesPermissions  fs.FileMode = 0600
+	folderPermissions fs.FileMode = 0700
+)
 
-func Apply(logger logger.LogInterface, configPath string, outputDir string, groupName string, clusterName string, contextPath string) error {
+// Apply builds the selected Kustomize resources and apply them in the context specified. The resources built are saved in files at the specified path.
+func Apply(logger logger.LogInterface, configPath string, outputDir string, isDryRun bool, groupName string, clusterName string, contextPath string) error {
 	cleanedContextPath := path.Clean(contextPath)
 	contextInfo, err := os.Stat(cleanedContextPath)
 	if err != nil {
@@ -65,30 +66,39 @@ func Apply(logger logger.LogInterface, configPath string, outputDir string, grou
 			return err
 		}
 
-		err := os.MkdirAll(outputDir, folderPermissions)
+		crdFilename := cluster + "-crds"
+		resourcesFilename := cluster + "-res"
+		crdsFilePath := filepath.Join(outputDir, crdFilename)
+		resourcesFilepath := filepath.Join(outputDir, resourcesFilename)
+
+		err := createResourcesFiles(outputDir, crdsFilePath, resourcesFilepath, *buffer)
 		if err != nil {
-			return err
-		}
-		filePath := filepath.Join(outputDir, cluster)
-		fmt.Println("creating resources at ", filePath)
-		err = ioutil.WriteFile(filePath, buffer.Bytes(), filesPermissions)
-		if err != nil {
-			return err
+			return fmt.Errorf("error creating resource files: %s", err)
 		}
 
 		context, err := getContext(configPath, groupName, cluster)
 		if err != nil {
-			return err
+			return fmt.Errorf("error searching for context: %s", err)
 		}
 
-		err = runKubectlApply(logger, cluster, context)
-		if err != nil {
-			return err
+		if _, err := os.Stat(crdsFilePath); err == nil {
+			err = runKubectlApply(logger, crdsFilePath, context, isDryRun)
+			if err != nil {
+				return fmt.Errorf("error applying crds at %s: %s", crdsFilePath, err)
+			}
+		}
+
+		if _, err := os.Stat(resourcesFilepath); err == nil {
+			err = runKubectlApply(logger, resourcesFilepath, context, isDryRun)
+			if err != nil {
+				return fmt.Errorf("error applying resources at %s: %s", resourcesFilepath, err)
+			}
 		}
 	}
 	return nil
 }
 
+// getContext retrieves the context for the cluster/group from the config file.
 func getContext(configPath string, groupName string, clusterName string) (string, error) {
 	config, err := utils.ReadConfig(configPath)
 	if err != nil {
@@ -108,7 +118,8 @@ func getContext(configPath string, groupName string, clusterName string) (string
 	return config.Spec.Groups[groupIdx].Clusters[clusterIdx].Context, nil
 }
 
-func runKubectlApply(logger logger.LogInterface, fileName string, context string) error {
+// runKubectlApply instantiates and executes the kubectl Apply command, with the correct parameters.
+func runKubectlApply(logger logger.LogInterface, fileName string, context string, isDryRun bool) error {
 	// default configflags
 	configFlags := genericclioptions.NewConfigFlags(false)
 	// the kubeconfig context used is equal to the fileName
@@ -123,14 +134,13 @@ func runKubectlApply(logger logger.LogInterface, fileName string, context string
 	args := []string{
 		"-f",
 		fileName,
+		"--wait",
 	}
 	cmd := apply.NewCmdApply("kubectl", factory, streams)
 	cmd.SetArgs(args)
 
-	// dry-run for testing purposes
-	test, _ := regexp.Match("test*", []byte(fileName))
-
-	if !test {
+	if !isDryRun {
+		fmt.Println("Apply")
 		err := cmd.Execute()
 		if err != nil {
 			return err

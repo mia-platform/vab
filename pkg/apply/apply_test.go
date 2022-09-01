@@ -27,13 +27,13 @@ import (
 
 func TestBuildFunctionForASingleCluster(t *testing.T) {
 	log := logger.DisabledLogger{}
-	configPath := testutils.GetTestFile("build", testBuildFolder, testConfigFileName)
-	outputDir := "./output"
-	err := Apply(log, configPath, outputDir, testutils.TestGroupName2, testutils.TestClusterName1, testutils.GetTestFile("build", testBuildFolder))
+	configPath := testutils.GetTestFile("apply", testBuildFolder, testConfigFileName)
+	outputDir := "./outputT1"
+	err := Apply(log, configPath, outputDir, true, testutils.TestGroupName2, testutils.TestClusterName1, testutils.GetTestFile("apply", testBuildFolder))
 
-	assert.FileExists(t, "./output/test-cluster")
+	assert.FileExists(t, "./outputT1/test-cluster-res")
 
-	os.RemoveAll("./output")
+	os.RemoveAll("./outputT1")
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -41,14 +41,14 @@ func TestBuildFunctionForASingleCluster(t *testing.T) {
 
 func TestBuildFunctionForAGroup(t *testing.T) {
 	log := logger.DisabledLogger{}
-	configPath := testutils.GetTestFile("build", testBuildFolder, testConfigFileName)
-	outputDir := "./output"
-	err := Apply(log, configPath, outputDir, testutils.TestGroupName2, "", testutils.GetTestFile("build", testBuildFolder))
+	configPath := testutils.GetTestFile("apply", testBuildFolder, testConfigFileName)
+	outputDir := "./outputT2"
+	err := Apply(log, configPath, outputDir, true, testutils.TestGroupName2, "", testutils.GetTestFile("apply", testBuildFolder))
 
-	assert.FileExists(t, "./output/test-cluster")
-	assert.FileExists(t, "./output/test-cluster2")
+	assert.FileExists(t, "./outputT2/test-cluster-res")
+	assert.FileExists(t, "./outputT2/test-cluster2-res")
 
-	os.RemoveAll("./output")
+	os.RemoveAll("./outputT2")
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -56,49 +56,49 @@ func TestBuildFunctionForAGroup(t *testing.T) {
 
 func TestWrongContextPath(t *testing.T) {
 	log := logger.DisabledLogger{}
-	configPath := testutils.GetTestFile("build", testBuildFolder, testConfigFileName)
-	outputDir := "./output"
-	err := Apply(log, configPath, outputDir, "", "", testutils.InvalidFolderPath)
+	configPath := testutils.GetTestFile("apply", testBuildFolder, testConfigFileName)
+	outputDir := "./outputT3"
+	err := Apply(log, configPath, outputDir, true, "", "", testutils.InvalidFolderPath)
 
 	if assert.Error(t, err) {
 		assert.ErrorIs(t, err, fs.ErrNotExist)
 	}
 
-	err = Apply(log, configPath, outputDir, "", "", configPath)
+	err = Apply(log, configPath, outputDir, true, "", "", configPath)
 	if assert.Error(t, err) {
 		assert.Equal(t, err.Error(), fmt.Sprintf("the target path %s is not a directory", configPath))
 	}
 
-	os.RemoveAll("./output")
+	os.RemoveAll("./outputT3")
 }
 
 func TestBuildInvalidConfigPath(t *testing.T) {
 	log := logger.DisabledLogger{}
-	contextPath := testutils.GetTestFile("build", testBuildFolder)
-	outputDir := "./output"
-	err := Apply(log, testutils.InvalidFileName, outputDir, "", "", contextPath)
+	contextPath := testutils.GetTestFile("apply", testBuildFolder)
+	outputDir := "./outputT4"
+	err := Apply(log, testutils.InvalidFileName, outputDir, true, "", "", contextPath)
 
 	if assert.Error(t, err) {
 		assert.ErrorIs(t, err, fs.ErrNotExist)
 	}
-	os.RemoveAll("./output")
+	os.RemoveAll("./outputT4")
 }
 
 func TestBuildInvalidKustomization(t *testing.T) {
 	log := logger.DisabledLogger{}
-	configPath := testutils.GetTestFile("build", testBuildFolder, testConfigFileName)
-	outputDir := "./output"
-	err := Apply(log, configPath, outputDir, testutils.TestGroupName1, testutils.TestClusterName1, testutils.GetTestFile("build", testBuildFolder))
+	configPath := testutils.GetTestFile("apply", testBuildFolder, testConfigFileName)
+	outputDir := "./outputT5"
+	err := Apply(log, configPath, outputDir, true, testutils.TestGroupName1, testutils.TestClusterName1, testutils.GetTestFile("apply", testBuildFolder))
 	assert.Error(t, err)
-	os.RemoveAll("./output")
+	os.RemoveAll("./outputT5")
 }
 
 func TestGetContextError(t *testing.T) {
-	configPath := testutils.GetTestFile("build", testBuildFolder, testConfigFileName)
+	configPath := testutils.GetTestFile("apply", testBuildFolder, testConfigFileName)
 	_, err := getContext(configPath, "notExistent", "test-cluster")
 	assert.Error(t, err)
 
-	_, err = getContext(configPath, "test-group", "notExistent")
+	_, err = getContext(configPath, "test-group2", "notExistent")
 	assert.Error(t, err)
 
 	configPathError := "notExistent"
@@ -107,6 +107,6 @@ func TestGetContextError(t *testing.T) {
 }
 
 const (
-	testBuildFolder    = "build-test"
+	testBuildFolder    = "apply-test"
 	testConfigFileName = "testconfig.yaml"
 )
