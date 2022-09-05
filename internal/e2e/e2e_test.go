@@ -27,7 +27,6 @@ import (
 	"github.com/mia-platform/vab/pkg/logger"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/spf13/cobra"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -63,7 +62,6 @@ var cfg *rest.Config
 var dynamicClient dynamic.Interface
 var testEnv *envtest.Environment
 var testDirPath string
-var rootCmd *cobra.Command
 var configPath string
 var projectPath string
 var clustersDirPath string
@@ -92,7 +90,6 @@ var _ = BeforeSuite(func() {
 
 		// initialize vab logger and root command
 		log = logger.DisabledLogger{}
-		rootCmd = cmd.NewRootCommand()
 
 		// initialize global paths and vars
 		testDirPath = os.TempDir()
@@ -126,6 +123,7 @@ var _ = AfterSuite(func() {
 var _ = Describe("setup vab project", func() {
 	Context("initialize new project", func() {
 		It("creates a preliminar directory structure", func() {
+			rootCmd := cmd.NewRootCommand()
 			rootCmd.SetArgs([]string{
 				"init",
 				fmt.Sprintf("--path=%s", testDirPath),
@@ -161,6 +159,7 @@ spec:
       context: kind-kind`
 			err := os.WriteFile(configPath, []byte(config), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
+			rootCmd := cmd.NewRootCommand()
 			rootCmd.SetArgs([]string{
 				"validate",
 				fmt.Sprintf("--config=%s", configPath),
@@ -169,8 +168,10 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 		})
 		It("syncs the project without errors", func() {
+			rootCmd := cmd.NewRootCommand()
 			rootCmd.SetArgs([]string{
 				"sync",
+				fmt.Sprintf("--config=%s", configPath),
 				fmt.Sprintf("--path=%s", projectPath),
 				"--dry-run",
 			})
@@ -204,10 +205,12 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 			err = os.WriteFile(path.Join(sampleModulePath1, "kustomization.yaml"), []byte(sampleKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
+			rootCmd := cmd.NewRootCommand()
 			rootCmd.SetArgs([]string{
 				"build",
 				"group1",
 				projectPath,
+				fmt.Sprintf("--config=%s", configPath),
 				fmt.Sprintf("--path=%s", projectPath),
 			})
 			err = rootCmd.Execute()
@@ -236,6 +239,7 @@ spec:
           weight: 1`
 			err := os.WriteFile(configPath, []byte(config), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
+			rootCmd := cmd.NewRootCommand()
 			rootCmd.SetArgs([]string{
 				"validate",
 				fmt.Sprintf("--config=%s", configPath),
@@ -244,8 +248,10 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 		})
 		It("syncs the project without errors", func() {
+			rootCmd := cmd.NewRootCommand()
 			rootCmd.SetArgs([]string{
 				"sync",
+				fmt.Sprintf("--config=%s", configPath),
 				fmt.Sprintf("--path=%s", projectPath),
 				"--dry-run",
 			})
@@ -253,21 +259,25 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 		})
 		It("builds the configuration without errors", func() {
+			rootCmd := cmd.NewRootCommand()
 			rootCmd.SetArgs([]string{
 				"build",
 				"group1",
 				"cluster1",
 				projectPath,
+				fmt.Sprintf("--config=%s", configPath),
 			})
 			err := rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
 		})
 		It("applies the configuration to the kind cluster", func() {
+			rootCmd := cmd.NewRootCommand()
 			rootCmd.SetArgs([]string{
 				"apply",
 				"group1",
 				"cluster1",
 				projectPath,
+				fmt.Sprintf("--config=%s", configPath),
 			})
 			err := rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
@@ -290,9 +300,11 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 			err = os.WriteFile(path.Join(pathToCluster, "kustomization.yaml"), []byte(kustomizationPatch1), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
+			rootCmd := cmd.NewRootCommand()
 			rootCmd.SetArgs([]string{
 				"sync",
 				fmt.Sprintf("--path=%s", projectPath),
+				fmt.Sprintf("--config=%s", configPath),
 				"--dry-run",
 			})
 			err = rootCmd.Execute()
@@ -302,21 +314,25 @@ spec:
 			Expect(k).To(BeEquivalentTo([]byte(kustomizationPatch1)))
 		})
 		It("builds the configuration without errors", func() {
+			rootCmd := cmd.NewRootCommand()
 			rootCmd.SetArgs([]string{
 				"build",
 				"group1",
 				"cluster1",
 				projectPath,
+				fmt.Sprintf("--config=%s", configPath),
 			})
 			err := rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
 		})
 		It("updates the resources on the kind cluster", func() {
+			rootCmd := cmd.NewRootCommand()
 			rootCmd.SetArgs([]string{
 				"apply",
 				"group1",
 				"cluster1",
 				projectPath,
+				fmt.Sprintf("--config=%s", configPath),
 			})
 			err := rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
@@ -351,6 +367,7 @@ spec:
           weight: 1`
 			err := os.WriteFile(configPath, []byte(config), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
+			rootCmd := cmd.NewRootCommand()
 			rootCmd.SetArgs([]string{
 				"validate",
 				fmt.Sprintf("--config=%s", configPath),
@@ -359,9 +376,11 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 		})
 		It("syncs the project without errors", func() {
+			rootCmd := cmd.NewRootCommand()
 			rootCmd.SetArgs([]string{
 				"sync",
 				fmt.Sprintf("--path=%s", projectPath),
+				fmt.Sprintf("--config=%s", configPath),
 				"--dry-run",
 			})
 			err := rootCmd.Execute()
@@ -394,21 +413,25 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 			err = os.WriteFile(path.Join(sampleAddOnPath, "kustomization.yaml"), []byte(sampleKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
+			rootCmd := cmd.NewRootCommand()
 			rootCmd.SetArgs([]string{
 				"build",
 				"group1",
 				"cluster1",
 				projectPath,
+				fmt.Sprintf("--config=%s", configPath),
 			})
 			err = rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
 		})
 		It("updates the resources on the kind cluster", func() {
+			rootCmd := cmd.NewRootCommand()
 			rootCmd.SetArgs([]string{
 				"apply",
 				"group1",
 				"cluster1",
 				projectPath,
+				fmt.Sprintf("--config=%s", configPath),
 			})
 			err := rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
@@ -447,6 +470,7 @@ spec:
           version: 0.1.1`
 			err := os.WriteFile(configPath, []byte(config), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
+			rootCmd := cmd.NewRootCommand()
 			rootCmd.SetArgs([]string{
 				"validate",
 				fmt.Sprintf("--config=%s", configPath),
@@ -455,30 +479,36 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 		})
 		It("syncs the project without errors", func() {
+			rootCmd := cmd.NewRootCommand()
 			rootCmd.SetArgs([]string{
 				"sync",
 				fmt.Sprintf("--path=%s", projectPath),
+				fmt.Sprintf("--config=%s", configPath),
 				"--dry-run",
 			})
 			err := rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
 		})
 		It("builds the configuration without errors", func() {
+			rootCmd := cmd.NewRootCommand()
 			rootCmd.SetArgs([]string{
 				"build",
 				"group1",
 				"cluster1",
 				projectPath,
+				fmt.Sprintf("--config=%s", configPath),
 			})
 			err := rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
 		})
 		It("applies the configuration to the kind cluster", func() {
+			rootCmd := cmd.NewRootCommand()
 			rootCmd.SetArgs([]string{
 				"apply",
 				"group1",
 				"cluster1",
 				projectPath,
+				fmt.Sprintf("--config=%s", configPath),
 			})
 			err := rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
@@ -505,9 +535,11 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 			err = os.WriteFile(path.Join(pathToCluster, "kustomization.yaml"), []byte(kustomizationPatch2), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
+			rootCmd := cmd.NewRootCommand()
 			rootCmd.SetArgs([]string{
 				"sync",
 				fmt.Sprintf("--path=%s", projectPath),
+				fmt.Sprintf("--config=%s", configPath),
 				"--dry-run",
 			})
 			err = rootCmd.Execute()
@@ -517,21 +549,25 @@ spec:
 			Expect(k).To(BeEquivalentTo([]byte(kustomizationPatch2)))
 		})
 		It("builds the configuration without errors", func() {
+			rootCmd := cmd.NewRootCommand()
 			rootCmd.SetArgs([]string{
 				"build",
 				"group1",
 				"cluster1",
 				projectPath,
+				fmt.Sprintf("--config=%s", configPath),
 			})
 			err := rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
 		})
 		It("updates the resources on the kind cluster", func() {
+			rootCmd := cmd.NewRootCommand()
 			rootCmd.SetArgs([]string{
 				"apply",
 				"group1",
 				"cluster1",
 				projectPath,
+				fmt.Sprintf("--config=%s", configPath),
 			})
 			err := rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
@@ -576,6 +612,7 @@ spec:
           version: 0.1.1`
 			err := os.WriteFile(configPath, []byte(config), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
+			rootCmd := cmd.NewRootCommand()
 			rootCmd.SetArgs([]string{
 				"validate",
 				fmt.Sprintf("--config=%s", configPath),
@@ -584,9 +621,11 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 		})
 		It("syncs the project without errors", func() {
+			rootCmd := cmd.NewRootCommand()
 			rootCmd.SetArgs([]string{
 				"sync",
 				fmt.Sprintf("--path=%s", projectPath),
+				fmt.Sprintf("--config=%s", configPath),
 				"--dry-run",
 			})
 			err := rootCmd.Execute()
@@ -619,11 +658,13 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 			err = os.WriteFile(path.Join(sampleModulePath2, "kustomization.yaml"), []byte(sampleKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
+			rootCmd := cmd.NewRootCommand()
 			rootCmd.SetArgs([]string{
 				"build",
 				"group1",
 				projectPath,
 				fmt.Sprintf("--path=%s", projectPath),
+				fmt.Sprintf("--config=%s", configPath),
 			})
 			err = rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
