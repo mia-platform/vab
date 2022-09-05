@@ -31,7 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
-	"sigs.k8s.io/controller-runtime/pkg/envtest"
+	"k8s.io/client-go/tools/clientcmd"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
@@ -59,8 +59,8 @@ patches:
 
 var log logger.LogInterface
 var cfg *rest.Config
-var dynamicClient dynamic.Interface
-var testEnv *envtest.Environment
+var dynamicClient_cluster1 dynamic.Interface
+var dynamicClient_cluster2 dynamic.Interface
 var testDirPath string
 var configPath string
 var projectPath string
@@ -74,19 +74,22 @@ var depsGvr schema.GroupVersionResource
 var _ = BeforeSuite(func() {
 	By("setting up the test environment...", func() {
 		logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
-		// initialize test environment
-		useCluster := true
-		testEnv = &envtest.Environment{
-			UseExistingCluster:       &useCluster,
-			AttachControlPlaneOutput: true,
-		}
-		var err error
-		fmt.Println("Starting test environment...")
-		cfg, err = testEnv.Start()
+		// initialize configs and clients for the test clusters
+		homeDir, err := os.UserHomeDir()
 		Expect(err).ToNot(HaveOccurred())
-		Expect(cfg).ToNot(BeNil())
 
-		dynamicClient = dynamic.NewForConfigOrDie(cfg)
+		kubeConfigPath := path.Join(homeDir, ".kube/config")
+
+		cluster1_cfg, err := buildConfigFromFlags("kind-vab-cluster-1", kubeConfigPath)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(cluster1_cfg).ToNot(BeNil())
+
+		cluster2_cfg, err := buildConfigFromFlags("kind-vab-cluster-2", kubeConfigPath)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(cluster2_cfg).ToNot(BeNil())
+
+		dynamicClient_cluster1 = dynamic.NewForConfigOrDie(cluster1_cfg)
+		dynamicClient_cluster2 = dynamic.NewForConfigOrDie(cluster2_cfg)
 
 		// initialize vab logger and root command
 		log = logger.DisabledLogger{}
@@ -100,7 +103,7 @@ var _ = BeforeSuite(func() {
 		allGroupsDirPath = path.Join(clustersDirPath, "all-groups")
 		sampleModulePath1 = path.Join(projectPath, "vendors", "modules", "module1", "flavour1")
 		sampleModulePath2 = path.Join(projectPath, "vendors", "modules", "module2", "flavour1")
-		sampleAddOnPath = path.Join(projectPath, "vendors", "add-ons", "sample-addon1")
+		sampleAddOnPath = path.Join(projectPath, "vendors", "add-ons", "addon1")
 
 		depsGvr = schema.GroupVersionResource{
 			Group:    "apps",
@@ -112,11 +115,7 @@ var _ = BeforeSuite(func() {
 
 var _ = AfterSuite(func() {
 	By("tearing down the test environment...", func() {
-		if testEnv != nil {
-			err := testEnv.Stop()
-			Expect(err).NotTo(HaveOccurred())
-		}
-		os.RemoveAll(testDirPath)
+		// os.RemoveAll(testDirPath)
 	})
 }, 60)
 
@@ -156,7 +155,7 @@ spec:
   - name: group1
     clusters:
     - name: cluster1
-      context: kind-kind`
+      context: kind-vab-cluster-1`
 			err := os.WriteFile(configPath, []byte(config), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 			rootCmd := cmd.NewRootCommand()
@@ -182,17 +181,17 @@ spec:
 			sampleFile := `apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: module1flavour1
+  name: module1-flavour1
   namespace: default
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: module1flavour1
+      app: module1-flavour1
   template:
     metadata:
       labels:
-        app: module1flavour1
+        app: module1-flavour1
     spec:
       containers:
       - image: k8s.gcr.io/echoserver:1.4
@@ -232,7 +231,7 @@ spec:
   - name: group1
     clusters:
     - name: cluster1
-      context: kind-kind
+      context: kind-vab-cluster-1
       modules:
         module1/flavour1:
           version: 0.1.1
@@ -282,7 +281,7 @@ spec:
 			err := rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
 
-			dep, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1flavour1", v1.GetOptions{})
+			dep, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
 			Expect(dep).NotTo(BeNil())
 			Expect(err).NotTo(HaveOccurred())
 		})
@@ -292,7 +291,7 @@ spec:
 			patch := `apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: module1flavour1
+  name: module1-flavour1
 spec:
   replicas: 2`
 			pathToCluster := path.Join(clustersDirPath, "group1", "cluster1")
@@ -337,7 +336,7 @@ spec:
 			err := rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
 
-			dep, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1flavour1", v1.GetOptions{})
+			dep, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dep).NotTo(BeNil())
 			Expect(dep.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 2))
@@ -354,13 +353,13 @@ spec:
       version: 0.1.0
       weight: 1
   addOns:
-    sample-addon1:
+    addon1:
       version: 0.1.0
   groups:
   - name: group1
     clusters:
     - name: cluster1
-      context: kind-kind
+      context: kind-vab-cluster-1
       modules:
         module1/flavour1:
           version: 0.1.1
@@ -390,17 +389,17 @@ spec:
 			sampleFile := `apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sample-addon1
+  name: addon1
   namespace: default
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: sample-addon1
+      app: addon1
   template:
     metadata:
       labels:
-        app: sample-addon1
+        app: addon1
     spec:
       containers:
       - image: k8s.gcr.io/echoserver:1.4
@@ -436,11 +435,11 @@ spec:
 			err := rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
 
-			depMod, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1flavour1", v1.GetOptions{})
+			depMod, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depMod).NotTo(BeNil())
 			Expect(depMod.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 2))
-			depAddOn, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "sample-addon1", v1.GetOptions{})
+			depAddOn, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "addon1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depAddOn).NotTo(BeNil())
 		})
@@ -460,13 +459,13 @@ spec:
   - name: group1
     clusters:
     - name: cluster1
-      context: kind-kind
+      context: kind-vab-cluster-1
       modules:
         module1/flavour1:
           version: 0.1.1
           weight: 1
       addOns:
-        sample-addon1:
+        addon1:
           version: 0.1.1`
 			err := os.WriteFile(configPath, []byte(config), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
@@ -513,11 +512,11 @@ spec:
 			err := rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
 
-			depMod, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1flavour1", v1.GetOptions{})
+			depMod, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depMod).NotTo(BeNil())
 			Expect(depMod.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 2))
-			depAddOn, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "sample-addon1", v1.GetOptions{})
+			depAddOn, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "addon1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depAddOn).NotTo(BeNil())
 		})
@@ -527,7 +526,7 @@ spec:
 			patch := `apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sample-addon1
+  name: addon1
 spec:
   replicas: 3`
 			pathToCluster := path.Join(clustersDirPath, "group1", "cluster1")
@@ -572,18 +571,28 @@ spec:
 			err := rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
 
-			depMod, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1flavour1", v1.GetOptions{})
+			depMod, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depMod).NotTo(BeNil())
 			Expect(depMod.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 2))
-			depAddOn, err := dynamicClient.Resource(depsGvr).Namespace("default").Get(context.Background(), "sample-addon1", v1.GetOptions{})
+			depAddOn, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "addon1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depAddOn).NotTo(BeNil())
 			Expect(depAddOn.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 3))
 		})
 	})
-	Context("2 modules, 1 add-on (w/ overrides and patches", func() {
+	Context("2 clusters, same group", func() {
 		It("validates the config file without errors", func() {
+			// clean up cluster 1
+			err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Delete(context.Background(), "module1-flavour1", v1.DeleteOptions{})
+			Expect(err).NotTo(HaveOccurred())
+			_, err = dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
+			Expect(err).To(HaveOccurred())
+			err = dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Delete(context.Background(), "addon1", v1.DeleteOptions{})
+			Expect(err).NotTo(HaveOccurred())
+			_, err = dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "addon1", v1.GetOptions{})
+			Expect(err).To(HaveOccurred())
+
 			config := `kind: ClustersConfiguration
 apiVersion: vab.mia-platform.eu/v1alpha1
 name: test-project
@@ -596,21 +605,30 @@ spec:
       version: 0.1.0
       weight: 2
   addOns:
-    sample-addon1:
+    addon1:
       version: 0.1.0
   groups:
   - name: group1
     clusters:
     - name: cluster1
-      context: kind-kind
+      context: kind-vab-cluster-1
       modules:
         module1/flavour1:
           version: 0.1.1
           weight: 1
       addOns:
-        sample-addon1:
-          version: 0.1.1`
-			err := os.WriteFile(configPath, []byte(config), os.ModePerm)
+        addon1:
+          version: 0.1.1
+    - name: cluster2
+      context: kind-vab-cluster-2
+      modules:
+        module2/flavour1:
+          version: 0.1.1
+          weight: 2
+      addOns:
+        addon1:
+          disable: true`
+			err = os.WriteFile(configPath, []byte(config), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 			rootCmd := cmd.NewRootCommand()
 			rootCmd.SetArgs([]string{
@@ -635,17 +653,17 @@ spec:
 			sampleFile := `apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: module2flavour1
+  name: module2-flavour1
   namespace: default
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: module2flavour1
+      app: module2-flavour1
   template:
     metadata:
       labels:
-        app: module2flavour1
+        app: module2-flavour1
     spec:
       containers:
       - image: k8s.gcr.io/echoserver:1.4
@@ -669,5 +687,45 @@ spec:
 			err = rootCmd.Execute()
 			Expect(err).NotTo(HaveOccurred())
 		})
+		It("applies the configuration to the correct cluster and context", func() {
+			rootCmd := cmd.NewRootCommand()
+			rootCmd.SetArgs([]string{
+				"apply",
+				"group1",
+				projectPath,
+				fmt.Sprintf("--config=%s", configPath),
+			})
+			err := rootCmd.Execute()
+			Expect(err).NotTo(HaveOccurred())
+
+			// cluster 1: module1-flavour1 deployed and patched
+			depMod, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(depMod).NotTo(BeNil())
+			Expect(depMod.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 2))
+			// cluster 1: addon1 deployed and patched
+			depAddOn, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "addon1", v1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(depAddOn).NotTo(BeNil())
+			Expect(depAddOn.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 3))
+
+			// cluster 2: module2-flavour1 deployed
+			depMod, err = dynamicClient_cluster2.Resource(depsGvr).Namespace("default").Get(context.Background(), "module2-flavour1", v1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(depMod).NotTo(BeNil())
+			// cluster 2: addon-1 disabled
+			depAddOn, err = dynamicClient_cluster2.Resource(depsGvr).Namespace("default").Get(context.Background(), "addon1", v1.GetOptions{})
+			Expect(err).To(HaveOccurred())
+			Expect(depAddOn).To(BeNil())
+		})
+
 	})
 })
+
+func buildConfigFromFlags(context, kubeconfigPath string) (*rest.Config, error) {
+	return clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+		&clientcmd.ClientConfigLoadingRules{ExplicitPath: kubeconfigPath},
+		&clientcmd.ConfigOverrides{
+			CurrentContext: context,
+		}).ClientConfig()
+}

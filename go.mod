@@ -61,7 +61,6 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	k8s.io/api v0.25.0 // indirect
-	k8s.io/apiextensions-apiserver v0.24.2 // indirect
 	k8s.io/component-base v0.25.0 // indirect
 	k8s.io/klog/v2 v2.70.1 // indirect
 	k8s.io/utils v0.0.0-20220728103510-ee6ede2d64ed // indirect

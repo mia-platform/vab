@@ -22,7 +22,8 @@ endif
 CMDNAME := vab
 TOOLS_DIR := $(PROJECT_DIR)/tools
 TOOLS_BIN := $(TOOLS_DIR)/bin
-KIND_CLUSTER_NAME ?= vab-kind
+KIND_CLUSTER_1_NAME ?= vab-cluster-1
+KIND_CLUSTER_2_NAME ?= vab-cluster-2
 
 SUPPORTED_PLATFORMS := linux/386,linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6
 $(eval BUILD_PLATFORMS = $(shell echo "$(SUPPORTED_PLATFORMS)" | sed "s#,# #g;s#/#.#g"))
@@ -77,21 +78,30 @@ else
 endif
 
 .PHONY: test-e2e
-test-e2e: kind-start
+test-e2e: kind-start e2e kind-stop
+
+e2e:
 ifneq ($(TEST_VERBOSE), "false")
-	go test -test.v -tags=e2e ./... || kind delete cluster
+	go test -test.v -tags=e2e ./...
 else
-	go test ./... -tags=e2e || kind delete cluster
+	go test ./... -tags=e2e
 endif
-	kind delete cluster
 
 kind-start:
-ifeq (1, $(shell kind get clusters | grep ${KIND_CLUSTER_NAME} | wc -l))
-	@echo "Kind cluster already exists!"
+ifeq (1, $(shell kind get clusters | grep ${KIND_CLUSTER_1_NAME} | wc -l))
+	@echo "Kind test cluster 1 already exists!"
 else
-	@echo "Creating Kind cluster..."
-	kind create cluster --config internal/e2e/kind/kind-config.yaml --kubeconfig ~/.kube/config
+	@kind create cluster --config internal/e2e/kind/kind-config.yaml --name ${KIND_CLUSTER_1_NAME} --kubeconfig ~/.kube/config
 endif
+ifeq (1, $(shell kind get clusters | grep ${KIND_CLUSTER_2_NAME} | wc -l))
+	@echo "Kind test cluster 2 already exists!"
+else
+	@kind create cluster --config internal/e2e/kind/kind-config.yaml --name ${KIND_CLUSTER_2_NAME} --kubeconfig ~/.kube/config
+endif
+
+kind-stop:
+	@kind delete cluster --name ${KIND_CLUSTER_1_NAME}
+	@kind delete cluster --name ${KIND_CLUSTER_2_NAME}
 
 .PHONY: test-coverage
 test-coverage:
