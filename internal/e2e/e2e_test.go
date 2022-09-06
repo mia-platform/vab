@@ -24,7 +24,10 @@ import (
 	"path"
 
 	"github.com/mia-platform/vab/internal/cmd"
+	"github.com/mia-platform/vab/internal/git"
+	initProj "github.com/mia-platform/vab/pkg/init"
 	"github.com/mia-platform/vab/pkg/logger"
+	"github.com/mia-platform/vab/pkg/sync"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,8 +35,6 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
 const (
@@ -73,7 +74,6 @@ var depsGvr schema.GroupVersionResource
 
 var _ = BeforeSuite(func() {
 	By("setting up the test environment...", func() {
-		logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 		// initialize configs and clients for the test clusters
 		homeDir, err := os.UserHomeDir()
 		Expect(err).ToNot(HaveOccurred())
@@ -91,9 +91,6 @@ var _ = BeforeSuite(func() {
 		dynamicClient_cluster1 = dynamic.NewForConfigOrDie(cluster1_cfg)
 		dynamicClient_cluster2 = dynamic.NewForConfigOrDie(cluster2_cfg)
 
-		// initialize vab logger and root command
-		log = logger.DisabledLogger{}
-
 		// initialize global paths and vars
 		testDirPath = os.TempDir()
 		// testDirPath = "."
@@ -104,12 +101,16 @@ var _ = BeforeSuite(func() {
 		sampleModulePath1 = path.Join(projectPath, "vendors", "modules", "module1", "flavour1")
 		sampleModulePath2 = path.Join(projectPath, "vendors", "modules", "module2", "flavour1")
 		sampleAddOnPath = path.Join(projectPath, "vendors", "add-ons", "addon1")
-
 		depsGvr = schema.GroupVersionResource{
 			Group:    "apps",
 			Version:  "v1",
 			Resource: "deployments",
 		}
+
+		// initialize project
+		log = logger.DisabledLogger{}
+		err = initProj.NewProject(log, testDirPath, testProjectName)
+		Expect(err).NotTo(HaveOccurred())
 	})
 }, 60)
 
@@ -120,28 +121,8 @@ var _ = AfterSuite(func() {
 }, 60)
 
 var _ = Describe("setup vab project", func() {
-	Context("initialize new project", func() {
-		It("creates a preliminar directory structure", func() {
-			rootCmd := cmd.NewRootCommand()
-			rootCmd.SetArgs([]string{
-				"init",
-				fmt.Sprintf("--path=%s", testDirPath),
-				fmt.Sprintf("--name=%s", testProjectName),
-			})
-			err := rootCmd.Execute()
-			Expect(err).NotTo(HaveOccurred())
-			// check that the path /tmpdir/test-e2e/clusters/all-groups/bases exists
-			info, err := os.Stat(path.Join(allGroupsDirPath, "bases"))
-			Expect(err).NotTo(HaveOccurred())
-			Expect(info.IsDir()).To(BeTrue())
-			// check that the path /tmpdir/test-e2e/clusters/all-groups/custom-resources exists
-			info, err = os.Stat((path.Join(allGroupsDirPath, "custom-resources")))
-			Expect(err).NotTo(HaveOccurred())
-			Expect(info.IsDir()).To(BeTrue())
-		})
-	})
 	Context("1 module (w/o overrides)", func() {
-		It("validates the config file without errors", func() {
+		It("syncs the project without errors", func() {
 			config := `kind: ClustersConfiguration
 apiVersion: vab.mia-platform.eu/v1alpha1
 name: test-project
@@ -158,23 +139,8 @@ spec:
       context: kind-vab-cluster-1`
 			err := os.WriteFile(configPath, []byte(config), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			rootCmd := cmd.NewRootCommand()
-			rootCmd.SetArgs([]string{
-				"validate",
-				fmt.Sprintf("--config=%s", configPath),
-			})
-			err = rootCmd.Execute()
-			Expect(err).NotTo(HaveOccurred())
-		})
-		It("syncs the project without errors", func() {
-			rootCmd := cmd.NewRootCommand()
-			rootCmd.SetArgs([]string{
-				"sync",
-				fmt.Sprintf("--config=%s", configPath),
-				fmt.Sprintf("--path=%s", projectPath),
-				"--dry-run",
-			})
-			err := rootCmd.Execute()
+
+			err = sync.Sync(log, git.RealFilesGetter{}, configPath, projectPath, true)
 			Expect(err).NotTo(HaveOccurred())
 		})
 		It("builds the configuration without errors", func() {
