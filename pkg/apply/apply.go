@@ -135,6 +135,7 @@ func runKubectlApply(logger logger.LogInterface, fileName string, context string
 		"-f",
 		fileName,
 		"--wait",
+		"--server-side",
 	}
 	cmd := apply.NewCmdApply("kubectl", factory, streams)
 	cmd.SetArgs(args)
