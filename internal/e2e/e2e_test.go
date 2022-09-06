@@ -115,7 +115,7 @@ var _ = BeforeSuite(func() {
 
 var _ = AfterSuite(func() {
 	By("tearing down the test environment...", func() {
-		// os.RemoveAll(testDirPath)
+		os.RemoveAll(testDirPath)
 	})
 }, 60)
 
