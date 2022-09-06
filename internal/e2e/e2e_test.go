@@ -19,12 +19,11 @@ package e2e_test
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path"
 
-	"github.com/mia-platform/vab/internal/cmd"
 	"github.com/mia-platform/vab/internal/git"
+	"github.com/mia-platform/vab/pkg/apply"
 	initProj "github.com/mia-platform/vab/pkg/init"
 	"github.com/mia-platform/vab/pkg/logger"
 	"github.com/mia-platform/vab/pkg/sync"
@@ -121,7 +120,7 @@ var _ = AfterSuite(func() {
 }, 60)
 
 var _ = Describe("setup vab project", func() {
-	Context("1 module (w/o overrides)", func() {
+	Context("1 module (w/ override)", func() {
 		It("syncs the project without errors", func() {
 			config := `kind: ClustersConfiguration
 apiVersion: vab.mia-platform.eu/v1alpha1
@@ -136,14 +135,18 @@ spec:
   - name: group1
     clusters:
     - name: cluster1
-      context: kind-vab-cluster-1`
+      context: kind-vab-cluster-1
+      modules:
+        module1/flavour1:
+          version: 0.1.1
+          weight: 1`
 			err := os.WriteFile(configPath, []byte(config), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
 			err = sync.Sync(log, git.RealFilesGetter{}, configPath, projectPath, true)
 			Expect(err).NotTo(HaveOccurred())
 		})
-		It("builds the configuration without errors", func() {
+		It("applies the configuration to the kind cluster", func() {
 			sampleFile := `apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -170,81 +173,8 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 			err = os.WriteFile(path.Join(sampleModulePath1, "kustomization.yaml"), []byte(sampleKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			rootCmd := cmd.NewRootCommand()
-			rootCmd.SetArgs([]string{
-				"build",
-				"group1",
-				projectPath,
-				fmt.Sprintf("--config=%s", configPath),
-				fmt.Sprintf("--path=%s", projectPath),
-			})
-			err = rootCmd.Execute()
-			Expect(err).NotTo(HaveOccurred())
-		})
-	})
-	Context("1 module (w/ override)", func() {
-		It("validates the config file without errors", func() {
-			config := `kind: ClustersConfiguration
-apiVersion: vab.mia-platform.eu/v1alpha1
-name: test-project
-spec:
-  modules:
-    module1/flavour1:
-      version: 0.1.0
-      weight: 1
-  addOns: {}
-  groups:
-  - name: group1
-    clusters:
-    - name: cluster1
-      context: kind-vab-cluster-1
-      modules:
-        module1/flavour1:
-          version: 0.1.1
-          weight: 1`
-			err := os.WriteFile(configPath, []byte(config), os.ModePerm)
-			Expect(err).NotTo(HaveOccurred())
-			rootCmd := cmd.NewRootCommand()
-			rootCmd.SetArgs([]string{
-				"validate",
-				fmt.Sprintf("--config=%s", configPath),
-			})
-			err = rootCmd.Execute()
-			Expect(err).NotTo(HaveOccurred())
-		})
-		It("syncs the project without errors", func() {
-			rootCmd := cmd.NewRootCommand()
-			rootCmd.SetArgs([]string{
-				"sync",
-				fmt.Sprintf("--config=%s", configPath),
-				fmt.Sprintf("--path=%s", projectPath),
-				"--dry-run",
-			})
-			err := rootCmd.Execute()
-			Expect(err).NotTo(HaveOccurred())
-		})
-		It("builds the configuration without errors", func() {
-			rootCmd := cmd.NewRootCommand()
-			rootCmd.SetArgs([]string{
-				"build",
-				"group1",
-				"cluster1",
-				projectPath,
-				fmt.Sprintf("--config=%s", configPath),
-			})
-			err := rootCmd.Execute()
-			Expect(err).NotTo(HaveOccurred())
-		})
-		It("applies the configuration to the kind cluster", func() {
-			rootCmd := cmd.NewRootCommand()
-			rootCmd.SetArgs([]string{
-				"apply",
-				"group1",
-				"cluster1",
-				projectPath,
-				fmt.Sprintf("--config=%s", configPath),
-			})
-			err := rootCmd.Execute()
+
+			err = apply.Apply(log, configPath, projectPath, false, "group1", "cluster1", projectPath)
 			Expect(err).NotTo(HaveOccurred())
 
 			dep, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
@@ -253,7 +183,7 @@ spec:
 		})
 	})
 	Context("1 module (w/ override and patch)", func() {
-		It("syncs the project without errors", func() {
+		It("updates the resources on the kind cluster", func() {
 			patch := `apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -265,41 +195,8 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 			err = os.WriteFile(path.Join(pathToCluster, "kustomization.yaml"), []byte(kustomizationPatch1), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			rootCmd := cmd.NewRootCommand()
-			rootCmd.SetArgs([]string{
-				"sync",
-				fmt.Sprintf("--path=%s", projectPath),
-				fmt.Sprintf("--config=%s", configPath),
-				"--dry-run",
-			})
-			err = rootCmd.Execute()
-			Expect(err).NotTo(HaveOccurred())
-			k, err := os.ReadFile(path.Join(pathToCluster, "kustomization.yaml"))
-			Expect(err).NotTo(HaveOccurred())
-			Expect(k).To(BeEquivalentTo([]byte(kustomizationPatch1)))
-		})
-		It("builds the configuration without errors", func() {
-			rootCmd := cmd.NewRootCommand()
-			rootCmd.SetArgs([]string{
-				"build",
-				"group1",
-				"cluster1",
-				projectPath,
-				fmt.Sprintf("--config=%s", configPath),
-			})
-			err := rootCmd.Execute()
-			Expect(err).NotTo(HaveOccurred())
-		})
-		It("updates the resources on the kind cluster", func() {
-			rootCmd := cmd.NewRootCommand()
-			rootCmd.SetArgs([]string{
-				"apply",
-				"group1",
-				"cluster1",
-				projectPath,
-				fmt.Sprintf("--config=%s", configPath),
-			})
-			err := rootCmd.Execute()
+
+			err = apply.Apply(log, configPath, projectPath, false, "group1", "cluster1", projectPath)
 			Expect(err).NotTo(HaveOccurred())
 
 			dep, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
@@ -309,7 +206,7 @@ spec:
 		})
 	})
 	Context("1 module (w/ override and patch), 1 add-on (w/o overrides)", func() {
-		It("validates the config file without errors", func() {
+		It("syncs the project without errors", func() {
 			config := `kind: ClustersConfiguration
 apiVersion: vab.mia-platform.eu/v1alpha1
 name: test-project
@@ -332,26 +229,11 @@ spec:
           weight: 1`
 			err := os.WriteFile(configPath, []byte(config), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			rootCmd := cmd.NewRootCommand()
-			rootCmd.SetArgs([]string{
-				"validate",
-				fmt.Sprintf("--config=%s", configPath),
-			})
-			err = rootCmd.Execute()
+
+			err = sync.Sync(log, git.RealFilesGetter{}, configPath, projectPath, true)
 			Expect(err).NotTo(HaveOccurred())
 		})
-		It("syncs the project without errors", func() {
-			rootCmd := cmd.NewRootCommand()
-			rootCmd.SetArgs([]string{
-				"sync",
-				fmt.Sprintf("--path=%s", projectPath),
-				fmt.Sprintf("--config=%s", configPath),
-				"--dry-run",
-			})
-			err := rootCmd.Execute()
-			Expect(err).NotTo(HaveOccurred())
-		})
-		It("builds the configuration without errors", func() {
+		It("updates the resources on the kind cluster", func() {
 			sampleFile := `apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -378,27 +260,8 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 			err = os.WriteFile(path.Join(sampleAddOnPath, "kustomization.yaml"), []byte(sampleKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			rootCmd := cmd.NewRootCommand()
-			rootCmd.SetArgs([]string{
-				"build",
-				"group1",
-				"cluster1",
-				projectPath,
-				fmt.Sprintf("--config=%s", configPath),
-			})
-			err = rootCmd.Execute()
-			Expect(err).NotTo(HaveOccurred())
-		})
-		It("updates the resources on the kind cluster", func() {
-			rootCmd := cmd.NewRootCommand()
-			rootCmd.SetArgs([]string{
-				"apply",
-				"group1",
-				"cluster1",
-				projectPath,
-				fmt.Sprintf("--config=%s", configPath),
-			})
-			err := rootCmd.Execute()
+
+			err = apply.Apply(log, configPath, projectPath, false, "group1", "cluster1", projectPath)
 			Expect(err).NotTo(HaveOccurred())
 
 			depMod, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
@@ -411,7 +274,7 @@ spec:
 		})
 	})
 	Context("1 module (w/ override and patch), 1 and add-on (w/ override)", func() {
-		It("validates the config file without errors", func() {
+		It("syncs the project without errors", func() {
 			config := `kind: ClustersConfiguration
 apiVersion: vab.mia-platform.eu/v1alpha1
 name: test-project
@@ -435,47 +298,12 @@ spec:
           version: 0.1.1`
 			err := os.WriteFile(configPath, []byte(config), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			rootCmd := cmd.NewRootCommand()
-			rootCmd.SetArgs([]string{
-				"validate",
-				fmt.Sprintf("--config=%s", configPath),
-			})
-			err = rootCmd.Execute()
-			Expect(err).NotTo(HaveOccurred())
-		})
-		It("syncs the project without errors", func() {
-			rootCmd := cmd.NewRootCommand()
-			rootCmd.SetArgs([]string{
-				"sync",
-				fmt.Sprintf("--path=%s", projectPath),
-				fmt.Sprintf("--config=%s", configPath),
-				"--dry-run",
-			})
-			err := rootCmd.Execute()
-			Expect(err).NotTo(HaveOccurred())
-		})
-		It("builds the configuration without errors", func() {
-			rootCmd := cmd.NewRootCommand()
-			rootCmd.SetArgs([]string{
-				"build",
-				"group1",
-				"cluster1",
-				projectPath,
-				fmt.Sprintf("--config=%s", configPath),
-			})
-			err := rootCmd.Execute()
+
+			err = sync.Sync(log, git.RealFilesGetter{}, configPath, projectPath, true)
 			Expect(err).NotTo(HaveOccurred())
 		})
 		It("applies the configuration to the kind cluster", func() {
-			rootCmd := cmd.NewRootCommand()
-			rootCmd.SetArgs([]string{
-				"apply",
-				"group1",
-				"cluster1",
-				projectPath,
-				fmt.Sprintf("--config=%s", configPath),
-			})
-			err := rootCmd.Execute()
+			err := apply.Apply(log, configPath, projectPath, false, "group1", "cluster1", projectPath)
 			Expect(err).NotTo(HaveOccurred())
 
 			depMod, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
@@ -500,41 +328,12 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 			err = os.WriteFile(path.Join(pathToCluster, "kustomization.yaml"), []byte(kustomizationPatch2), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			rootCmd := cmd.NewRootCommand()
-			rootCmd.SetArgs([]string{
-				"sync",
-				fmt.Sprintf("--path=%s", projectPath),
-				fmt.Sprintf("--config=%s", configPath),
-				"--dry-run",
-			})
-			err = rootCmd.Execute()
-			Expect(err).NotTo(HaveOccurred())
-			k, err := os.ReadFile(path.Join(pathToCluster, "kustomization.yaml"))
-			Expect(err).NotTo(HaveOccurred())
-			Expect(k).To(BeEquivalentTo([]byte(kustomizationPatch2)))
-		})
-		It("builds the configuration without errors", func() {
-			rootCmd := cmd.NewRootCommand()
-			rootCmd.SetArgs([]string{
-				"build",
-				"group1",
-				"cluster1",
-				projectPath,
-				fmt.Sprintf("--config=%s", configPath),
-			})
-			err := rootCmd.Execute()
+
+			err = sync.Sync(log, git.RealFilesGetter{}, configPath, projectPath, true)
 			Expect(err).NotTo(HaveOccurred())
 		})
 		It("updates the resources on the kind cluster", func() {
-			rootCmd := cmd.NewRootCommand()
-			rootCmd.SetArgs([]string{
-				"apply",
-				"group1",
-				"cluster1",
-				projectPath,
-				fmt.Sprintf("--config=%s", configPath),
-			})
-			err := rootCmd.Execute()
+			err := apply.Apply(log, configPath, projectPath, false, "group1", "cluster1", projectPath)
 			Expect(err).NotTo(HaveOccurred())
 
 			depMod, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
@@ -548,7 +347,7 @@ spec:
 		})
 	})
 	Context("2 clusters, same group", func() {
-		It("validates the config file without errors", func() {
+		It("syncs the project without errors", func() {
 			// clean up cluster 1
 			err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Delete(context.Background(), "module1-flavour1", v1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
@@ -596,26 +395,11 @@ spec:
           disable: true`
 			err = os.WriteFile(configPath, []byte(config), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			rootCmd := cmd.NewRootCommand()
-			rootCmd.SetArgs([]string{
-				"validate",
-				fmt.Sprintf("--config=%s", configPath),
-			})
-			err = rootCmd.Execute()
+
+			err = sync.Sync(log, git.RealFilesGetter{}, configPath, projectPath, true)
 			Expect(err).NotTo(HaveOccurred())
 		})
-		It("syncs the project without errors", func() {
-			rootCmd := cmd.NewRootCommand()
-			rootCmd.SetArgs([]string{
-				"sync",
-				fmt.Sprintf("--path=%s", projectPath),
-				fmt.Sprintf("--config=%s", configPath),
-				"--dry-run",
-			})
-			err := rootCmd.Execute()
-			Expect(err).NotTo(HaveOccurred())
-		})
-		It("builds the configuration without errors", func() {
+		It("applies the configuration to the correct cluster and context", func() {
 			sampleFile := `apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -642,26 +426,8 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 			err = os.WriteFile(path.Join(sampleModulePath2, "kustomization.yaml"), []byte(sampleKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			rootCmd := cmd.NewRootCommand()
-			rootCmd.SetArgs([]string{
-				"build",
-				"group1",
-				projectPath,
-				fmt.Sprintf("--path=%s", projectPath),
-				fmt.Sprintf("--config=%s", configPath),
-			})
-			err = rootCmd.Execute()
-			Expect(err).NotTo(HaveOccurred())
-		})
-		It("applies the configuration to the correct cluster and context", func() {
-			rootCmd := cmd.NewRootCommand()
-			rootCmd.SetArgs([]string{
-				"apply",
-				"group1",
-				projectPath,
-				fmt.Sprintf("--config=%s", configPath),
-			})
-			err := rootCmd.Execute()
+
+			err = apply.Apply(log, configPath, projectPath, false, "group1", "", projectPath)
 			Expect(err).NotTo(HaveOccurred())
 
 			// cluster 1: module1-flavour1 deployed and patched
@@ -684,7 +450,6 @@ spec:
 			Expect(err).To(HaveOccurred())
 			Expect(depAddOn).To(BeNil())
 		})
-
 	})
 })
 
