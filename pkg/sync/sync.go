@@ -118,22 +118,22 @@ func UpdateBases(logger logger.LogInterface, filesGetter git.FilesGetter, basePa
 		return fmt.Errorf("error reading kustomization file for %s: %w", targetPath, err)
 	}
 	var syncedKustomization types.Kustomization
-	// if modules and add-ons are empty and the path does not contains "clusters/all-groups",
+	// if modules and add-ons are nil and the path does not contains "clusters/all-groups",
 	// the target is a cluster that does not override the default configuration
-	if len(modules) == 0 && len(addons) == 0 && !strings.Contains(targetPath, utils.AllGroupsDirPath) {
+	if modules == nil && addons == nil && !strings.Contains(targetPath, utils.AllGroupsDirPath) {
 		// overwrite the kustomization to contain only the path to all-groups
 		syncedKustomization = utils.EmptyKustomization()
 		syncedKustomization.Resources = append(syncedKustomization.Resources, "../../../all-groups")
 		// in any other case we need to explicitly list the resources,
 		// whether it is the all-groups configuration or a single cluster override
 	} else {
-		// NB: one between the lists of modules and add-ons overrides may still be empty.
+		// NB: one between the lists of modules and add-ons overrides may still be nil.
 		// If that's the case, assign the default list of relative packages to
 		// overwrite the corresponding kustomization
-		if len(modules) == 0 {
+		if modules == nil {
 			modules = config.Spec.DeepCopy().Modules
 		}
-		if len(addons) == 0 {
+		if addons == nil {
 			addons = config.Spec.DeepCopy().AddOns
 		}
 		syncedKustomization = *kustomizehelper.SyncKustomizeResources(&modules, &addons, *kustomization, targetPath)
@@ -201,9 +201,9 @@ func UpdateClusters(logger logger.LogInterface, filesGetter git.FilesGetter, con
 // UpdateClusterModules returns the complete map of modules of the given cluster
 // TODO: refactor (duplicate of UpdateClusterAddOns)
 func UpdateClusterModules(modulesOverrides map[string]v1alpha1.Module, defaultModules map[string]v1alpha1.Module) map[string]v1alpha1.Module {
-	// if the cluster does not provide any override, return the empty map to apply the default configuration
+	// if the cluster does not provide any override, return nil to apply the default configuration
 	if len(modulesOverrides) == 0 {
-		return make(map[string]v1alpha1.Module)
+		return nil
 	}
 	// loop over the cluster modules
 	for name, clusterModule := range modulesOverrides {
@@ -225,9 +225,9 @@ func UpdateClusterModules(modulesOverrides map[string]v1alpha1.Module, defaultMo
 // UpdateClusterAddOns returns the complete map of add-ons of the given cluster
 // TODO: refactor (duplicate of UpdateClusterModules)
 func UpdateClusterAddOns(addonsOverrides map[string]v1alpha1.AddOn, defaultAddOns map[string]v1alpha1.AddOn) map[string]v1alpha1.AddOn {
-	// if the cluster does not provide any override, return the empty map to apply the default configuration
+	// if the cluster does not provide any override, return nil to apply the default configuration
 	if len(addonsOverrides) == 0 {
-		return make(map[string]v1alpha1.AddOn)
+		return nil
 	}
 	// loop over the cluster add-ons
 	for name, clusterAddOn := range addonsOverrides {
