@@ -453,6 +453,7 @@ spec:
 	})
 })
 
+// buildConfigFromFlags supports the switch between multiple kubecontext
 func buildConfigFromFlags(context, kubeconfigPath string) (*rest.Config, error) {
 	return clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		&clientcmd.ClientConfigLoadingRules{ExplicitPath: kubeconfigPath},
