@@ -16,6 +16,7 @@ package testutils
 
 import (
 	"io/fs"
+	"os"
 	"path"
 	"testing"
 
@@ -128,4 +129,11 @@ type FakeFilesGetter struct {
 
 func (filesGetter FakeFilesGetter) WorkTreeForPackage(pkgName string, pkg v1alpha1.Package) (*billy.Filesystem, error) {
 	return PrepareFakeWorktree(filesGetter.Testing), nil
+}
+
+func CompareFile(t *testing.T, fileContent []byte, filePath string) {
+	t.Helper()
+	f, err := os.ReadFile(filePath)
+	assert.NoError(t, err)
+	assert.Equal(t, fileContent, f)
 }

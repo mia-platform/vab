@@ -1,3 +1,6 @@
+//go:build !e2e
+// +build !e2e
+
 // Copyright 2022 Mia-Platform
 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,13 +27,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func compareFile(t *testing.T, fileContent []byte, filePath string) {
-	t.Helper()
-	f, err := os.ReadFile(filePath)
-	assert.NoError(t, err)
-	assert.Equal(t, fileContent, f)
-}
-
 func TestReadWrite(t *testing.T) {
 	fakeWorktree := testutils.PrepareFakeWorktree(t)
 
@@ -45,9 +41,9 @@ func TestReadWrite(t *testing.T) {
 	err := WritePkgToDir(input, tempdir)
 	assert.NoError(t, err)
 
-	compareFile(t, []byte("file1-1-1 content\n"), path.Join(tempdir, "test-flavour1/file1.yaml"))
-	compareFile(t, []byte("file1-1-2 content\n"), path.Join(tempdir, "test-flavour1/file2.yaml"))
-	compareFile(t, []byte("file1-2-1 content\n"), path.Join(tempdir, "test-flavour2/file1.yaml"))
+	testutils.CompareFile(t, []byte("file1-1-1 content\n"), path.Join(tempdir, "test-flavour1/file1.yaml"))
+	testutils.CompareFile(t, []byte("file1-1-2 content\n"), path.Join(tempdir, "test-flavour1/file2.yaml"))
+	testutils.CompareFile(t, []byte("file1-2-1 content\n"), path.Join(tempdir, "test-flavour2/file1.yaml"))
 
 	dirList, err := os.ReadDir(path.Join(tempdir, "test-flavour1/"))
 	assert.NoError(t, err)

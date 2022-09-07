@@ -1,5 +1,5 @@
-//go:build !e2e
-// +build !e2e
+//go:build e2e
+// +build e2e
 
 // Copyright 2022 Mia-Platform
 
@@ -15,20 +15,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package testutils
+package e2e_test
 
 import (
-	"path"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
-// Test that the path for test file is the known one
-func TestGetTestFile(t *testing.T) {
-	filePath := GetTestFile("test", "prova.yaml")
-	assert.Equal(t, filePath, path.Join("..", "..", "tests", "test", "prova.yaml"), "Unexpected path to file %s", filePath)
-
-	filePath = GetTestFile("test", "dir", "subdir")
-	assert.Equal(t, filePath, path.Join("..", "..", "tests", "test", "dir", "subdir"), "Unexpected path to file %s", filePath)
+func TestE2e(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "E2E Suite")
 }
