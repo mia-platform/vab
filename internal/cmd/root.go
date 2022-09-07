@@ -17,7 +17,6 @@ package cmd
 import (
 	"flag"
 	"fmt"
-	"os"
 	"runtime"
 
 	"github.com/mia-platform/vab/internal/utils"
@@ -26,12 +25,11 @@ import (
 )
 
 type FlagPole struct {
-	Name        string
-	Config      string
-	Verbosity   uint8
-	DryRun      bool
-	Output      string
-	ProjectPath string
+	Name      string
+	Config    string
+	Verbosity uint8
+	DryRun    bool
+	Output    string
 }
 
 var flags = &FlagPole{}
@@ -41,11 +39,6 @@ func NewRootCommand() *cobra.Command {
 	// Setup the logger for all commands with the default out and err streams
 	defaultStreams := log.DefaultStreams()
 	logger := log.NewLogger(defaultStreams)
-	currentPath, err := os.Getwd()
-	if err != nil {
-		logger.V(10).Write("Error trying to access the current path")
-		os.Exit(1)
-	}
 
 	rootCmd := &cobra.Command{
 		Use:     "vab",
@@ -57,8 +50,7 @@ func NewRootCommand() *cobra.Command {
 	}
 
 	rootCmd.PersistentFlags().Uint8VarP(&flags.Verbosity, "verbosity", "v", 0, "log verbosity, higher value produces more output, max value 10")
-	rootCmd.PersistentFlags().StringVarP(&flags.Config, "config", "c", utils.DefaultConfigFilename, "specify a different path or name for the configuration file")
-	rootCmd.PersistentFlags().StringVarP(&flags.ProjectPath, "path", "p", currentPath, "specify a different path for the project directory")
+	rootCmd.PersistentFlags().StringVarP(&flags.Config, "config", "c", utils.DefaultConfigFilename, "specify a different path for the configuration file")
 
 	rootCmd.AddCommand(NewInitCommand(logger))
 	rootCmd.AddCommand(NewValidateCommand(logger))

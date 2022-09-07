@@ -15,6 +15,8 @@
 package cmd
 
 import (
+	"os"
+
 	initProj "github.com/mia-platform/vab/pkg/init"
 	"github.com/mia-platform/vab/pkg/logger"
 	"github.com/spf13/cobra"
@@ -34,7 +36,14 @@ configuration), and the configuration file.`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			cmd.SilenceUsage = true
 			logger.V(0).Writef("Initializing...")
-			return initProj.NewProject(logger, flags.ProjectPath, flags.Name)
+
+			currentPath, err := os.Getwd()
+			if err != nil {
+				logger.V(10).Write("Error trying to access the current path")
+				return err
+			}
+
+			return initProj.NewProject(logger, currentPath, flags.Name)
 		},
 	}
 

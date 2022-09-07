@@ -34,7 +34,7 @@ configuration.`,
 		RunE: func(_ *cobra.Command, _ []string) error {
 			logger.V(0).Writef("Synchronizing configuration at %s...", flags.Config)
 			gitFilesGetter := git.RealFilesGetter{}
-			return sync.Sync(logger, gitFilesGetter, flags.Config, flags.ProjectPath, flags.DryRun)
+			return sync.Sync(logger, gitFilesGetter, flags.Config, ".", flags.DryRun)
 		},
 	}
 
