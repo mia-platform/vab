@@ -100,10 +100,13 @@ func TestSyncEmptyKustomization(t *testing.T) {
 	}
 
 	finalKustomization := SyncKustomizeResources(&modules, &addons, emptyKustomization, utils.AllGroupsDirPath)
-	expectedResources := []string{"../../../vendors/modules/m1", "../../../vendors/modules/m3", "../../../vendors/modules/m2", "../../../vendors/add-ons/ao1", "../../../vendors/add-ons/ao2"}
+	expectedResources := []string{"../../../vendors/modules/m1", "../../../vendors/modules/m3", "../../../vendors/modules/m2"}
+	expectedComponents := []string{"../../../vendors/add-ons/ao1", "../../../vendors/add-ons/ao2"}
 
 	assert.Equal(t, expectedResources, finalKustomization.Resources, "Unexpected resources in Kustomization.")
-	assert.NotEqual(t, emptyKustomization, expectedResources, "The original Kustomization struct should remain unchanged.")
+	assert.Equal(t, expectedComponents, finalKustomization.Components, "Unexpected resources in Kustomization.")
+	assert.NotEqual(t, emptyKustomization.Resources, expectedResources, "The original Kustomization struct should remain unchanged.")
+	assert.NotEqual(t, emptyKustomization.Components, expectedComponents, "The original Kustomization struct should remain unchanged.")
 }
 
 // SyncResources appends the correct resources in the kustomization.yaml
@@ -115,6 +118,8 @@ func TestSyncExistingKustomization(t *testing.T) {
 		"../../../vendors/modules/mod2-1.0.0",
 		"../../../vendors/modules/mod3-1.0.0",
 		"./local/mod-1.0.0",
+	}
+	kustomization.Components = []string{
 		"../../../vendors/add-ons/ao1-1.0.0",
 		"../../../vendors/add-ons/ao2-1.0.0",
 		"../../../vendors/add-ons/ao3-1.0.0",
@@ -156,13 +161,16 @@ func TestSyncExistingKustomization(t *testing.T) {
 	expectedResources := []string{
 		"../../../vendors/modules/mod3-1.0.0",
 		"../../../vendors/modules/mod1-2.0.0",
+		"./local/mod-1.0.0",
+	}
+	expectedComponents := []string{
 		"../../../vendors/add-ons/ao1-2.0.0",
 		"../../../vendors/add-ons/ao3-1.0.0",
-		"./local/mod-1.0.0",
 		"./local/ao-1.0.0",
 	}
 
 	assert.Equal(t, expectedResources, finalKustomization.Resources, "Unexpected resources in Kustomization.")
+	assert.Equal(t, expectedComponents, finalKustomization.Components, "Unexpected components in Kustomization.")
 }
 
 // fixResourcesPath appends the correct prefix to modules
