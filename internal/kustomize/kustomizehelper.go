@@ -31,9 +31,8 @@ import (
 
 // SyncKustomizeResources updates the clusters' kustomization resources to the latest sync
 func SyncKustomizeResources(modules *map[string]v1alpha1.Module, addons *map[string]v1alpha1.AddOn, k kustomize.Kustomization, targetPath string) *kustomize.Kustomization {
-	resourcesList := getSortedModulesList(modules, targetPath)
+	modulesList := getSortedModulesList(modules, targetPath)
 	addonsList := getAddOnsList(addons, targetPath)
-	resourcesList = append(resourcesList, addonsList...)
 
 	// If the file already includes a non-empty list of resources, this function
 	// collects all the custom modules that were added manually by the user
@@ -50,12 +49,18 @@ func SyncKustomizeResources(modules *map[string]v1alpha1.Module, addons *map[str
 		}
 		for _, r := range k.Resources {
 			if !strings.Contains(r, "vendors/") {
-				resourcesList = append(resourcesList, r)
+				modulesList = append(modulesList, r)
+			}
+		}
+		for _, r := range k.Components {
+			if !strings.Contains(r, "vendors/") {
+				addonsList = append(addonsList, r)
 			}
 		}
 	}
 
-	k.Resources = resourcesList
+	k.Resources = modulesList
+	k.Components = addonsList
 
 	return &k
 }

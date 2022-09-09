@@ -38,10 +38,14 @@ import (
 
 const (
 	testProjectName     = "test-e2e"
-	sampleKustomization = `kind: Kustomization
+	moduleKustomization = `kind: Kustomization
 apiVersion: kustomize.config.k8s.io/v1beta1
 resources:
   - example.yaml`
+	addonKustomization = `kind: Component
+apiVersion: kustomize.config.k8s.io/v1alpha1
+patches:
+  - path: example.yaml`
 	kustomizationPatch1 = `kind: Kustomization
 apiVersion: kustomize.config.k8s.io/v1beta1
 resources:
@@ -171,7 +175,7 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 			err = os.WriteFile(path.Join(sampleModulePath1, "example.yaml"), []byte(sampleFile), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(sampleModulePath1, "kustomization.yaml"), []byte(sampleKustomization), os.ModePerm)
+			err = os.WriteFile(path.Join(sampleModulePath1, "kustomization.yaml"), []byte(moduleKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
 			err = apply.Apply(log, configPath, projectPath, false, "group1", "cluster1", projectPath)
@@ -237,28 +241,23 @@ spec:
 			sampleFile := `apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: addon1
-  namespace: default
+  name: module1-flavour1
 spec:
-  replicas: 1
   selector:
     matchLabels:
-      app: addon1
+      app: module1-flavour1
   template:
-    metadata:
-      labels:
-        app: addon1
     spec:
       containers:
       - image: k8s.gcr.io/echoserver:1.4
-        name: echoserver
+        name: sidecar
         ports:
         - containerPort: 8080`
 			err := os.MkdirAll(sampleAddOnPath, os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 			err = os.WriteFile(path.Join(sampleAddOnPath, "example.yaml"), []byte(sampleFile), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(sampleAddOnPath, "kustomization.yaml"), []byte(sampleKustomization), os.ModePerm)
+			err = os.WriteFile(path.Join(sampleAddOnPath, "kustomization.yaml"), []byte(addonKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
 			err = apply.Apply(log, configPath, projectPath, false, "group1", "cluster1", projectPath)
@@ -267,10 +266,12 @@ spec:
 			depMod, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depMod).NotTo(BeNil())
-			Expect(depMod.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 2))
-			depAddOn, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "addon1", v1.GetOptions{})
-			Expect(err).NotTo(HaveOccurred())
-			Expect(depAddOn).NotTo(BeNil())
+			// module patched
+			replicas := depMod.Object["spec"].(map[string]interface{})["replicas"]
+			Expect(replicas).Should(BeNumerically("==", 2))
+			// add-on deployed
+			containersCount := len(depMod.Object["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{}))
+			Expect(containersCount).Should(BeNumerically("==", 2))
 		})
 	})
 	Context("1 module (w/ override and patch), 1 and add-on (w/ override)", func() {
@@ -309,10 +310,12 @@ spec:
 			depMod, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depMod).NotTo(BeNil())
-			Expect(depMod.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 2))
-			depAddOn, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "addon1", v1.GetOptions{})
-			Expect(err).NotTo(HaveOccurred())
-			Expect(depAddOn).NotTo(BeNil())
+			// module patched
+			replicas := depMod.Object["spec"].(map[string]interface{})["replicas"]
+			Expect(replicas).Should(BeNumerically("==", 2))
+			// add-on deployed
+			containersCount := len(depMod.Object["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{}))
+			Expect(containersCount).Should(BeNumerically("==", 2))
 		})
 	})
 	Context("1 module, 1 add-on (w/ overrides and patches)", func() {
@@ -320,9 +323,15 @@ spec:
 			patch := `apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: addon1
+  name: module1-flavour1
 spec:
-  replicas: 3`
+  replicas: 3
+  template:
+    spec:
+      containers:
+      - name: sidecar
+        ports:
+        - containerPort: 9000`
 			pathToCluster := path.Join(clustersDirPath, "group1", "cluster1")
 			err := os.WriteFile(path.Join(pathToCluster, "addon.patch.yaml"), []byte(patch), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
@@ -339,11 +348,15 @@ spec:
 			depMod, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depMod).NotTo(BeNil())
-			Expect(depMod.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 2))
-			depAddOn, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "addon1", v1.GetOptions{})
-			Expect(err).NotTo(HaveOccurred())
-			Expect(depAddOn).NotTo(BeNil())
-			Expect(depAddOn.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 3))
+			// module patched
+			replicas := depMod.Object["spec"].(map[string]interface{})["replicas"]
+			Expect(replicas).Should(BeNumerically("==", 3))
+			// add-on deployed
+			containersCount := len(depMod.Object["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{}))
+			Expect(containersCount).Should(BeNumerically("==", 2))
+			// add-on patched
+			newSidecarPort := depMod.Object["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{})[1].(map[string]interface{})["ports"].([]interface{})[1].(map[string]interface{})["containerPort"]
+			Expect(newSidecarPort).Should(BeNumerically("==", 9000))
 		})
 	})
 	Context("2 clusters, same group", func() {
@@ -352,10 +365,6 @@ spec:
 			err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Delete(context.Background(), "module1-flavour1", v1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			_, err = dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
-			Expect(err).To(HaveOccurred())
-			err = dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Delete(context.Background(), "addon1", v1.DeleteOptions{})
-			Expect(err).NotTo(HaveOccurred())
-			_, err = dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "addon1", v1.GetOptions{})
 			Expect(err).To(HaveOccurred())
 
 			config := `kind: ClustersConfiguration
@@ -424,31 +433,32 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 			err = os.WriteFile(path.Join(sampleModulePath2, "example.yaml"), []byte(sampleFile), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(sampleModulePath2, "kustomization.yaml"), []byte(sampleKustomization), os.ModePerm)
+			err = os.WriteFile(path.Join(sampleModulePath2, "kustomization.yaml"), []byte(moduleKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
 			err = apply.Apply(log, configPath, projectPath, false, "group1", "", projectPath)
 			Expect(err).NotTo(HaveOccurred())
 
-			// cluster 1: module1-flavour1 deployed and patched
+			// cluster 1: module1-flavour1 deployed and patched, addon1 deployed (replicas == 3)
 			depMod, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depMod).NotTo(BeNil())
-			Expect(depMod.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 2))
-			// cluster 1: addon1 deployed and patched
-			depAddOn, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "addon1", v1.GetOptions{})
-			Expect(err).NotTo(HaveOccurred())
-			Expect(depAddOn).NotTo(BeNil())
-			Expect(depAddOn.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 3))
+			Expect(depMod.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 3))
+			// cluster 1: addon1 patched
+			newSidecarPort := depMod.Object["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{})[0].(map[string]interface{})["ports"].([]interface{})[0].(map[string]interface{})["containerPort"]
+			Expect(newSidecarPort).Should(BeNumerically("==", 9000))
 
 			// cluster 2: module2-flavour1 deployed
 			depMod, err = dynamicClient_cluster2.Resource(depsGvr).Namespace("default").Get(context.Background(), "module2-flavour1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depMod).NotTo(BeNil())
-			// cluster 2: addon-1 disabled
-			depAddOn, err = dynamicClient_cluster2.Resource(depsGvr).Namespace("default").Get(context.Background(), "addon1", v1.GetOptions{})
-			Expect(err).To(HaveOccurred())
-			Expect(depAddOn).To(BeNil())
+			// cluster 2: no module patch, addon-1 disabled (1 replica, no sidecar container)
+			depMod, err = dynamicClient_cluster2.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(depMod).NotTo(BeNil())
+			Expect(depMod.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 1))
+			containersCount := len(depMod.Object["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{}))
+			Expect(containersCount).Should(BeNumerically("==", 1))
 		})
 	})
 })
