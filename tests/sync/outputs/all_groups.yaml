@@ -1,9 +1,9 @@
 kind: Kustomization
 apiVersion: kustomize.config.k8s.io/v1beta1
 resources:
-  - ../../../vendors/modules/test-module2/test-flavour1
-  - ../../../vendors/modules/test-module1/test-flavour1
-  - ../../../vendors/modules/test-module3/test-flavour1
+  - ../../../vendors/modules/test-module2-1.0.0/test-flavour1
+  - ../../../vendors/modules/test-module1-1.0.0/test-flavour1
+  - ../../../vendors/modules/test-module3-1.0.0/test-flavour1
 components:
-  - ../../../vendors/add-ons/test-addon1
-  - ../../../vendors/add-ons/test-addon2
+  - ../../../vendors/add-ons/test-addon1-1.0.0
+  - ../../../vendors/add-ons/test-addon2-1.0.0
