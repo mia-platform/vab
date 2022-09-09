@@ -35,8 +35,8 @@ func Sync(logger logger.LogInterface, filesGetter git.FilesGetter, configPath st
 	if err != nil {
 		return fmt.Errorf("sync error: %w", err)
 	}
-	defaultModules := config.Spec.Modules
-	defaultAddOns := config.Spec.AddOns
+	defaultModules := kustomizehelper.CompleteModuleNames(config.Spec.Modules)
+	defaultAddOns := kustomizehelper.CompleteAddOnNames(config.Spec.AddOns)
 
 	// update the default bases in the all-groups directory
 	if err := UpdateBases(logger, filesGetter, basePath, path.Join(basePath, utils.AllGroupsDirPath), defaultModules, defaultAddOns, config, dryRun); err != nil {
@@ -131,10 +131,10 @@ func UpdateBases(logger logger.LogInterface, filesGetter git.FilesGetter, basePa
 		// If that's the case, assign the default list of relative packages to
 		// overwrite the corresponding kustomization
 		if modules == nil {
-			modules = config.Spec.DeepCopy().Modules
+			modules = kustomizehelper.CompleteModuleNames(config.Spec.DeepCopy().Modules)
 		}
 		if addons == nil {
-			addons = config.Spec.DeepCopy().AddOns
+			addons = kustomizehelper.CompleteAddOnNames(config.Spec.DeepCopy().AddOns)
 		}
 		syncedKustomization = *kustomizehelper.SyncKustomizeResources(&modules, &addons, *kustomization, targetPath)
 	}
@@ -219,7 +219,7 @@ func UpdateClusterModules(modulesOverrides map[string]v1alpha1.Module, defaultMo
 		}
 	}
 	// return the updated copy of defaultModules
-	return defaultModules
+	return kustomizehelper.CompleteModuleNames(defaultModules)
 }
 
 // UpdateClusterAddOns returns the complete map of add-ons of the given cluster
@@ -243,5 +243,5 @@ func UpdateClusterAddOns(addonsOverrides map[string]v1alpha1.AddOn, defaultAddOn
 		}
 	}
 	// return the updated copy of defaultAddOns
-	return defaultAddOns
+	return kustomizehelper.CompleteAddOnNames(defaultAddOns)
 }
