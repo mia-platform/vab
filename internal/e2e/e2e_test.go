@@ -70,9 +70,12 @@ var configPath string
 var projectPath string
 var clustersDirPath string
 var allGroupsDirPath string
-var sampleModulePath1 string
-var sampleModulePath2 string
-var sampleAddOnPath string
+var modulePath1 string
+var modulePath2 string
+var moduleOverridePath1 string
+var moduleOverridePath2 string
+var addOnPath string
+var addOnOverridePath string
 var depsGvr schema.GroupVersionResource
 
 var _ = BeforeSuite(func() {
@@ -101,9 +104,12 @@ var _ = BeforeSuite(func() {
 		configPath = path.Join(projectPath, "config.yaml")
 		clustersDirPath = path.Join(projectPath, "clusters")
 		allGroupsDirPath = path.Join(clustersDirPath, "all-groups")
-		sampleModulePath1 = path.Join(projectPath, "vendors", "modules", "module1", "flavour1")
-		sampleModulePath2 = path.Join(projectPath, "vendors", "modules", "module2", "flavour1")
-		sampleAddOnPath = path.Join(projectPath, "vendors", "add-ons", "addon1")
+		modulePath1 = path.Join(projectPath, "vendors", "modules", "module1-0.1.0", "flavour1")
+		moduleOverridePath1 = path.Join(projectPath, "vendors", "modules", "module1-0.1.1", "flavour1")
+		modulePath2 = path.Join(projectPath, "vendors", "modules", "module2-0.1.0", "flavour1")
+		moduleOverridePath2 = path.Join(projectPath, "vendors", "modules", "module2-0.1.1", "flavour1")
+		addOnPath = path.Join(projectPath, "vendors", "add-ons", "addon1-0.1.0")
+		addOnOverridePath = path.Join(projectPath, "vendors", "add-ons", "addon1-0.1.1")
 		depsGvr = schema.GroupVersionResource{
 			Group:    "apps",
 			Version:  "v1",
@@ -151,7 +157,7 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 		})
 		It("applies the configuration to the kind cluster", func() {
-			sampleFile := `apiVersion: apps/v1
+			sampleFile1 := `apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: module1-flavour1
@@ -161,21 +167,52 @@ spec:
   selector:
     matchLabels:
       app: module1-flavour1
+      version: 0.1.0
   template:
     metadata:
       labels:
         app: module1-flavour1
+        version: 0.1.0
     spec:
       containers:
       - image: k8s.gcr.io/echoserver:1.4
         name: echoserver
         ports:
         - containerPort: 8080`
-			err := os.MkdirAll(sampleModulePath1, os.ModePerm)
+			err := os.MkdirAll(modulePath1, os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(sampleModulePath1, "example.yaml"), []byte(sampleFile), os.ModePerm)
+			err = os.WriteFile(path.Join(modulePath1, "example.yaml"), []byte(sampleFile1), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(sampleModulePath1, "kustomization.yaml"), []byte(moduleKustomization), os.ModePerm)
+			err = os.WriteFile(path.Join(modulePath1, "kustomization.yaml"), []byte(moduleKustomization), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+
+			sampleFile2 := `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: module1-flavour1
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: module1-flavour1
+      version: 0.1.1
+  template:
+    metadata:
+      labels:
+        app: module1-flavour1
+        version: 0.1.1
+    spec:
+      containers:
+      - image: k8s.gcr.io/echoserver:1.4
+        name: echoserver
+        ports:
+        - containerPort: 8080`
+			err = os.MkdirAll(moduleOverridePath1, os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			err = os.WriteFile(path.Join(moduleOverridePath1, "example.yaml"), []byte(sampleFile2), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			err = os.WriteFile(path.Join(moduleOverridePath1, "kustomization.yaml"), []byte(moduleKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
 			err = apply.Apply(log, configPath, projectPath, false, "group1", "cluster1", projectPath)
@@ -184,6 +221,8 @@ spec:
 			dep, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
 			Expect(dep).NotTo(BeNil())
 			Expect(err).NotTo(HaveOccurred())
+			modVer := dep.Object["spec"].(map[string]interface{})["template"].(map[string]interface{})["metadata"].(map[string]interface{})["labels"].(map[string]interface{})["version"]
+			Expect(modVer).To(BeIdenticalTo("0.1.1"))
 		})
 	})
 	Context("1 module (w/ override and patch)", func() {
@@ -253,11 +292,11 @@ spec:
         name: sidecar
         ports:
         - containerPort: 8080`
-			err := os.MkdirAll(sampleAddOnPath, os.ModePerm)
+			err := os.MkdirAll(addOnPath, os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(sampleAddOnPath, "example.yaml"), []byte(sampleFile), os.ModePerm)
+			err = os.WriteFile(path.Join(addOnPath, "example.yaml"), []byte(sampleFile), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(sampleAddOnPath, "kustomization.yaml"), []byte(addonKustomization), os.ModePerm)
+			err = os.WriteFile(path.Join(addOnPath, "kustomization.yaml"), []byte(addonKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
 			err = apply.Apply(log, configPath, projectPath, false, "group1", "cluster1", projectPath)
@@ -304,7 +343,29 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 		})
 		It("applies the configuration to the kind cluster", func() {
-			err := apply.Apply(log, configPath, projectPath, false, "group1", "cluster1", projectPath)
+			sampleFile := `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: module1-flavour1
+spec:
+  selector:
+    matchLabels:
+      app: module1-flavour1
+  template:
+    spec:
+      containers:
+      - image: k8s.gcr.io/echoserver:1.4
+        name: sidecar-v2
+        ports:
+        - containerPort: 8080`
+			err := os.MkdirAll(addOnOverridePath, os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			err = os.WriteFile(path.Join(addOnOverridePath, "example.yaml"), []byte(sampleFile), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			err = os.WriteFile(path.Join(addOnOverridePath, "kustomization.yaml"), []byte(addonKustomization), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = apply.Apply(log, configPath, projectPath, false, "group1", "cluster1", projectPath)
 			Expect(err).NotTo(HaveOccurred())
 
 			depMod, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
@@ -316,6 +377,9 @@ spec:
 			// add-on deployed
 			containersCount := len(depMod.Object["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{}))
 			Expect(containersCount).Should(BeNumerically("==", 2))
+			// add-on overridden
+			containerName := depMod.Object["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{})[1].(map[string]interface{})["name"]
+			Expect(containerName).To(BeIdenticalTo("sidecar-v2"))
 		})
 	})
 	Context("1 module, 1 add-on (w/ overrides and patches)", func() {
@@ -329,7 +393,7 @@ spec:
   template:
     spec:
       containers:
-      - name: sidecar
+      - name: sidecar-v2
         ports:
         - containerPort: 9000`
 			pathToCluster := path.Join(clustersDirPath, "group1", "cluster1")
@@ -409,7 +473,7 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 		})
 		It("applies the configuration to the correct cluster and context", func() {
-			sampleFile := `apiVersion: apps/v1
+			sampleFile1 := `apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: module2-flavour1
@@ -419,21 +483,52 @@ spec:
   selector:
     matchLabels:
       app: module2-flavour1
+      version: 0.1.0
   template:
     metadata:
       labels:
         app: module2-flavour1
+        version: 0.1.0
     spec:
       containers:
       - image: k8s.gcr.io/echoserver:1.4
         name: echoserver
         ports:
         - containerPort: 8080`
-			err := os.MkdirAll(sampleModulePath2, os.ModePerm)
+			err := os.MkdirAll(modulePath2, os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(sampleModulePath2, "example.yaml"), []byte(sampleFile), os.ModePerm)
+			err = os.WriteFile(path.Join(modulePath2, "example.yaml"), []byte(sampleFile1), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(sampleModulePath2, "kustomization.yaml"), []byte(moduleKustomization), os.ModePerm)
+			err = os.WriteFile(path.Join(modulePath2, "kustomization.yaml"), []byte(moduleKustomization), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+
+			sampleFile2 := `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: module2-flavour1
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: module2-flavour1
+      version: 0.1.1
+  template:
+    metadata:
+      labels:
+        app: module2-flavour1
+        version: 0.1.1
+    spec:
+      containers:
+      - image: k8s.gcr.io/echoserver:1.4
+        name: echoserver
+        ports:
+        - containerPort: 8080`
+			err = os.MkdirAll(moduleOverridePath2, os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			err = os.WriteFile(path.Join(moduleOverridePath2, "example.yaml"), []byte(sampleFile2), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			err = os.WriteFile(path.Join(moduleOverridePath2, "kustomization.yaml"), []byte(moduleKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
 			err = apply.Apply(log, configPath, projectPath, false, "group1", "", projectPath)
@@ -448,10 +543,12 @@ spec:
 			newSidecarPort := depMod.Object["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{})[0].(map[string]interface{})["ports"].([]interface{})[0].(map[string]interface{})["containerPort"]
 			Expect(newSidecarPort).Should(BeNumerically("==", 9000))
 
-			// cluster 2: module2-flavour1 deployed
+			// cluster 2: module2-flavour1 deployed and overridden
 			depMod, err = dynamicClient_cluster2.Resource(depsGvr).Namespace("default").Get(context.Background(), "module2-flavour1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depMod).NotTo(BeNil())
+			modVer := depMod.Object["spec"].(map[string]interface{})["template"].(map[string]interface{})["metadata"].(map[string]interface{})["labels"].(map[string]interface{})["version"]
+			Expect(modVer).To(BeIdenticalTo("0.1.1"))
 			// cluster 2: no module patch, addon-1 disabled (1 replica, no sidecar container)
 			depMod, err = dynamicClient_cluster2.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())

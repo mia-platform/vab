@@ -70,10 +70,9 @@ func SyncKustomizeResources(modules *map[string]v1alpha1.Module, addons *map[str
 func getSortedModulesList(modules *map[string]v1alpha1.Module, targetPath string) []string {
 	modulesList := make([]string, 0, len(*modules))
 
-	for m := range *modules {
-		if !(*modules)[m].Disable {
-			// modulePath := path.Join(utils.VendorsModulesPath, m)
-			modulesList = append(modulesList, m)
+	for modName, mod := range *modules {
+		if !mod.Disable {
+			modulesList = append(modulesList, modName)
 		}
 	}
 
@@ -93,9 +92,9 @@ func getSortedModulesList(modules *map[string]v1alpha1.Module, targetPath string
 func getAddOnsList(addons *map[string]v1alpha1.AddOn, targetPath string) []string {
 	addonsList := make([]string, 0, len(*addons))
 
-	for ao := range *addons {
-		if !(*addons)[ao].Disable {
-			addonsList = append(addonsList, ao)
+	for aoName, ao := range *addons {
+		if !ao.Disable {
+			addonsList = append(addonsList, aoName)
 		}
 	}
 
@@ -173,6 +172,8 @@ func getKustomizationFilePath(targetPath string) (string, error) {
 	return kustomizationPath, nil
 }
 
+// getVendorPackageRelativePath returns the relative path to the vendor package
+// for the Kustomization file
 func getVendorPackageRelativePath(targetPath string, pkgPath string) string {
 	var vendorPackageRelativePath string
 	if strings.Contains(targetPath, utils.AllGroupsDirPath) {
@@ -181,4 +182,28 @@ func getVendorPackageRelativePath(targetPath string, pkgPath string) string {
 		vendorPackageRelativePath = path.Join("..", "..", "..", "..", pkgPath)
 	}
 	return vendorPackageRelativePath
+}
+
+// CompleteModuleNames returns the modules map with names in the format <module>-<semver>/<flavour>
+func CompleteModuleNames(modules map[string]v1alpha1.Module) map[string]v1alpha1.Module {
+	updatedModules := make(map[string]v1alpha1.Module, len(modules))
+	var splitModName []string
+	var updatedModName string
+	for modName, mod := range modules {
+		splitModName = strings.Split(modName, "/")
+		updatedModName = fmt.Sprintf("%s-%s/%s", splitModName[0], mod.Version, splitModName[1])
+		updatedModules[updatedModName] = mod
+	}
+	return updatedModules
+}
+
+// CompleteAddOnNames returns the add-ons map with names in the format <addon>-<semver>
+func CompleteAddOnNames(addons map[string]v1alpha1.AddOn) map[string]v1alpha1.AddOn {
+	updatedAddOns := make(map[string]v1alpha1.AddOn, len(addons))
+	var updatedAoName string
+	for aoName, ao := range addons {
+		updatedAoName = fmt.Sprintf("%s-%s", aoName, ao.Version)
+		updatedAddOns[updatedAoName] = ao
+	}
+	return updatedAddOns
 }

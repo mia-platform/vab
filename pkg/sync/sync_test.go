@@ -116,23 +116,23 @@ func TestUpdateBasesAllGroups(t *testing.T) {
 		return
 	}
 	modules := make(map[string]v1alpha1.Module)
-	modules["test-module3/test-flavour1"] = v1alpha1.Module{
+	modules["test-module3-1.0.0/test-flavour1"] = v1alpha1.Module{
 		Version: "1.0.0",
 		Weight:  4,
 	}
-	modules["test-module2/test-flavour1"] = v1alpha1.Module{
+	modules["test-module2-1.0.0/test-flavour1"] = v1alpha1.Module{
 		Version: "1.0.0",
 		Weight:  1,
 	}
-	modules["test-module1/test-flavour1"] = v1alpha1.Module{
+	modules["test-module1-1.0.0/test-flavour1"] = v1alpha1.Module{
 		Version: "1.0.0",
 		Weight:  3,
 	}
 	addons := make(map[string]v1alpha1.AddOn)
-	addons["test-addon1"] = v1alpha1.AddOn{
+	addons["test-addon1-1.0.0"] = v1alpha1.AddOn{
 		Version: "1.0.0",
 	}
-	addons["test-addon2"] = v1alpha1.AddOn{
+	addons["test-addon2-1.0.0"] = v1alpha1.AddOn{
 		Version: "1.0.0",
 	}
 	config := v1alpha1.ClustersConfiguration{}
@@ -361,11 +361,11 @@ func TestUpdateClusterModules(t *testing.T) {
 	}
 	output := UpdateClusterModules(overrides, defaultModules)
 	expectedOutput := make(map[string]v1alpha1.Module)
-	expectedOutput["test-module1/test-flavour1"] = v1alpha1.Module{
+	expectedOutput["test-module1-1.0.0/test-flavour1"] = v1alpha1.Module{
 		Version: "1.0.0",
 		Weight:  1,
 	}
-	expectedOutput["test-module3/test-flavour1"] = v1alpha1.Module{
+	expectedOutput["test-module3-1.0.1/test-flavour1"] = v1alpha1.Module{
 		Version: "1.0.1",
 		Weight:  4,
 	}
@@ -404,7 +404,7 @@ func TestUpdateClusterAddOns(t *testing.T) {
 	}
 	output := UpdateClusterAddOns(overrides, defaultAddOns)
 	expectedOutput := make(map[string]v1alpha1.AddOn)
-	expectedOutput["test-addon1"] = v1alpha1.AddOn{
+	expectedOutput["test-addon1-1.0.1"] = v1alpha1.AddOn{
 		Version: "1.0.1",
 	}
 	assert.Equal(t, expectedOutput, output, "Unexpected map of add-ons")
