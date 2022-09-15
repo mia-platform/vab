@@ -6,9 +6,7 @@ spec:
     # Valid module structure
     module-0/flavor-0:
       version: 1.0.0
-      weight: 1
     # Invalid module structure: missing version
-    # Weight set to 0 by default (warning)
     module-1/flavor-1: {}
     # Disabled module
     module-2/flavor-2:
@@ -43,9 +41,7 @@ spec:
         # Valid module structure
         module-0/flavor-0:
           version: 1.0.0
-          weight: 1
         # Invalid module structure: missing version
-        # Weight set to 0 by default (warning)
         module-1/flavor-1: {}
         module-2/flavor-2:
         # Disabled module

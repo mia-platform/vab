@@ -35,31 +35,25 @@ func TestSortedModulesList(t *testing.T) {
 	modules := make(map[string]v1alpha1.Module)
 	modules["m1-1.0.0/f1"] = v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  4,
 	}
 	modules["m2-1.0.0/f1"] = v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  1,
 	}
 	modules["m3-1.0.0/f1"] = v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  3,
 	}
 	modules["m4b-1.0.0/f1"] = v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  2,
 	}
 	modules["m4a-1.0.0/f1"] = v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  2,
 	}
 	modules["m0-1.0.0/f1"] = v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  10,
 		Disable: true,
 	}
 
-	expectedList := []string{"../../../vendors/modules/m2-1.0.0/f1", "../../../vendors/modules/m4a-1.0.0/f1", "../../../vendors/modules/m4b-1.0.0/f1", "../../../vendors/modules/m3-1.0.0/f1", "../../../vendors/modules/m1-1.0.0/f1"}
+	expectedList := []string{"../../../vendors/modules/m1-1.0.0/f1", "../../../vendors/modules/m2-1.0.0/f1", "../../../vendors/modules/m3-1.0.0/f1", "../../../vendors/modules/m4a-1.0.0/f1", "../../../vendors/modules/m4b-1.0.0/f1"}
 	list := getSortedModulesList(&modules, utils.AllGroupsDirPath)
 
 	assert.Equal(t, expectedList, list, "Unexpected modules list.")
@@ -72,19 +66,15 @@ func TestSyncEmptyKustomization(t *testing.T) {
 	modules := make(map[string]v1alpha1.Module)
 	modules["m1-1.0.0/f1"] = v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  1,
 	}
 	modules["m3-1.0.0/f1"] = v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  2,
 	}
 	modules["m2-1.0.0/f1"] = v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  3,
 	}
 	modules["m0-1.0.0/f1"] = v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  10,
 		Disable: true,
 	}
 	addons := make(map[string]v1alpha1.AddOn)
@@ -100,7 +90,7 @@ func TestSyncEmptyKustomization(t *testing.T) {
 	}
 
 	finalKustomization := SyncKustomizeResources(&modules, &addons, emptyKustomization, utils.AllGroupsDirPath)
-	expectedResources := []string{"../../../vendors/modules/m1-1.0.0/f1", "../../../vendors/modules/m3-1.0.0/f1", "../../../vendors/modules/m2-1.0.0/f1"}
+	expectedResources := []string{"../../../vendors/modules/m1-1.0.0/f1", "../../../vendors/modules/m2-1.0.0/f1", "../../../vendors/modules/m3-1.0.0/f1"}
 	expectedComponents := []string{"../../../vendors/add-ons/ao1-1.0.0", "../../../vendors/add-ons/ao2-1.0.0"}
 
 	assert.Equal(t, expectedResources, finalKustomization.Resources, "Unexpected resources in Kustomization.")
@@ -129,18 +119,15 @@ func TestSyncExistingKustomization(t *testing.T) {
 	// change mod1 version
 	modules["mod1-2.0.0/f1"] = v1alpha1.Module{
 		Version: "2.0.0",
-		Weight:  3,
 	}
 	// disable mod2
 	modules["mod2-1.0.0/f1"] = v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  2,
 		Disable: true,
 	}
 	// unchanged module
 	modules["mod3-1.0.0/f1"] = v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  1,
 	}
 	addons := make(map[string]v1alpha1.AddOn)
 	// change ao1 version
@@ -159,8 +146,8 @@ func TestSyncExistingKustomization(t *testing.T) {
 
 	finalKustomization := SyncKustomizeResources(&modules, &addons, kustomization, utils.AllGroupsDirPath)
 	expectedResources := []string{
-		"../../../vendors/modules/mod3-1.0.0/f1",
 		"../../../vendors/modules/mod1-2.0.0/f1",
+		"../../../vendors/modules/mod3-1.0.0/f1",
 		"./local/mod-1.0.0/f1",
 	}
 	expectedComponents := []string{
@@ -283,20 +270,16 @@ func TestGetModuleCompleteName(t *testing.T) {
 	modules := make(map[string]v1alpha1.Module)
 	modules["m1/f1"] = v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  1,
 	}
 	modules["m2/f1"] = v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  2,
 	}
 	expectedModules := make(map[string]v1alpha1.Module)
 	expectedModules["m1-1.0.0/f1"] = v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  1,
 	}
 	expectedModules["m2-1.0.0/f1"] = v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  2,
 	}
 	updatedModules := CompleteModuleNames(modules)
 	assert.Equal(t, expectedModules, updatedModules, "Unexpected module name")

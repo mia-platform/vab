@@ -28,11 +28,9 @@ spec:
   modules: {}
     # example-module:
     #   version: 1.20.1
-    #   weight: 10
   addons: {}
     # example-addon:
     #   version: 1.20.1
-    #   weight: 1
   groups: []
     # - name: group-name
     #   clusters:
@@ -48,7 +46,6 @@ spec:
     #           disable: true
     #         other-module: --- ADD NEW MODULE
     #           version: 1.20.20 
-    #           weight: 1
     #     - name: cluster3-name
     #       context: context3-name
 ```
@@ -77,10 +74,8 @@ spec:
   modules:
     ingress/traefik:
       version: 1.20.1
-      weight: 10
     cni/cilium:
       version: 1.20.1
-      weight: 1
   groups: 
     - group: group-name
       clusters:
@@ -90,7 +85,6 @@ spec:
               disable: true
             cni/calico:
               version: 1.20.20 
-              weight: 1
         - cluster2-name: context2-name
 ```
 

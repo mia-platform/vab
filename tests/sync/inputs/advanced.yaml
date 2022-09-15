@@ -5,13 +5,10 @@ spec:
   modules:
     test-module1/test-flavour1:
       version: 1.0.0
-      weight: 3
     test-module2/test-flavour1:
       version: 1.0.0
-      weight: 1
     test-module3/test-flavour1:
       version: 1.0.0
-      weight: 5
   addOns:
     test-addon1:
       version: 1.0.0
@@ -26,12 +23,8 @@ spec:
       modules:
         test-module1/test-flavour1: # override module version
           version: 1.0.1
-          weight: 3
         test-module2/test-flavour1: # disable module
           disable: true
-        test-module3/test-flavour1: # override module weight (change order)
-          version: 1.0.0
-          weight: 1
     # cluster-2 only overrides add-ons
     - name: cluster-2
       context: context-2
@@ -48,7 +41,6 @@ spec:
       modules:
         test-module2/test-flavour1:
           version: 1.0.0
-          weight: 7
       addOns:
         test-addon1:
           version: 1.0.1

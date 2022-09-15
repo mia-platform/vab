@@ -92,7 +92,6 @@ The configuration is valid!
 [warn] no group found: check the config file if this behavior is unexpected
 `
 	expectedOutput3 = `[error][default] missing version of module module-1/flavor-1
-[warn][default] missing weight of module module-1/flavor-1: setting default (0)
 [info][default] disabling module module-2/flavor-2
 [error][default] missing version of add-on addon-1
 [info][default] disabling add-on addon-2

@@ -31,11 +31,11 @@ import (
 func TestRemoteURL(t *testing.T) {
 	expectedURL := "https://github.com/mia-platform/distribution"
 
-	// module := v1alpha1.Module{Version: "1.2.3", Weight: 1, Disable: false}
+	// module := v1alpha1.Package{Version: "1.2.3", Disable: false}
 	assert.Equal(t, remoteURL(), expectedURL)
 	assert.Equal(t, remoteURL(), expectedURL)
 
-	// addon := v1alpha1.AddOn{Version: "1.2.3", Disable: false}
+	// addon := v1alpha1.Package{Version: "1.2.3", Disable: false}
 	assert.Equal(t, remoteURL(), expectedURL)
 	assert.Equal(t, remoteURL(), expectedURL)
 }
@@ -63,7 +63,6 @@ func TestTagReferences(t *testing.T) {
 	expectedReference = "refs/tags/module-module-name-" + addonVersion
 	module := v1alpha1.Module{
 		Version: moduleVersion,
-		Weight:  10,
 		Disable: false,
 	}
 
@@ -81,7 +80,7 @@ func TestCloneOptions(t *testing.T) {
 	assert.Nil(t, options.Auth)
 	assert.Equal(t, options.ReferenceName, tagReferenceForPackage(addonName, addon))
 
-	module := v1alpha1.Module{Version: "1.0.0", Weight: 10, Disable: false}
+	module := v1alpha1.Module{Version: "1.0.0", Disable: false}
 	moduleName := "module-name/flavor-name"
 	options = cloneOptionsForPackage(moduleName, module)
 

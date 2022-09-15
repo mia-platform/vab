@@ -35,11 +35,11 @@ func ConfigurationFile(logger logger.LogInterface, configurationPath string, wri
 		return fmt.Errorf("error while parsing the configuration file: %v", readErr)
 	}
 
-	feedbackString := checkTypeMeta(logger, &config.TypeMeta, &code)
+	feedbackString := checkTypeMeta(&config.TypeMeta, &code)
 	logger.V(5).Writef("Checking TypeMeta for config ended with %d", code)
-	feedbackString += checkModules(logger, &config.Spec.Modules, "", &code)
+	feedbackString += checkModules(&config.Spec.Modules, "", &code)
 	logger.V(5).Writef("Checking configuration modules ended with %d", code)
-	feedbackString += checkAddOns(logger, &config.Spec.AddOns, "", &code)
+	feedbackString += checkAddOns(&config.Spec.AddOns, "", &code)
 	logger.V(5).Writef("Checking configuration add-ons ended with %d", code)
 	feedbackString += checkGroups(logger, &config.Spec.Groups, &code)
 	logger.V(5).Writef("Checking configuration groups add-ons ended with %d", code)
@@ -54,7 +54,7 @@ func ConfigurationFile(logger logger.LogInterface, configurationPath string, wri
 }
 
 // checkTypeMeta checks the file's Kind and APIVersion
-func checkTypeMeta(logger logger.LogInterface, config *v1alpha1.TypeMeta, code *int) string {
+func checkTypeMeta(config *v1alpha1.TypeMeta, code *int) string {
 	outString := ""
 	if config.Kind != v1alpha1.Kind {
 		outString += fmt.Sprintf("[error] wrong kind: %s - expected: %s\n", config.Kind, v1alpha1.Kind)
@@ -70,7 +70,7 @@ func checkTypeMeta(logger logger.LogInterface, config *v1alpha1.TypeMeta, code *
 }
 
 // checkModules checks the modules listed in the config file
-func checkModules(logger logger.LogInterface, modules *map[string]v1alpha1.Module, scope string, code *int) string {
+func checkModules(modules *map[string]v1alpha1.Module, scope string, code *int) string {
 	if scope == "" {
 		scope = defaultScope
 	}
@@ -83,7 +83,7 @@ func checkModules(logger logger.LogInterface, modules *map[string]v1alpha1.Modul
 
 	for m := range *modules {
 		// TODO: add check for modules' uniqueness (only one flavor per module is allowed)
-		if (*modules)[m].Disable {
+		if (*modules)[m].IsDisabled() {
 			outString += fmt.Sprintf("[info][%s] disabling module %s\n", scope, m)
 			continue
 		}
@@ -92,16 +92,13 @@ func checkModules(logger logger.LogInterface, modules *map[string]v1alpha1.Modul
 			outString += fmt.Sprintf("[error][%s] missing version of module %s\n", scope, m)
 			*code = 1
 		}
-		if (*modules)[m].Weight == 0 {
-			outString += fmt.Sprintf("[warn][%s] missing weight of module %s: setting default (0)\n", scope, m)
-		}
 	}
 
 	return outString
 }
 
 // checkAddOns checks the add-ons listed in the config file
-func checkAddOns(logger logger.LogInterface, addons *map[string]v1alpha1.AddOn, scope string, code *int) string {
+func checkAddOns(addons *map[string]v1alpha1.AddOn, scope string, code *int) string {
 	if scope == "" {
 		scope = defaultScope
 	}
@@ -113,7 +110,7 @@ func checkAddOns(logger logger.LogInterface, addons *map[string]v1alpha1.AddOn, 
 	}
 
 	for m := range *addons {
-		if (*addons)[m].Disable {
+		if (*addons)[m].IsDisabled() {
 			outString += fmt.Sprintf("[info][%s] disabling add-on %s\n", scope, m)
 		} else if (*addons)[m].Version == "" {
 			outString += fmt.Sprintf("[error][%s] missing version of add-on %s\n", scope, m)
@@ -170,9 +167,9 @@ func checkClusters(logger logger.LogInterface, group *v1alpha1.Group, groupName 
 		}
 
 		scope := groupName + "/" + clusterName
-		outString += checkModules(logger, &cluster.Modules, scope, code)
+		outString += checkModules(&cluster.Modules, scope, code)
 		logger.V(5).Writef("Checking cluster %s modules ended with %d", scope, *code)
-		outString += checkAddOns(logger, &cluster.AddOns, scope, code)
+		outString += checkAddOns(&cluster.AddOns, scope, code)
 		logger.V(5).Writef("Checking cluster %s add-on ended with %d", scope, *code)
 	}
 

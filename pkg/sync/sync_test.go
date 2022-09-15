@@ -37,7 +37,6 @@ func TestClonePackage(t *testing.T) {
 	logger := logger.DisabledLogger{}
 	testModule := v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  2,
 	}
 	outputFiles, err := ClonePackages(logger, "test-module1/test-flavour1", testModule, testutils.FakeFilesGetter{Testing: t})
 	if !assert.NoError(t, err) {
@@ -71,15 +70,12 @@ func TestUpdateModules(t *testing.T) {
 	modules := make(map[string]v1alpha1.Module)
 	modules["test-module1/test-flavour1"] = v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  4,
 	}
 	modules["test-module2/test-flavour1"] = v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  1,
 	}
 	modules["test-module3/test-flavour1"] = v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  3,
 		Disable: true,
 	}
 	testDirPath := t.TempDir()
@@ -118,15 +114,12 @@ func TestUpdateBasesAllGroups(t *testing.T) {
 	modules := make(map[string]v1alpha1.Module)
 	modules["test-module3-1.0.0/test-flavour1"] = v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  4,
 	}
 	modules["test-module2-1.0.0/test-flavour1"] = v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  1,
 	}
 	modules["test-module1-1.0.0/test-flavour1"] = v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  3,
 	}
 	addons := make(map[string]v1alpha1.AddOn)
 	addons["test-addon1-1.0.0"] = v1alpha1.AddOn{
@@ -317,15 +310,12 @@ func TestUpdateClusterModulesNoOverrides(t *testing.T) {
 	defaultModules := make(map[string]v1alpha1.Module)
 	defaultModules["test-module3/test-flavour1"] = v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  4,
 	}
 	defaultModules["test-module2/test-flavour1"] = v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  1,
 	}
 	defaultModules["test-module1/test-flavour1"] = v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  3,
 	}
 	overrides := make(map[string]v1alpha1.Module)
 	output := UpdateClusterModules(overrides, defaultModules)
@@ -337,37 +327,30 @@ func TestUpdateClusterModules(t *testing.T) {
 	defaultModules := make(map[string]v1alpha1.Module)
 	defaultModules["test-module3/test-flavour1"] = v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  4,
 	}
 	defaultModules["test-module2/test-flavour1"] = v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  1,
 	}
 	defaultModules["test-module1/test-flavour1"] = v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  3,
 	}
 	overrides := make(map[string]v1alpha1.Module)
 	overrides["test-module3/test-flavour1"] = v1alpha1.Module{
 		Version: "1.0.1",
-		Weight:  4,
 	}
 	overrides["test-module2/test-flavour1"] = v1alpha1.Module{
 		Disable: true,
 	}
 	overrides["test-module1/test-flavour1"] = v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  1,
 	}
 	output := UpdateClusterModules(overrides, defaultModules)
 	expectedOutput := make(map[string]v1alpha1.Module)
 	expectedOutput["test-module1-1.0.0/test-flavour1"] = v1alpha1.Module{
 		Version: "1.0.0",
-		Weight:  1,
 	}
 	expectedOutput["test-module3-1.0.1/test-flavour1"] = v1alpha1.Module{
 		Version: "1.0.1",
-		Weight:  4,
 	}
 	assert.Equal(t, expectedOutput, output, "Unexpected map of modules")
 }

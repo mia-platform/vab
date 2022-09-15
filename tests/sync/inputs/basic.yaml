@@ -5,10 +5,8 @@ spec:
   modules:
     test-module1/test-flavour1:
       version: 1.0.0
-      weight: 2
     test-module2/test-flavour1:
       version: 1.0.0
-      weight: 1
   addOns:
     test-addon1:
       version: 1.0.0

@@ -23,6 +23,7 @@ import (
 	"path"
 	"testing"
 
+	"github.com/dchest/uniuri"
 	"github.com/mia-platform/vab/internal/testutils"
 	"github.com/mia-platform/vab/internal/utils"
 	"github.com/mia-platform/vab/pkg/logger"
@@ -105,11 +106,12 @@ func TestNewClusterOverride(t *testing.T) {
 		return
 	}
 
-	if err := createClusterOverride(testDirPath, testName); !assert.NoError(t, err) {
+	randomName := uniuri.New()
+	if err := createClusterOverride(testDirPath, randomName); !assert.NoError(t, err) {
 		return
 	}
 
-	kustomizationPath := path.Join(testDirPath, utils.ClustersDirName, testName, konfig.DefaultKustomizationFileName())
+	kustomizationPath := path.Join(testDirPath, utils.ClustersDirName, randomName, konfig.DefaultKustomizationFileName())
 	_, err := os.Stat(kustomizationPath)
 	assert.NoError(t, err)
 }
@@ -117,7 +119,8 @@ func TestNewClusterOverride(t *testing.T) {
 // Test that the clusters directory is created if missing
 func TestMissingClustersDirectory(t *testing.T) {
 	testDirPath := t.TempDir()
-	err := createClusterOverride(testDirPath, testName)
+	randomName := uniuri.New()
+	err := createClusterOverride(testDirPath, randomName)
 	assert.NoError(t, err)
 }
 
@@ -128,7 +131,8 @@ func TestNewClusterErrPermission(t *testing.T) {
 		return
 	}
 
-	err := createClusterOverride(testDirPath, testName)
+	randomName := uniuri.New()
+	err := createClusterOverride(testDirPath, randomName)
 	if assert.Error(t, err) {
 		assert.ErrorIs(t, err, fs.ErrPermission)
 	}
@@ -141,7 +145,8 @@ func TestMissingClustersDirErrPermission(t *testing.T) {
 		return
 	}
 
-	err := createClusterOverride(testDirPath, testName)
+	randomName := uniuri.New()
+	err := createClusterOverride(testDirPath, randomName)
 	if assert.Error(t, err) {
 		assert.ErrorIs(t, err, fs.ErrPermission)
 	}
