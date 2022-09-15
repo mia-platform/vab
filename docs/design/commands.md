@@ -138,6 +138,8 @@ if all the resources are generated correctly for the target cluster.
 
 Builds and applies the local configuration to the specified cluster, group, or to all of them.
 The command builds the configurations using the same function as the `build` command.
-The apply uses the `kubectl apply` command, creating a yaml file with the resources and then applying it to a KUBECONFIG context with the same name of the `ClusterName` specified in the main configuration file.
+The apply uses the `kubectl apply` command, creating a yaml file with the resources and then applying it to a
+KUBECONFIG context with the same name of the `ClusterName` specified in the main configuration file.
 
-If the cluster has `ClusterName` that satisfies the regex `test*`, the configuration file will skip the `kubectl apply` step. 
+If the cluster has `ClusterName` that satisfies the regex `test*`, the configuration file will skip
+the `kubectl apply` step.
