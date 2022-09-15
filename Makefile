@@ -22,8 +22,11 @@ endif
 CMDNAME := vab
 TOOLS_DIR := $(PROJECT_DIR)/tools
 TOOLS_BIN := $(TOOLS_DIR)/bin
+
 KIND_CLUSTER_1_NAME ?= vab-cluster-1
 KIND_CLUSTER_2_NAME ?= vab-cluster-2
+GOLANCI_LINT_VERSION=1.49.0
+DEEPCOPY_GEN_VERSION=0.25.0
 
 SUPPORTED_PLATFORMS := linux/386,linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6
 $(eval BUILD_PLATFORMS = $(shell echo "$(SUPPORTED_PLATFORMS)" | sed "s#,# #g;s#/#.#g"))
@@ -164,10 +167,10 @@ lint-mod:
 install-dep: generate-dep lintgo-dep
 
 lintgo-dep:
-	@GOBIN=$(TOOLS_BIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.46.2
+	@GOBIN=$(TOOLS_BIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@v$(GOLANCI_LINT_VERSION)
 
 generate-dep:
-	@GOBIN=$(TOOLS_BIN) go install k8s.io/code-generator/cmd/deepcopy-gen@v0.24.2
+	@GOBIN=$(TOOLS_BIN) go install k8s.io/code-generator/cmd/deepcopy-gen@v$(DEEPCOPY_GEN_VERSION)
 
 ##@ Images
 

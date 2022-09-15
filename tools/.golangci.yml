@@ -4,6 +4,7 @@ run:
 linters:
   enable:
     - asciicheck
+    - bodyclose
     - goconst
     - gocritic
     - gofmt
@@ -14,11 +15,9 @@ linters:
     - revive
     - tagliatelle
     - unconvert
-    - whitespace
-  disable: # disabled check for https://github.com/golangci/golangci-lint/issues/2649, track it for re enabled them
-    - bodyclose
-    - structcheck
     - unparam
+    - unused
+    - whitespace
 linters-settings:
   gofmt:
     simplify: true
