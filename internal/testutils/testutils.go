@@ -127,7 +127,7 @@ type FakeFilesGetter struct {
 	Testing *testing.T
 }
 
-func (filesGetter FakeFilesGetter) WorkTreeForPackage(pkgName string, pkg v1alpha1.Package) (*billy.Filesystem, error) {
+func (filesGetter FakeFilesGetter) WorkTreeForPackage(pkg v1alpha1.Package) (*billy.Filesystem, error) {
 	return PrepareFakeWorktree(filesGetter.Testing), nil
 }
 

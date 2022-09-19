@@ -70,7 +70,7 @@ func checkTypeMeta(config *v1alpha1.TypeMeta, code *int) string {
 }
 
 // checkModules checks the modules listed in the config file
-func checkModules(modules *map[string]v1alpha1.Module, scope string, code *int) string {
+func checkModules(modules *map[string]v1alpha1.Package, scope string, code *int) string {
 	if scope == "" {
 		scope = defaultScope
 	}
@@ -83,7 +83,7 @@ func checkModules(modules *map[string]v1alpha1.Module, scope string, code *int) 
 
 	for m := range *modules {
 		// TODO: add check for modules' uniqueness (only one flavor per module is allowed)
-		if (*modules)[m].IsDisabled() {
+		if (*modules)[m].Disable {
 			outString += fmt.Sprintf("[info][%s] disabling module %s\n", scope, m)
 			continue
 		}
@@ -98,7 +98,7 @@ func checkModules(modules *map[string]v1alpha1.Module, scope string, code *int) 
 }
 
 // checkAddOns checks the add-ons listed in the config file
-func checkAddOns(addons *map[string]v1alpha1.AddOn, scope string, code *int) string {
+func checkAddOns(addons *map[string]v1alpha1.Package, scope string, code *int) string {
 	if scope == "" {
 		scope = defaultScope
 	}
@@ -110,7 +110,7 @@ func checkAddOns(addons *map[string]v1alpha1.AddOn, scope string, code *int) str
 	}
 
 	for m := range *addons {
-		if (*addons)[m].IsDisabled() {
+		if (*addons)[m].Disable {
 			outString += fmt.Sprintf("[info][%s] disabling add-on %s\n", scope, m)
 		} else if (*addons)[m].Version == "" {
 			outString += fmt.Sprintf("[error][%s] missing version of add-on %s\n", scope, m)

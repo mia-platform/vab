@@ -69,11 +69,11 @@ func (f *File) String() string {
 }
 
 type FilesGetter interface {
-	WorkTreeForPackage(pkgName string, pkg v1alpha1.Package) (*billy.Filesystem, error)
+	WorkTreeForPackage(pkg v1alpha1.Package) (*billy.Filesystem, error)
 }
 
 type RealFilesGetter struct{}
 
-func (filesGetter RealFilesGetter) WorkTreeForPackage(pkgName string, pkg v1alpha1.Package) (*billy.Filesystem, error) {
-	return worktreeForPackage(pkgName, pkg)
+func (filesGetter RealFilesGetter) WorkTreeForPackage(pkg v1alpha1.Package) (*billy.Filesystem, error) {
+	return worktreeForPackage(pkg)
 }

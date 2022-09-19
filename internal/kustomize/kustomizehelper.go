@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -30,7 +31,7 @@ import (
 )
 
 // SyncKustomizeResources updates the clusters' kustomization resources to the latest sync
-func SyncKustomizeResources(modules *map[string]v1alpha1.Module, addons *map[string]v1alpha1.AddOn, k kustomize.Kustomization, targetPath string) *kustomize.Kustomization {
+func SyncKustomizeResources(modules *map[string]v1alpha1.Package, addons *map[string]v1alpha1.Package, k kustomize.Kustomization, targetPath string) *kustomize.Kustomization {
 	modulesList := getSortedModulesList(modules, targetPath)
 	addonsList := getSortedAddOnsList(addons, targetPath)
 
@@ -66,7 +67,7 @@ func SyncKustomizeResources(modules *map[string]v1alpha1.Module, addons *map[str
 }
 
 // getSortedModulesList returns the list of modules names in lexicographic order.
-func getSortedModulesList(packages *map[string]v1alpha1.Module, targetPath string) []string {
+func getSortedModulesList(packages *map[string]v1alpha1.Package, targetPath string) []string {
 	sordtedList := make([]string, 0, len(*packages))
 
 	for aoName, ao := range *packages {
@@ -83,7 +84,7 @@ func getSortedModulesList(packages *map[string]v1alpha1.Module, targetPath strin
 }
 
 // getSortedAddOnsList returns the list of addons names in lexicographic order
-func getSortedAddOnsList(packages *map[string]v1alpha1.AddOn, targetPath string) []string {
+func getSortedAddOnsList(packages *map[string]v1alpha1.Package, targetPath string) []string {
 	sordtedList := make([]string, 0, len(*packages))
 
 	for aoName, ao := range *packages {
@@ -178,26 +179,20 @@ func getVendorPackageRelativePath(targetPath string, pkgPath string) string {
 	return vendorPackageRelativePath
 }
 
-// CompleteModuleNames returns the modules map with names in the format <module>-<semver>/<flavour>
-func CompleteModuleNames(modules map[string]v1alpha1.Module) map[string]v1alpha1.Module {
-	updatedModules := make(map[string]v1alpha1.Module, len(modules))
-	var splitModName []string
-	var updatedModName string
-	for modName, mod := range modules {
-		splitModName = strings.Split(modName, "/")
-		updatedModName = fmt.Sprintf("%s-%s/%s", splitModName[0], mod.Version, splitModName[1])
-		updatedModules[updatedModName] = mod
-	}
-	return updatedModules
-}
+// PackagesMapForPaths return the package map with key the disk path for kustomize
+func PackagesMapForPaths(packages map[string]v1alpha1.Package) map[string]v1alpha1.Package {
+	pathsMap := make(map[string]v1alpha1.Package, len(packages))
 
-// CompleteAddOnNames returns the add-ons map with names in the format <addon>-<semver>
-func CompleteAddOnNames(addons map[string]v1alpha1.AddOn) map[string]v1alpha1.AddOn {
-	updatedAddOns := make(map[string]v1alpha1.AddOn, len(addons))
-	var updatedAoName string
-	for aoName, ao := range addons {
-		updatedAoName = fmt.Sprintf("%s-%s", aoName, ao.Version)
-		updatedAddOns[updatedAoName] = ao
+	for _, pkg := range packages {
+		var newKey string
+		if pkg.IsModule() {
+			newKey = pkg.GetName() + "-" + pkg.Version + string(filepath.Separator) + pkg.GetFlavorName()
+		} else {
+			newKey = pkg.GetName() + "-" + pkg.Version
+		}
+
+		pathsMap[newKey] = pkg
 	}
-	return updatedAddOns
+
+	return pathsMap
 }

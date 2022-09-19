@@ -35,10 +35,8 @@ import (
 // ClonePackages returns a list of mocked file pointers w/o errors
 func TestClonePackage(t *testing.T) {
 	logger := logger.DisabledLogger{}
-	testModule := v1alpha1.Module{
-		Version: "1.0.0",
-	}
-	outputFiles, err := ClonePackages(logger, "test-module1/test-flavour1", testModule, testutils.FakeFilesGetter{Testing: t})
+	testModule := v1alpha1.NewModule(t, "test-module1/test-flavour1", "1.0.0", false)
+	outputFiles, err := ClonePackages(logger, testModule, testutils.FakeFilesGetter{Testing: t})
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -67,19 +65,28 @@ func TestMoveToDisk(t *testing.T) {
 // UpdateModules syncs new modules without errors
 func TestUpdateModules(t *testing.T) {
 	logger := logger.DisabledLogger{}
-	modules := make(map[string]v1alpha1.Module)
-	modules["test-module1/test-flavour1"] = v1alpha1.Module{
-		Version: "1.0.0",
-	}
-	modules["test-module2/test-flavour1"] = v1alpha1.Module{
-		Version: "1.0.0",
-	}
-	modules["test-module3/test-flavour1"] = v1alpha1.Module{
-		Version: "1.0.0",
-		Disable: true,
-	}
+	modules := make(map[string]v1alpha1.Package)
+	modules["test-module1/test-flavour1"] = v1alpha1.NewModule(
+		t,
+		"test-module1/test-flavour1",
+		"1.0.0",
+		false,
+	)
+	modules["test-module2/test-flavour1"] = v1alpha1.NewModule(
+		t,
+		"test-module2/test-flavour1",
+		"1.0.0",
+		false,
+	)
+	modules["test-module3/test-flavour1"] = v1alpha1.NewModule(
+		t,
+		"test-module3/test-flavour1",
+		"1.0.0",
+		true,
+	)
+
 	testDirPath := t.TempDir()
-	err := UpdateModules(logger, modules, testDirPath, testutils.FakeFilesGetter{Testing: t})
+	err := DownloadPackages(logger, modules, testDirPath, testutils.FakeFilesGetter{Testing: t})
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -88,16 +95,21 @@ func TestUpdateModules(t *testing.T) {
 // UpdateAddOns syncs new modules without errors
 func TestUpdateAddOns(t *testing.T) {
 	logger := logger.DisabledLogger{}
-	addons := make(map[string]v1alpha1.AddOn)
-	addons["test-addon1"] = v1alpha1.AddOn{
-		Version: "1.0.0",
-	}
-	addons["test-addon2"] = v1alpha1.AddOn{
-		Version: "1.0.0",
-		Disable: true,
-	}
+	addons := make(map[string]v1alpha1.Package)
+	addons["test-addon1"] = v1alpha1.NewAddon(
+		t,
+		"test-addon1",
+		"1.0.0",
+		false,
+	)
+	addons["test-addon2"] = v1alpha1.NewAddon(
+		t,
+		"test-addon2",
+		"1.0.0",
+		true,
+	)
 	testDirPath := t.TempDir()
-	err := UpdateAddOns(logger, addons, testDirPath, testutils.FakeFilesGetter{Testing: t})
+	err := DownloadPackages(logger, addons, testDirPath, testutils.FakeFilesGetter{Testing: t})
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -111,23 +123,39 @@ func TestUpdateBasesAllGroups(t *testing.T) {
 	if err := os.MkdirAll(targetPath, os.ModePerm); err != nil {
 		return
 	}
-	modules := make(map[string]v1alpha1.Module)
-	modules["test-module3-1.0.0/test-flavour1"] = v1alpha1.Module{
-		Version: "1.0.0",
-	}
-	modules["test-module2-1.0.0/test-flavour1"] = v1alpha1.Module{
-		Version: "1.0.0",
-	}
-	modules["test-module1-1.0.0/test-flavour1"] = v1alpha1.Module{
-		Version: "1.0.0",
-	}
-	addons := make(map[string]v1alpha1.AddOn)
-	addons["test-addon1-1.0.0"] = v1alpha1.AddOn{
-		Version: "1.0.0",
-	}
-	addons["test-addon2-1.0.0"] = v1alpha1.AddOn{
-		Version: "1.0.0",
-	}
+	modules := make(map[string]v1alpha1.Package)
+	modules["test-module3-1.0.0/test-flavour1"] = v1alpha1.NewModule(
+		t,
+		"test-module3/test-flavour1",
+		"1.0.0",
+		false,
+	)
+	modules["test-module2-1.0.0/test-flavour1"] = v1alpha1.NewModule(
+		t,
+		"test-module2/test-flavour1",
+		"1.0.0",
+		false,
+	)
+	modules["test-module1-1.0.0/test-flavour1"] = v1alpha1.NewModule(
+		t,
+		"test-module1/test-flavour1",
+		"1.0.0",
+		false,
+	)
+
+	addons := make(map[string]v1alpha1.Package)
+	addons["test-addon1-1.0.0"] = v1alpha1.NewAddon(
+		t,
+		"test-addon1",
+		"1.0.0",
+		false,
+	)
+	addons["test-addon2-1.0.0"] = v1alpha1.NewAddon(
+		t,
+		"test-addon2",
+		"1.0.0",
+		false,
+	)
 	config := v1alpha1.ClustersConfiguration{}
 	config.Spec.Modules = modules
 	config.Spec.AddOns = addons
@@ -307,49 +335,49 @@ func TestUpdateClusters(t *testing.T) {
 
 // UpdateClusterModules returns the correct map of modules (w/o overrides)
 func TestUpdateClusterModulesNoOverrides(t *testing.T) {
-	defaultModules := make(map[string]v1alpha1.Module)
-	defaultModules["test-module3/test-flavour1"] = v1alpha1.Module{
+	defaultModules := make(map[string]v1alpha1.Package)
+	defaultModules["test-module3/test-flavour1"] = v1alpha1.Package{
 		Version: "1.0.0",
 	}
-	defaultModules["test-module2/test-flavour1"] = v1alpha1.Module{
+	defaultModules["test-module2/test-flavour1"] = v1alpha1.Package{
 		Version: "1.0.0",
 	}
-	defaultModules["test-module1/test-flavour1"] = v1alpha1.Module{
+	defaultModules["test-module1/test-flavour1"] = v1alpha1.Package{
 		Version: "1.0.0",
 	}
-	overrides := make(map[string]v1alpha1.Module)
-	output := UpdateClusterModules(overrides, defaultModules)
+	overrides := make(map[string]v1alpha1.Package)
+	output := MergePackages(defaultModules, overrides)
 	assert.Equal(t, 0, len(output), "The output should be nil")
 }
 
 // UpdateClusterModules returns the correct map of modules (w/ overrides)
 func TestUpdateClusterModules(t *testing.T) {
-	defaultModules := make(map[string]v1alpha1.Module)
-	defaultModules["test-module3/test-flavour1"] = v1alpha1.Module{
+	defaultModules := make(map[string]v1alpha1.Package)
+	defaultModules["test-module3/test-flavour1"] = v1alpha1.Package{
 		Version: "1.0.0",
 	}
-	defaultModules["test-module2/test-flavour1"] = v1alpha1.Module{
+	defaultModules["test-module2/test-flavour1"] = v1alpha1.Package{
 		Version: "1.0.0",
 	}
-	defaultModules["test-module1/test-flavour1"] = v1alpha1.Module{
+	defaultModules["test-module1/test-flavour1"] = v1alpha1.Package{
 		Version: "1.0.0",
 	}
-	overrides := make(map[string]v1alpha1.Module)
-	overrides["test-module3/test-flavour1"] = v1alpha1.Module{
+	overrides := make(map[string]v1alpha1.Package)
+	overrides["test-module3/test-flavour1"] = v1alpha1.Package{
 		Version: "1.0.1",
 	}
-	overrides["test-module2/test-flavour1"] = v1alpha1.Module{
+	overrides["test-module2/test-flavour1"] = v1alpha1.Package{
 		Disable: true,
 	}
-	overrides["test-module1/test-flavour1"] = v1alpha1.Module{
+	overrides["test-module1/test-flavour1"] = v1alpha1.Package{
 		Version: "1.0.0",
 	}
-	output := UpdateClusterModules(overrides, defaultModules)
-	expectedOutput := make(map[string]v1alpha1.Module)
-	expectedOutput["test-module1-1.0.0/test-flavour1"] = v1alpha1.Module{
+	output := MergePackages(defaultModules, overrides)
+	expectedOutput := make(map[string]v1alpha1.Package)
+	expectedOutput["test-module1-1.0.0/test-flavour1"] = v1alpha1.Package{
 		Version: "1.0.0",
 	}
-	expectedOutput["test-module3-1.0.1/test-flavour1"] = v1alpha1.Module{
+	expectedOutput["test-module3-1.0.1/test-flavour1"] = v1alpha1.Package{
 		Version: "1.0.1",
 	}
 	assert.Equal(t, expectedOutput, output, "Unexpected map of modules")
@@ -357,37 +385,37 @@ func TestUpdateClusterModules(t *testing.T) {
 
 // UpdateClusterAddOns returns the correct map of add-ons (w/o overrides)
 func TestUpdateClusterAddOnsNoOverrides(t *testing.T) {
-	defaultAddOns := make(map[string]v1alpha1.AddOn)
-	defaultAddOns["test-addon1"] = v1alpha1.AddOn{
+	defaultAddOns := make(map[string]v1alpha1.Package)
+	defaultAddOns["test-addon1"] = v1alpha1.Package{
 		Version: "1.0.0",
 	}
-	defaultAddOns["test-addon2"] = v1alpha1.AddOn{
+	defaultAddOns["test-addon2"] = v1alpha1.Package{
 		Version: "1.0.0",
 	}
-	overrides := make(map[string]v1alpha1.AddOn)
-	output := UpdateClusterAddOns(overrides, defaultAddOns)
+	overrides := make(map[string]v1alpha1.Package)
+	output := MergePackages(defaultAddOns, overrides)
 	assert.Equal(t, 0, len(output), "The output should be nil")
 }
 
 // UpdateClusterAddOns returns the correct map of add-ons (w/ overrides)
 func TestUpdateClusterAddOns(t *testing.T) {
-	defaultAddOns := make(map[string]v1alpha1.AddOn)
-	defaultAddOns["test-addon1"] = v1alpha1.AddOn{
+	defaultAddOns := make(map[string]v1alpha1.Package)
+	defaultAddOns["test-addon1"] = v1alpha1.Package{
 		Version: "1.0.0",
 	}
-	defaultAddOns["test-addon2"] = v1alpha1.AddOn{
+	defaultAddOns["test-addon2"] = v1alpha1.Package{
 		Version: "1.0.0",
 	}
-	overrides := make(map[string]v1alpha1.AddOn)
-	overrides["test-addon1"] = v1alpha1.AddOn{
+	overrides := make(map[string]v1alpha1.Package)
+	overrides["test-addon1"] = v1alpha1.Package{
 		Version: "1.0.1",
 	}
-	overrides["test-addon2"] = v1alpha1.AddOn{
+	overrides["test-addon2"] = v1alpha1.Package{
 		Disable: true,
 	}
-	output := UpdateClusterAddOns(overrides, defaultAddOns)
-	expectedOutput := make(map[string]v1alpha1.AddOn)
-	expectedOutput["test-addon1-1.0.1"] = v1alpha1.AddOn{
+	output := MergePackages(defaultAddOns, overrides)
+	expectedOutput := make(map[string]v1alpha1.Package)
+	expectedOutput["test-addon1-1.0.1"] = v1alpha1.Package{
 		Version: "1.0.1",
 	}
 	assert.Equal(t, expectedOutput, output, "Unexpected map of add-ons")
