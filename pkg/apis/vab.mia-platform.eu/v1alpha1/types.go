@@ -101,10 +101,6 @@ type Module struct {
 	// Version of the module to be installed
 	Version string `yaml:"version"`
 
-	// Weight int to define the installation priority of the module
-	// Modules will be installed in ascending order
-	Weight int32 `yaml:"weight"`
-
 	// Flag that disables the add-on if set to true
 	Disable bool `yaml:"disable"`
 }

@@ -65,8 +65,7 @@ func SyncKustomizeResources(modules *map[string]v1alpha1.Module, addons *map[str
 	return &k
 }
 
-// getSortedModulesList returns the list of module names sorted by weight.
-// In case of equal weights, the modules are ordered lexicographically.
+// getSortedModulesList returns the list of modules names in lexicographic order.
 func getSortedModulesList(packages *map[string]v1alpha1.Module, targetPath string) []string {
 	sordtedList := make([]string, 0, len(*packages))
 
