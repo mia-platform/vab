@@ -14,7 +14,11 @@
 
 package v1alpha1
 
-import "gopkg.in/yaml.v3"
+import (
+	"fmt"
+
+	"gopkg.in/yaml.v3"
+)
 
 type shadowConfigSpec struct {
 
@@ -42,19 +46,24 @@ func (configSpec *ConfigSpec) UnmarshalYAML(value *yaml.Node) error {
 		return err
 	}
 
+	fmt.Println("Hi!")
 	configSpec.Groups = temporaryConfig.Groups
-	configSpec.Modules = temporaryConfig.Modules
-	configSpec.AddOns = temporaryConfig.AddOns
 
-	for key, module := range configSpec.Modules {
+	newModules := map[string]Package{}
+	for key, module := range temporaryConfig.Modules {
 		module.name = key
 		module.isModule = true
+		newModules[key] = module
 	}
+	configSpec.Modules = newModules
 
-	for key, addon := range configSpec.AddOns {
+	newAddos := map[string]Package{}
+	for key, addon := range temporaryConfig.AddOns {
 		addon.name = key
 		addon.isModule = false
+		newAddos[key] = addon
 	}
+	configSpec.AddOns = newAddos
 
 	return nil
 }
@@ -91,18 +100,22 @@ func (cluster *Cluster) UnmarshalYAML(value *yaml.Node) error {
 
 	cluster.Name = temporaryCluster.Name
 	cluster.Context = temporaryCluster.Context
-	cluster.Modules = temporaryCluster.Modules
-	cluster.AddOns = temporaryCluster.AddOns
 
-	for key, module := range cluster.Modules {
+	newModules := map[string]Package{}
+	for key, module := range temporaryCluster.Modules {
 		module.name = key
 		module.isModule = true
+		newModules[key] = module
 	}
+	cluster.Modules = newModules
 
-	for key, addon := range cluster.AddOns {
+	newAddos := map[string]Package{}
+	for key, addon := range temporaryCluster.AddOns {
 		addon.name = key
 		addon.isModule = false
+		newAddos[key] = addon
 	}
+	cluster.AddOns = newAddos
 
 	return nil
 }

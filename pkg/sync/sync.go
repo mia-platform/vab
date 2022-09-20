@@ -36,7 +36,9 @@ func Sync(logger logger.LogInterface, filesGetter git.FilesGetter, configPath st
 		return fmt.Errorf("sync error: %w", err)
 	}
 	defaultModules := kustomizehelper.PackagesMapForPaths(config.Spec.Modules)
+	fmt.Println("default modules:", defaultModules)
 	defaultAddOns := kustomizehelper.PackagesMapForPaths(config.Spec.AddOns)
+	fmt.Println("default addons:", defaultAddOns)
 
 	// update the default bases in the all-groups directory
 	if err := UpdateBases(logger, filesGetter, basePath, path.Join(basePath, utils.AllGroupsDirPath), defaultModules, defaultAddOns, config, dryRun); err != nil {
@@ -187,7 +189,6 @@ func UpdateClusters(logger logger.LogInterface, filesGetter git.FilesGetter, con
 
 // MergePackages return a map of merged packages excluding disabled ones, if second has no elements return nil
 func MergePackages(first map[string]v1alpha1.Package, second map[string]v1alpha1.Package) map[string]v1alpha1.Package {
-
 	// return nil if there is no elements in the second map
 	if len(second) == 0 {
 		return nil

@@ -33,25 +33,42 @@ import (
 // getSortedModules returns the list of modules sorted correctly
 func TestSortedModulesList(t *testing.T) {
 	modules := make(map[string]v1alpha1.Package)
-	modules["m1-1.0.0/f1"] = v1alpha1.Package{
-		Version: "1.0.0",
-	}
-	modules["m2-1.0.0/f1"] = v1alpha1.Package{
-		Version: "1.0.0",
-	}
-	modules["m3-1.0.0/f1"] = v1alpha1.Package{
-		Version: "1.0.0",
-	}
-	modules["m4b-1.0.0/f1"] = v1alpha1.Package{
-		Version: "1.0.0",
-	}
-	modules["m4a-1.0.0/f1"] = v1alpha1.Package{
-		Version: "1.0.0",
-	}
-	modules["m0-1.0.0/f1"] = v1alpha1.Package{
-		Version: "1.0.0",
-		Disable: true,
-	}
+	modules["m1-1.0.0/f1"] = v1alpha1.NewModule(
+		t,
+		"m1/f1",
+		"1.0.0",
+		false,
+	)
+	modules["m2-1.0.0/f1"] = v1alpha1.NewModule(
+		t,
+		"m2/f1",
+		"1.0.0",
+		false,
+	)
+	modules["m3-1.0.0/f1"] = v1alpha1.NewModule(
+		t,
+		"m3/f1",
+		"1.0.0",
+		false,
+	)
+	modules["m4b-1.0.0/f1"] = v1alpha1.NewModule(
+		t,
+		"m4b/f1",
+		"1.0.0",
+		false,
+	)
+	modules["m4a-1.0.0/f1"] = v1alpha1.NewModule(
+		t,
+		"m4a/f1",
+		"1.0.0",
+		false,
+	)
+	modules["m0-1.0.0/f1"] = v1alpha1.NewModule(
+		t,
+		"m0/f1",
+		"1.0.0",
+		true,
+	)
 
 	expectedList := []string{"../../../vendors/modules/m1-1.0.0/f1", "../../../vendors/modules/m2-1.0.0/f1", "../../../vendors/modules/m3-1.0.0/f1", "../../../vendors/modules/m4a-1.0.0/f1", "../../../vendors/modules/m4b-1.0.0/f1"}
 	list := getSortedModulesList(&modules, utils.AllGroupsDirPath)
@@ -64,30 +81,49 @@ func TestSortedModulesList(t *testing.T) {
 func TestSyncEmptyKustomization(t *testing.T) {
 	emptyKustomization := kustomize.Kustomization{}
 	modules := make(map[string]v1alpha1.Package)
-	modules["m1-1.0.0/f1"] = v1alpha1.Package{
-		Version: "1.0.0",
-	}
-	modules["m3-1.0.0/f1"] = v1alpha1.Package{
-		Version: "1.0.0",
-	}
-	modules["m2-1.0.0/f1"] = v1alpha1.Package{
-		Version: "1.0.0",
-	}
-	modules["m0-1.0.0/f1"] = v1alpha1.Package{
-		Version: "1.0.0",
-		Disable: true,
-	}
+	modules["m1-1.0.0/f1"] = v1alpha1.NewModule(
+		t,
+		"m1/f1",
+		"1.0.0",
+		false,
+	)
+	modules["m3-1.0.0/f1"] = v1alpha1.NewModule(
+		t,
+		"m3/f1",
+		"1.0.0",
+		false,
+	)
+	modules["m2-1.0.0/f1"] = v1alpha1.NewModule(
+		t,
+		"m2/f1",
+		"1.0.0",
+		false,
+	)
+	modules["m0-1.0.0/f1"] = v1alpha1.NewModule(
+		t,
+		"m0/f1",
+		"1.0.0",
+		true,
+	)
 	addons := make(map[string]v1alpha1.Package)
-	addons["ao1-1.0.0"] = v1alpha1.Package{
-		Version: "1.0.0",
-	}
-	addons["ao2-1.0.0"] = v1alpha1.Package{
-		Version: "1.0.0",
-	}
-	addons["ao0-1.0.0"] = v1alpha1.Package{
-		Version: "1.0.0",
-		Disable: true,
-	}
+	addons["ao1-1.0.0"] = v1alpha1.NewAddon(
+		t,
+		"ao1",
+		"1.0.0",
+		false,
+	)
+	addons["ao2-1.0.0"] = v1alpha1.NewAddon(
+		t,
+		"ao2",
+		"1.0.0",
+		false,
+	)
+	addons["ao3-1.0.0"] = v1alpha1.NewAddon(
+		t,
+		"ao1",
+		"1.0.0",
+		true,
+	)
 
 	finalKustomization := SyncKustomizeResources(&modules, &addons, emptyKustomization, utils.AllGroupsDirPath)
 	expectedResources := []string{"../../../vendors/modules/m1-1.0.0/f1", "../../../vendors/modules/m2-1.0.0/f1", "../../../vendors/modules/m3-1.0.0/f1"}
@@ -268,19 +304,31 @@ func TestGetMissingKustomizationPath(t *testing.T) {
 // getModuleCompleteName returns the string in the correct format <module>-<semver>/<flavour>
 func TestGetModuleCompleteName(t *testing.T) {
 	modules := make(map[string]v1alpha1.Package)
-	modules["m1/f1"] = v1alpha1.Package{
-		Version: "1.0.0",
-	}
-	modules["m2/f1"] = v1alpha1.Package{
-		Version: "1.0.0",
-	}
+	modules["m1/f1"] = v1alpha1.NewModule(
+		t,
+		"m1/f1",
+		"1.0.0",
+		true,
+	)
+	modules["m2/f1"] = v1alpha1.NewModule(
+		t,
+		"m2/f1",
+		"1.0.0",
+		true,
+	)
 	expectedModules := make(map[string]v1alpha1.Package)
-	expectedModules["m1-1.0.0/f1"] = v1alpha1.Package{
-		Version: "1.0.0",
-	}
-	expectedModules["m2-1.0.0/f1"] = v1alpha1.Package{
-		Version: "1.0.0",
-	}
-	updatedModules := CompleteModuleNames(modules)
+	expectedModules["m1-1.0.0/f1"] = v1alpha1.NewModule(
+		t,
+		"m1/f1",
+		"1.0.0",
+		true,
+	)
+	expectedModules["m2-1.0.0/f1"] = v1alpha1.NewModule(
+		t,
+		"m2/f1",
+		"1.0.0",
+		true,
+	)
+	updatedModules := PackagesMapForPaths(modules)
 	assert.Equal(t, expectedModules, updatedModules, "Unexpected module name")
 }

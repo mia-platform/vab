@@ -26,7 +26,7 @@ TOOLS_BIN := $(TOOLS_DIR)/bin
 KIND_CLUSTER_1_NAME ?= vab-cluster-1
 KIND_CLUSTER_2_NAME ?= vab-cluster-2
 GOLANCI_LINT_VERSION=1.49.0
-DEEPCOPY_GEN_VERSION=0.25.0
+DEEPCOPY_GEN_VERSION=0.25.1
 
 SUPPORTED_PLATFORMS := linux/386,linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6
 $(eval BUILD_PLATFORMS = $(shell echo "$(SUPPORTED_PLATFORMS)" | sed "s#,# #g;s#/#.#g"))
