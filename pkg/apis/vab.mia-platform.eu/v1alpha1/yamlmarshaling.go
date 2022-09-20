@@ -39,6 +39,8 @@ type shadowConfigSpec struct {
 	Groups []Group `yaml:"groups"`
 }
 
+// UnmarshalYAML conform to Unmarshaler interface for customize the modules and addons
+// maps enriching the Package structs with additionals information
 func (configSpec *ConfigSpec) UnmarshalYAML(value *yaml.Node) error {
 	var temporaryConfig shadowConfigSpec
 
@@ -91,6 +93,8 @@ type shadowCluster struct {
 	AddOns map[string]Package `yaml:"addOns,omitempty"`
 }
 
+// UnmarshalYAML conform to Unmarshaler interface for customize the modules and addons
+// maps enriching the Package structs with additionals information
 func (cluster *Cluster) UnmarshalYAML(value *yaml.Node) error {
 	var temporaryCluster shadowCluster
 
