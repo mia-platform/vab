@@ -57,13 +57,13 @@ func (configSpec *ConfigSpec) UnmarshalYAML(value *yaml.Node) error {
 	}
 	configSpec.Modules = newModules
 
-	newAddos := map[string]Package{}
+	newAddons := map[string]Package{}
 	for key, addon := range temporaryConfig.AddOns {
 		addon.name = key
 		addon.isModule = false
-		newAddos[key] = addon
+		newAddons[key] = addon
 	}
-	configSpec.AddOns = newAddos
+	configSpec.AddOns = newAddons
 
 	return nil
 }
@@ -109,13 +109,13 @@ func (cluster *Cluster) UnmarshalYAML(value *yaml.Node) error {
 	}
 	cluster.Modules = newModules
 
-	newAddos := map[string]Package{}
+	newAddons := map[string]Package{}
 	for key, addon := range temporaryCluster.AddOns {
 		addon.name = key
 		addon.isModule = false
-		newAddos[key] = addon
+		newAddons[key] = addon
 	}
-	cluster.AddOns = newAddos
+	cluster.AddOns = newAddons
 
 	return nil
 }

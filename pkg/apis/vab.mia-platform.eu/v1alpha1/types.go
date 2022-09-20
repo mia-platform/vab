@@ -118,8 +118,8 @@ func (pkg Package) IsModule() bool {
 // GetName return the canonical name of the package
 func (pkg Package) GetName() string {
 	if pkg.isModule {
-		splittedStrings := strings.Split(pkg.name, "/")
-		return strings.Join(splittedStrings[:len(splittedStrings)-1], "/")
+		splitStrings := strings.Split(pkg.name, "/")
+		return strings.Join(splitStrings[:len(splitStrings)-1], "/")
 	}
 	return pkg.name
 }
@@ -127,8 +127,8 @@ func (pkg Package) GetName() string {
 // GetFlavorName return the flavor name of the package if is a module or an empty string otherwise
 func (pkg Package) GetFlavorName() string {
 	if pkg.isModule {
-		splittedStrings := strings.Split(pkg.name, "/")
-		return splittedStrings[len(splittedStrings)-1]
+		splitStrings := strings.Split(pkg.name, "/")
+		return splitStrings[len(splitStrings)-1]
 	}
 	return ""
 }
