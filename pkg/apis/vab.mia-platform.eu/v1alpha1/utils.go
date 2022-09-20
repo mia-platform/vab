@@ -14,6 +14,8 @@
 
 package v1alpha1
 
+import "testing"
+
 const (
 	// Valid value for the kind property of the configuration
 	Kind = "ClustersConfiguration"
@@ -30,9 +32,29 @@ func EmptyConfig(name string) *ClustersConfiguration {
 		},
 		Name: name,
 		Spec: ConfigSpec{
-			Modules: make(map[string]Module),
-			AddOns:  make(map[string]AddOn),
+			Modules: make(map[string]Package),
+			AddOns:  make(map[string]Package),
 			Groups:  make([]Group, 0),
 		},
+	}
+}
+
+func NewModule(t *testing.T, name string, version string, disable bool) Package {
+	t.Helper()
+	return Package{
+		name:     name,
+		Version:  version,
+		Disable:  disable,
+		isModule: true,
+	}
+}
+
+func NewAddon(t *testing.T, name string, version string, disable bool) Package {
+	t.Helper()
+	return Package{
+		name:     name,
+		Version:  version,
+		Disable:  disable,
+		isModule: false,
 	}
 }

@@ -28,11 +28,9 @@ spec:
   modules: {}
     # example-module:
     #   version: 1.20.1
-    #   weight: 10
   addons: {}
     # example-addon:
     #   version: 1.20.1
-    #   weight: 1
   groups: []
     # - name: group-name
     #   clusters:
@@ -48,7 +46,6 @@ spec:
     #           disable: true
     #         other-module: --- ADD NEW MODULE
     #           version: 1.20.20 
-    #           weight: 1
     #     - name: cluster3-name
     #       context: context3-name
 ```
@@ -77,10 +74,8 @@ spec:
   modules:
     ingress/traefik:
       version: 1.20.1
-      weight: 10
     cni/cilium:
       version: 1.20.1
-      weight: 1
   groups: 
     - group: group-name
       clusters:
@@ -90,7 +85,6 @@ spec:
               disable: true
             cni/calico:
               version: 1.20.20 
-              weight: 1
         - cluster2-name: context2-name
 ```
 
@@ -144,6 +138,8 @@ if all the resources are generated correctly for the target cluster.
 
 Builds and applies the local configuration to the specified cluster, group, or to all of them.
 The command builds the configurations using the same function as the `build` command.
-The apply uses the `kubectl apply` command, creating a yaml file with the resources and then applying it to a KUBECONFIG context with the same name of the `ClusterName` specified in the main configuration file.
+The apply uses the `kubectl apply` command, creating a yaml file with the resources and then applying it to a
+KUBECONFIG context with the same name of the `ClusterName` specified in the main configuration file.
 
-If the cluster has `ClusterName` that satisfies the regex `test*`, the configuration file will skip the `kubectl apply` step. 
+If the cluster has `ClusterName` that satisfies the regex `test*`, the configuration file will skip
+the `kubectl apply` step.

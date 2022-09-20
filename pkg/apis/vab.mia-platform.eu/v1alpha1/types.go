@@ -14,10 +14,9 @@
 
 package v1alpha1
 
-// Package is a generic interface for modules and add-ons
-type Package interface {
-	IsDisabled() bool
-}
+import (
+	"strings"
+)
 
 // TypeMeta partially copies apimachinery/pkg/apis/meta/v1.TypeMeta
 type TypeMeta struct {
@@ -46,13 +45,13 @@ type ConfigSpec struct {
 	// unless otherwise specified
 	// Modules in the dictionary are referenced by module-name/flavor-name
 	// For example: ingress/traefik, cni/cilium, etc.
-	Modules map[string]Module `yaml:"modules"`
+	Modules map[string]Package `yaml:"modules"`
 
 	// Dictionary of AddOns
 	// These add-ons will be installed on every cluster
 	// unless otherwise specified
 	// AddOns in the dictionary are referenced by their name
-	AddOns map[string]AddOn `yaml:"addOns"`
+	AddOns map[string]Package `yaml:"addOns"`
 
 	// Groups contains the list of cluster groups
 	Groups []Group `yaml:"groups"`
@@ -86,45 +85,58 @@ type Cluster struct {
 	// or patch/disable a default module
 	// Modules in the dictionary are referenced by "module-name/flavor-name"
 	// For example: ingress/traefik, cni/cilium, etc.
-	Modules map[string]Module `yaml:"modules,omitempty"`
+	Modules map[string]Package `yaml:"modules,omitempty"`
 
 	// Dictionary of AddOns
 	// This field can be used to add a new add-on
 	// or patch/disable a default add-on
 	// AddOns in the dictionary are referenced by their name
-	AddOns map[string]AddOn `yaml:"addOns,omitempty"`
+	AddOns map[string]Package `yaml:"addOns,omitempty"`
 }
 
 // Module contains the module's version and priority
-type Module struct {
+type Package struct {
 
-	// Version of the module to be installed
-	Version string `yaml:"version"`
-
-	// Weight int to define the installation priority of the module
-	// Modules will be installed in ascending order
-	Weight int32 `yaml:"weight"`
-
-	// Flag that disables the add-on if set to true
-	Disable bool `yaml:"disable"`
-}
-
-// IsDisabled returns Module.Disable
-func (m Module) IsDisabled() bool {
-	return m.Disable
-}
-
-// AddOn contains the add-on's version
-type AddOn struct {
+	// name is a private property containing the name of the module
+	name string
 
 	// Version of the module to be installed
 	Version string `yaml:"version"`
 
 	// Flag that disables the add-on if set to true
 	Disable bool `yaml:"disable"`
+
+	// isModule is a private property for setting if a package is a module or an addon
+	isModule bool
 }
 
-// IsDisabled returns AddOn.Disable
-func (a AddOn) IsDisabled() bool {
-	return a.Disable
+// IsModule return the value of the private property with the same name
+func (pkg Package) IsModule() bool {
+	return pkg.isModule
+}
+
+// GetName return the canonical name of the package
+func (pkg Package) GetName() string {
+	if pkg.isModule {
+		splitStrings := strings.Split(pkg.name, "/")
+		return strings.Join(splitStrings[:len(splitStrings)-1], "/")
+	}
+	return pkg.name
+}
+
+// GetFlavorName return the flavor name of the package if is a module or an empty string otherwise
+func (pkg Package) GetFlavorName() string {
+	if pkg.isModule {
+		splitStrings := strings.Split(pkg.name, "/")
+		return splitStrings[len(splitStrings)-1]
+	}
+	return ""
+}
+
+// PackageType return the type of the package in string form
+func (pkg Package) PackageType() string {
+	if pkg.isModule {
+		return "module"
+	}
+	return "addon"
 }

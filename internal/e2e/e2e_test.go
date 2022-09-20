@@ -139,7 +139,6 @@ spec:
   modules:
     module1/flavour1:
       version: 0.1.0
-      weight: 1
   addOns: {}
   groups:
   - name: group1
@@ -148,8 +147,7 @@ spec:
       context: kind-vab-cluster-1
       modules:
         module1/flavour1:
-          version: 0.1.1
-          weight: 1`
+          version: 0.1.1`
 			err := os.WriteFile(configPath, []byte(config), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -257,7 +255,6 @@ spec:
   modules:
     module1/flavour1:
       version: 0.1.0
-      weight: 1
   addOns:
     addon1:
       version: 0.1.0
@@ -268,8 +265,7 @@ spec:
       context: kind-vab-cluster-1
       modules:
         module1/flavour1:
-          version: 0.1.1
-          weight: 1`
+          version: 0.1.1`
 			err := os.WriteFile(configPath, []byte(config), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -322,7 +318,6 @@ spec:
   modules:
     module1/flavour1:
       version: 0.1.0
-      weight: 1
   addOns: {}
   groups:
   - name: group1
@@ -332,7 +327,6 @@ spec:
       modules:
         module1/flavour1:
           version: 0.1.1
-          weight: 1
       addOns:
         addon1:
           version: 0.1.1`
@@ -438,10 +432,8 @@ spec:
   modules:
     module1/flavour1:
       version: 0.1.0
-      weight: 1
     module2/flavour1:
       version: 0.1.0
-      weight: 2
   addOns:
     addon1:
       version: 0.1.0
@@ -453,7 +445,6 @@ spec:
       modules:
         module1/flavour1:
           version: 0.1.1
-          weight: 1
       addOns:
         addon1:
           version: 0.1.1
@@ -462,7 +453,6 @@ spec:
       modules:
         module2/flavour1:
           version: 0.1.1
-          weight: 2
       addOns:
         addon1:
           disable: true`

@@ -11,10 +11,8 @@ spec:
   modules:  # type: Object
     ingress/traefik:
       version: 1.20.1
-      weight: 10
     cni/cilium:
       version: 1.20.1
-      weight: 1
   addons:   # type: Object
     ingress-monitoring:
       version: 1.20.1
@@ -33,7 +31,6 @@ spec:
               disable: true
             cni/calico:
               version: 1.20.20
-              weight: 1
         - name: cluster-3
           context: context-3
 ```
@@ -43,7 +40,7 @@ In the sample configuration file above:
 - A `ClusterConfiguration` named `my-clusters` is defined.
 - The `modules` field is a dictionary that will include the modules to install by default on every cluster unless
   otherwise specified. In this case, the configuration will download the modules `ingress/traefik` and `cni/cilium`
-  with version `1.20.1` and weights to define the order of installation (the order is **ascending**).  
+  with version `1.20.1`.  
   The `version` of the core modules will follow the release schedule and version of Kubernetes for majors and minors,
   while patches will be released asynchronously.
 - The `addons` field is a dictionary that will include the add-ons to install by default on every cluster unless

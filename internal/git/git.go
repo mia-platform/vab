@@ -17,7 +17,6 @@ package git
 import (
 	"fmt"
 	"io/fs"
-	"strings"
 
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/memfs"
@@ -47,24 +46,23 @@ func remoteAuth() transport.AuthMethod {
 }
 
 // tagReferenceForPackage return a valid tag reference for the package name and version
-func tagReferenceForPackage(pkgName string, pkg v1alpha1.Package) plumbing.ReferenceName {
+func tagReferenceForPackage(pkg v1alpha1.Package) plumbing.ReferenceName {
 	var tag string
-	switch pkg := pkg.(type) {
-	case v1alpha1.Module:
-		tag = "module-" + strings.Split(pkgName, "/")[0] + "-" + pkg.Version
-	case v1alpha1.AddOn:
-		tag = "addon-" + pkgName + "-" + pkg.Version
+	if pkg.IsModule() {
+		tag = "module-" + pkg.GetName() + "-" + pkg.Version
+	} else {
+		tag = "addon-" + pkg.GetName() + "-" + pkg.Version
 	}
 
 	return plumbing.NewTagReferenceName(tag)
 }
 
 // cloneOptionsForPackage return the options for cloning the package with pkgName with pkg configuaration
-func cloneOptionsForPackage(pkgName string, pkg v1alpha1.Package) *git.CloneOptions {
+func cloneOptionsForPackage(pkg v1alpha1.Package) *git.CloneOptions {
 	return &git.CloneOptions{
 		URL:           remoteURL(),
 		Auth:          remoteAuth(),
-		ReferenceName: tagReferenceForPackage(pkgName, pkg),
+		ReferenceName: tagReferenceForPackage(pkg),
 		Depth:         1,
 		SingleBranch:  true,
 		Tags:          git.NoTags,
@@ -72,8 +70,8 @@ func cloneOptionsForPackage(pkgName string, pkg v1alpha1.Package) *git.CloneOpti
 }
 
 // worktreeForPackage return a worktree from the cloned repository for the package with pkgName
-func worktreeForPackage(pkgName string, pkg v1alpha1.Package) (*billy.Filesystem, error) {
-	cloneOptions := cloneOptionsForPackage(pkgName, pkg)
+func worktreeForPackage(pkg v1alpha1.Package) (*billy.Filesystem, error) {
+	cloneOptions := cloneOptionsForPackage(pkg)
 	fs := memfs.New()
 	storage := memory.NewStorage()
 	if _, err := git.Clone(storage, fs, cloneOptions); err != nil {
@@ -83,13 +81,12 @@ func worktreeForPackage(pkgName string, pkg v1alpha1.Package) (*billy.Filesystem
 	return &fs, nil
 }
 
-func filterWorktreeForPackage(log logger.LogInterface, worktree *billy.Filesystem, pkgName string, pkg v1alpha1.Package) ([]*File, error) {
+func filterWorktreeForPackage(log logger.LogInterface, worktree *billy.Filesystem, pkg v1alpha1.Package) ([]*File, error) {
 	var packageFolder string
-	switch pkg.(type) {
-	case v1alpha1.Module:
-		packageFolder = "./modules/" + strings.Split(pkgName, "/")[0]
-	case v1alpha1.AddOn:
-		packageFolder = "./add-ons/" + pkgName
+	if pkg.IsModule() {
+		packageFolder = "./modules/" + pkg.GetName()
+	} else {
+		packageFolder = "./add-ons/" + pkg.GetName()
 	}
 
 	log.V(10).Writef("Extracting file paths from package in %s", packageFolder)
@@ -107,21 +104,21 @@ func filterWorktreeForPackage(log logger.LogInterface, worktree *billy.Filesyste
 	})
 
 	if err != nil {
-		log.V(5).Writef("Error extracting files for %s", pkgName)
+		log.V(5).Writef("Error extracting files for %s", pkg.GetName())
 		return nil, err
 	}
 	return files, nil
 }
 
 // GetFilesForPackage clones the package in memory
-func GetFilesForPackage(log logger.LogInterface, filesGetter FilesGetter, pkgName string, pkg v1alpha1.Package) ([]*File, error) {
-	log.V(0).Writef("Download package %s from git...", pkgName)
-	memFs, err := filesGetter.WorkTreeForPackage(pkgName, pkg)
+func GetFilesForPackage(log logger.LogInterface, filesGetter FilesGetter, pkg v1alpha1.Package) ([]*File, error) {
+	log.V(0).Writef("Download package %s from git...", pkg.GetName())
+	memFs, err := filesGetter.WorkTreeForPackage(pkg)
 	if err != nil {
-		log.V(5).Writef("Error during cloning repostitory for %s", pkgName)
+		log.V(5).Writef("Error during cloning repostitory for %s", pkg.GetName())
 		return nil, err
 	}
 
-	log.V(0).Writef("Getting file paths for %s", pkgName)
-	return filterWorktreeForPackage(log, memFs, pkgName, pkg)
+	log.V(0).Writef("Getting file paths for %s", pkg.GetName())
+	return filterWorktreeForPackage(log, memFs, pkg)
 }
