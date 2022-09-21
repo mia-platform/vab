@@ -72,18 +72,18 @@ kind: ClustersConfiguration
 name: project-name
 spec:
   modules:
-    ingress/traefik:
+    ingress/traefik/base:
       version: 1.20.1
-    cni/cilium:
+    cni/cilium/base:
       version: 1.20.1
   groups: 
     - group: group-name
       clusters:
         - cluster1-name: context1-name
           modules:
-            cni/cilium:
+            cni/cilium/base:
               disable: true
-            cni/calico:
+            cni/calico/base:
               version: 1.20.20 
         - cluster2-name: context2-name
 ```
@@ -96,15 +96,18 @@ The command execution will build the following directory structure:
 |   ├── modules
 |   |   ├── ingress
 |   |   |   └── traefik
-|   |   |       ├── [...]
-|   |   |       └── kustomization.yaml
+|   |   |       └── base
+|   |   |           ├── [...]
+|   |   |           └── kustomization.yaml
 |   |   └── cni
 |   |       ├── cilium
-|   |       |   ├── [...]
-|   |       |   └── kustomization.yaml
+|   |       |   └── base
+|   |       |       ├── [...]
+|   |       |       └── kustomization.yaml
 |   |       └── calico
-|   |           ├── [...]
-|   |           └── kustomization.yaml
+|   |           └── base
+|   |               ├── [...]
+|   |               └── kustomization.yaml
 |   └── add-ons
 |       └── ..
 ├── clusters

@@ -35,7 +35,7 @@ import (
 // ClonePackages returns a list of mocked file pointers w/o errors
 func TestClonePackage(t *testing.T) {
 	logger := logger.DisabledLogger{}
-	testModule := v1alpha1.NewModule(t, "test-module1/test-flavour1", "1.0.0", false)
+	testModule := v1alpha1.NewModule(t, "group/test-module1/test-flavour1", "1.0.0", false)
 	outputFiles, err := ClonePackages(logger, testModule, testutils.FakeFilesGetter{Testing: t})
 	if !assert.NoError(t, err) {
 		return
@@ -48,9 +48,9 @@ func TestMoveToDisk(t *testing.T) {
 	logger := logger.DisabledLogger{}
 	fakeWorktree := testutils.PrepareFakeWorktree(t)
 	input := []*git.File{
-		git.NewFile("./modules/test-module1/test-flavour1/file1.yaml", "./modules/test-module1", *fakeWorktree),
-		git.NewFile("./modules/test-module1/test-flavour1/file2.yaml", "./modules/test-module1", *fakeWorktree),
-		git.NewFile("./modules/test-module1/test-flavour1/file1.yaml", "./modules/test-module1", *fakeWorktree),
+		git.NewFile("./modules/group/test-module1/test-flavour1/file1.yaml", "./modules/group/test-module1", *fakeWorktree),
+		git.NewFile("./modules/group/test-module1/test-flavour1/file2.yaml", "./modules/group/test-module1", *fakeWorktree),
+		git.NewFile("./modules/group/test-module1/test-flavour1/file1.yaml", "./modules/group/test-module1", *fakeWorktree),
 	}
 	testDirPath := t.TempDir()
 	err := MoveToDisk(logger, input, "test-module1/test-flavour1", testDirPath)
@@ -66,21 +66,21 @@ func TestMoveToDisk(t *testing.T) {
 func TestUpdateModules(t *testing.T) {
 	logger := logger.DisabledLogger{}
 	modules := make(map[string]v1alpha1.Package)
-	modules["test-module1/test-flavour1"] = v1alpha1.NewModule(
+	modules["group/test-module1/test-flavour1"] = v1alpha1.NewModule(
 		t,
-		"test-module1/test-flavour1",
+		"group/test-module1/test-flavour1",
 		"1.0.0",
 		false,
 	)
-	modules["test-module2/test-flavour1"] = v1alpha1.NewModule(
+	modules["group/test-module2/test-flavour1"] = v1alpha1.NewModule(
 		t,
-		"test-module2/test-flavour1",
+		"group/test-module2/test-flavour1",
 		"1.0.0",
 		false,
 	)
-	modules["test-module3/test-flavour1"] = v1alpha1.NewModule(
+	modules["group/test-module3/test-flavour1"] = v1alpha1.NewModule(
 		t,
-		"test-module3/test-flavour1",
+		"group/test-module3/test-flavour1",
 		"1.0.0",
 		true,
 	)
@@ -96,15 +96,15 @@ func TestUpdateModules(t *testing.T) {
 func TestUpdateAddOns(t *testing.T) {
 	logger := logger.DisabledLogger{}
 	addons := make(map[string]v1alpha1.Package)
-	addons["test-addon1"] = v1alpha1.NewAddon(
+	addons["group/test-addon1"] = v1alpha1.NewAddon(
 		t,
-		"test-addon1",
+		"group/test-addon1",
 		"1.0.0",
 		false,
 	)
-	addons["test-addon2"] = v1alpha1.NewAddon(
+	addons["group/test-addon2"] = v1alpha1.NewAddon(
 		t,
-		"test-addon2",
+		"group/test-addon2",
 		"1.0.0",
 		true,
 	)
@@ -124,35 +124,35 @@ func TestUpdateBasesAllGroups(t *testing.T) {
 		return
 	}
 	modules := make(map[string]v1alpha1.Package)
-	modules["test-module3-1.0.0/test-flavour1"] = v1alpha1.NewModule(
+	modules["group/test-module3-1.0.0/test-flavour1"] = v1alpha1.NewModule(
 		t,
-		"test-module3/test-flavour1",
+		"group/test-module3/test-flavour1",
 		"1.0.0",
 		false,
 	)
-	modules["test-module2-1.0.0/test-flavour1"] = v1alpha1.NewModule(
+	modules["group/test-module2-1.0.0/test-flavour1"] = v1alpha1.NewModule(
 		t,
-		"test-module2/test-flavour1",
+		"group/test-module2/test-flavour1",
 		"1.0.0",
 		false,
 	)
-	modules["test-module1-1.0.0/test-flavour1"] = v1alpha1.NewModule(
+	modules["group/test-module1-1.0.0/test-flavour1"] = v1alpha1.NewModule(
 		t,
-		"test-module1/test-flavour1",
+		"group/test-module1/test-flavour1",
 		"1.0.0",
 		false,
 	)
 
 	addons := make(map[string]v1alpha1.Package)
-	addons["test-addon1-1.0.0"] = v1alpha1.NewAddon(
+	addons["group/test-addon1-1.0.0"] = v1alpha1.NewAddon(
 		t,
-		"test-addon1",
+		"group/test-addon1",
 		"1.0.0",
 		false,
 	)
-	addons["test-addon2-1.0.0"] = v1alpha1.NewAddon(
+	addons["group/test-addon2-1.0.0"] = v1alpha1.NewAddon(
 		t,
-		"test-addon2",
+		"group/test-addon2",
 		"1.0.0",
 		false,
 	)

@@ -4,12 +4,12 @@ This document will provide the grammar for the identifiers that can be used insi
 of modules and add-ons for our tool.
 
 ```text
-<valid tag>     ::= "add-on-" <addon-name> "-" <valid semver>
-                  | "module-" "<module-name>" - <valid semver>
+<valid tag>     ::= "add-on-" <identifier> "-" <identifier> "-" <valid semver>
+                  | "module-" <identifier> "-" <identifier> "-" <valid semver>
 
-<addon-name>    ::= <identifier>
+<addon-name>    ::= <identifier> "/" <identifier>
 
-<module-name>   ::= <identifier> "/" <identifier>
+<module-name>   ::= <identifier> "/" <identifier> "/" <identifier>
 
 <group-name>    ::= <identifier>
 

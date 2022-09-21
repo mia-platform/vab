@@ -9,12 +9,12 @@ kind: ClustersConfiguration
 name: my-clusters
 spec:
   modules:  # type: Object
-    ingress/traefik:
+    ingress/traefik/base:
       version: 1.20.1
-    cni/cilium:
+    cni/cilium/base:
       version: 1.20.1
   addons:   # type: Object
-    ingress-monitoring:
+    monitoring/traefik:
       version: 1.20.1
   groups:   # type: Array[]
     - name: group-1
@@ -22,14 +22,14 @@ spec:
         - name: cluster-1
           context: context-1
           addons:
-            ingress-monitoring:
+            monitoring/traefik:
               version: 1.20.100
         - name: cluster-2
           context: context-2
           modules:
-            cni/cilium:
+            cni/cilium/base:
               disable: true
-            cni/calico:
+            cni/calico/base:
               version: 1.20.20
         - name: cluster-3
           context: context-3
@@ -44,7 +44,7 @@ In the sample configuration file above:
   The `version` of the core modules will follow the release schedule and version of Kubernetes for majors and minors,
   while patches will be released asynchronously.
 - The `addons` field is a dictionary that will include the add-ons to install by default on every cluster unless
-  otherwise specified. In this case, the configuration will download the add-on `ingress-monitoring`
+  otherwise specified. In this case, the configuration will download the add-on `monitoring/traefik`
   with version `1.20.1`.
 - The `groups` field is an array that will list all the cluster groups to which the default configuration
   will be applied. Each group will contain a list of clusters with their customizations.
@@ -62,13 +62,13 @@ The `sync` command will be in charge of updating the vendors to the latest confi
 directory structure. According to the example above, `clusters/group-1` will include the following directories:
 
 - **`all-clusters`:** containing patches of the modules (`ingress/traefik v1.20.1`, `cni/cilium v1.20.1`)
-  and add-ons (`ingress-monitoring v1.20.1`) that will be applied to all the clusters;
+  and add-ons (`monitoring/traefik v1.20.1`) that will be applied to all the clusters;
 - **`cluster-1`:** containing patches of the modules (`ingress/traefik v1.20.1`, `cni/cilium v1.20.1`)
-  and add-ons (`ingress-monitoring v1.20.100`) that will be applied to Cluster 1;
+  and add-ons (`monitoring/traefik v1.20.100`) that will be applied to Cluster 1;
 - **`cluster-2`:** containing patches of the modules (`ingress/traefik v1.20.1`, `cni/calico v1.20.20`)
-  and add-ons (`ingress-monitoring v1.20.1`) that will be applied to Cluster 2;
+  and add-ons (`monitoring/traefik v1.20.1`) that will be applied to Cluster 2;
 - **`cluster-3`:** containing patches of the modules (`ingress/traefik v1.20.1`, `cni/cilium v1.20.1`)
-  and add-ons (`ingress-monitoring v1.20.1`) that will be applied to Cluster 3.
+  and add-ons (`monitoring/traefik v1.20.1`) that will be applied to Cluster 3.
 
 Assuming that the folder names will be consistent with those specified in the configuration,
 there will be no need of referencing them in the configuration file.
