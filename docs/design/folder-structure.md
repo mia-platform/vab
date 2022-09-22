@@ -25,27 +25,30 @@ For example:
 |   └── [...]
 └── vendors
     ├── modules
-    |   ├── <module-name-1>-<valid semver>
-    |   |   ├── <flavour-name1>
-    |   |   |   ├── [...]
-    |   |   |   └── kustomization.yaml
-    |   |   └── <flavour-name2>
-    |   |       ├── [...]
-    |   |       └── kustomization.yaml
-    |   └── <module-name-2>-<valid semver>
-    |       ├── <flavour-name1>
-    |       |   ├── [...]
-    |       |   └── kustomization.yaml
-    |       └── <flavour-name2>
-    |           ├── [...]
-    |           └── kustomization.yaml
+    |   ├── <module-category>
+    |   |   └── <module-name-1>-<valid semver>
+    |   |       ├── <flavour-name1>
+    |   |       |   ├── [...]
+    |   |       |   └── kustomization.yaml
+    |   |       └── <flavour-name2>
+    |   |           ├── [...]
+    |   |           └── kustomization.yaml
+    |   └── <module-category>
+    |       └── <module-name-2>-<valid semver>
+    |           ├── <flavour-name1>
+    |           |   ├── [...]
+    |           |   └── kustomization.yaml
+    |           └── <flavour-name2>
+    |               ├── [...]
+    |               └── kustomization.yaml
     └── add-ons
-        ├── <addon-name1>-v1.0.0
-        |   ├── [...]
-        |   └── kustomization.yaml
-        └── <addon-name1>-v1.2.0
-            ├── [...]
-            └── kustomization.yaml
+        └── <addon-category>
+            ├── <addon-name1>-v1.0.0
+            |   ├── [...]
+            |   └── kustomization.yaml
+            └── <addon-name1>-v1.2.0
+                ├── [...]
+                └── kustomization.yaml
 ```
 
 ## Clusters

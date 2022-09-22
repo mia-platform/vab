@@ -17,6 +17,7 @@ package git
 import (
 	"fmt"
 	"io/fs"
+	"strings"
 
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/memfs"
@@ -47,13 +48,7 @@ func remoteAuth() transport.AuthMethod {
 
 // tagReferenceForPackage return a valid tag reference for the package name and version
 func tagReferenceForPackage(pkg v1alpha1.Package) plumbing.ReferenceName {
-	var tag string
-	if pkg.IsModule() {
-		tag = "module-" + pkg.GetName() + "-" + pkg.Version
-	} else {
-		tag = "addon-" + pkg.GetName() + "-" + pkg.Version
-	}
-
+	tag := pkg.PackageType() + "-" + strings.ReplaceAll(pkg.GetName(), "/", "-") + "-" + pkg.Version
 	return plumbing.NewTagReferenceName(tag)
 }
 

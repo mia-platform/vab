@@ -31,9 +31,9 @@ func TestReadWrite(t *testing.T) {
 	fakeWorktree := testutils.PrepareFakeWorktree(t)
 
 	input := []*git.File{
-		git.NewFile("./modules/test-module1/test-flavour1/file1.yaml", "./modules/test-module1", *fakeWorktree),
-		git.NewFile("./modules/test-module1/test-flavour1/file2.yaml", "./modules/test-module1", *fakeWorktree),
-		git.NewFile("./modules/test-module1/test-flavour2/file1.yaml", "./modules/test-module1", *fakeWorktree),
+		git.NewFile("./modules/category/test-module1/test-flavour1/file1.yaml", "./modules/category/test-module1", *fakeWorktree),
+		git.NewFile("./modules/category/test-module1/test-flavour1/file2.yaml", "./modules/category/test-module1", *fakeWorktree),
+		git.NewFile("./modules/category/test-module1/test-flavour2/file1.yaml", "./modules/category/test-module1", *fakeWorktree),
 	}
 
 	tempdir := t.TempDir()

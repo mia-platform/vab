@@ -13,23 +13,30 @@ With the previous rules in mind, we envisioned the following folder structure in
 
 ```txt
 ./modules
-|   ├── module-1
-|   |   ├── flavor-1
-|   |   |..
-|   |   └── flavor-n
-|   └── module-2
-|       ├── flavor-1
-|       |..
-|       └── flavor-n
+|   └── module-category-1
+|   |   ├── module-1
+|   |   |   ├── flavor-1
+|   |   |   |..
+|   |   |   └── flavor-n
+|   |   └── module-2
+|   |       ├── flavor-1
+|   |       |..
+|   |       └── flavor-n
+|   └── module-category-2
+|       └── module-1
+|           ├── flavor-1
+|           |..
+|           └── flavor-n
 └── README.md
 ```
 
 ## Versioning
 
 The CLI will pull modules versioned via git tags inside the repository. However, since you can have multiple modules
-inside a repository, the tags must be in the form of `module-<module-name>-<`[`semver`][semver]`-version>`.  
-The CLI will match the `module-name` with the folder name included in the `modules` directory. and will pull all
-the files contained in it, so you will have all the different flavors contained in it to ease the cross dependencies
-between them.
+inside a repository, the tags must be in the form of
+`module-<module-category>-<module-name>-<`[`semver`][semver]`-version>`.  
+The CLI will match the `module-category/module-name` with the folder name included in the `modules` directory
+and will pull all the files contained in it, so you will have all the different flavors contained in it to
+ease the cross dependencies between them.
 
 [semver]: https://semver.org/spec/v2.0.0.html "semantic versioning v2.0.0 site"

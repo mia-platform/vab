@@ -91,10 +91,10 @@ The configuration is valid!
 [warn][default] no add-on found: check the config file if this behavior is unexpected
 [warn] no group found: check the config file if this behavior is unexpected
 `
-	expectedOutput3 = `[error][default] missing version of module module-1/flavor-1
-[info][default] disabling module module-2/flavor-2
-[error][default] missing version of add-on addon-1
-[info][default] disabling add-on addon-2
+	expectedOutput3 = `[error][default] missing version of module category/module-1/flavor-1
+[info][default] disabling module category/module-2/flavor-2
+[error][default] missing version of add-on category/addon-1
+[info][default] disabling add-on category/addon-2
 [error] please specify a valid name for each group
 [error][undefined] missing cluster name in group: please specify a valid name for each cluster
 [error][undefined/undefined] missing cluster context: please specify a valid context for each cluster
