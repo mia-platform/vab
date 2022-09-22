@@ -4,21 +4,21 @@ name: validate-test
 spec:
   modules:
     # Valid module structure
-    group/module-0/flavor-0:
+    category/module-0/flavor-0:
       version: 1.0.0
     # Invalid module structure: missing version
-    group/module-1/flavor-1: {}
+    category/module-1/flavor-1: {}
     # Disabled module
-    group/module-2/flavor-2:
+    category/module-2/flavor-2:
       disable: true
   addOns:
     # Valid add-on structure
-    group/addon-0:
+    category/addon-0:
       version: 1.0.0
     # Invalid add-on structure: missing version
-    group/addon-1: {}
+    category/addon-1: {}
     # Disabled add-on
-    group/addon-2:
+    category/addon-2:
       disable: true
   groups:
   # Invalid group structure: missing name
@@ -39,19 +39,19 @@ spec:
       context: context-2
       modules:
         # Valid module structure
-        group/module-0/flavor-0:
+        category/module-0/flavor-0:
           version: 1.0.0
         # Invalid module structure: missing version
-        group/module-1/flavor-1: {}
-        group/module-2/flavor-2:
+        category/module-1/flavor-1: {}
+        category/module-2/flavor-2:
         # Disabled module
           disable: true
       addons:
         # Valid add-on structure
-        group/addon-0:
+        category/addon-0:
           version: 1.0.0
         # Invalid add-on structure: missing version
-        group/addon-1: {}
+        category/addon-1: {}
         # Disabled add-on
-        group/addon-2:
+        category/addon-2:
           disable: true

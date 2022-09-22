@@ -25,7 +25,7 @@ For example:
 |   └── [...]
 └── vendors
     ├── modules
-    |   ├── <module-group>
+    |   ├── <module-category>
     |   |   └── <module-name-1>-<valid semver>
     |   |       ├── <flavour-name1>
     |   |       |   ├── [...]
@@ -33,7 +33,7 @@ For example:
     |   |       └── <flavour-name2>
     |   |           ├── [...]
     |   |           └── kustomization.yaml
-    |   └── <module-group>
+    |   └── <module-category>
     |       └── <module-name-2>-<valid semver>
     |           ├── <flavour-name1>
     |           |   ├── [...]
@@ -42,7 +42,7 @@ For example:
     |               ├── [...]
     |               └── kustomization.yaml
     └── add-ons
-        └── <addon-group>
+        └── <addon-category>
             ├── <addon-name1>-v1.0.0
             |   ├── [...]
             |   └── kustomization.yaml

@@ -15,11 +15,11 @@ With the previous rules in mind, we envisioned the following folder structure in
 
 ```txt
 ./add-ons
-|   ├── category-1
+|   ├── add-on-category-1
 |   |   ├── add-on-1
 |   |   |..
 |   |   └── add-on-n
-|   └── category-2
+|   └── add-on-category-2
 |   |   ├── add-on-1
 |   |   |..
 |   |   └── add-on-n

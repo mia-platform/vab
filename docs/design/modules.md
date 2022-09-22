@@ -13,7 +13,7 @@ With the previous rules in mind, we envisioned the following folder structure in
 
 ```txt
 ./modules
-|   └── module-group-1
+|   └── module-category-1
 |   |   ├── module-1
 |   |   |   ├── flavor-1
 |   |   |   |..
@@ -22,7 +22,7 @@ With the previous rules in mind, we envisioned the following folder structure in
 |   |       ├── flavor-1
 |   |       |..
 |   |       └── flavor-n
-|   └── module-group-2
+|   └── module-category-2
 |       └── module-1
 |           ├── flavor-1
 |           |..
@@ -34,8 +34,8 @@ With the previous rules in mind, we envisioned the following folder structure in
 
 The CLI will pull modules versioned via git tags inside the repository. However, since you can have multiple modules
 inside a repository, the tags must be in the form of
-`module-<module-group>-<module-name>-<`[`semver`][semver]`-version>`.  
-The CLI will match the `module-group/module-name` with the folder name included in the `modules` directory
+`module-<module-category>-<module-name>-<`[`semver`][semver]`-version>`.  
+The CLI will match the `module-category/module-name` with the folder name included in the `modules` directory
 and will pull all the files contained in it, so you will have all the different flavors contained in it to
 ease the cross dependencies between them.
 

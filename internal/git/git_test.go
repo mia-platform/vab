@@ -46,15 +46,15 @@ func TestGetAuths(t *testing.T) {
 }
 
 func TestTagReferences(t *testing.T) {
-	expectedReference := "refs/tags/addon-group-addon-name-1.0.0"
+	expectedReference := "refs/tags/addon-category-addon-name-1.0.0"
 
-	addon := v1alpha1.NewAddon(t, "group/addon-name", "1.0.0", false)
+	addon := v1alpha1.NewAddon(t, "category/addon-name", "1.0.0", false)
 	tag := tagReferenceForPackage(addon)
 	assert.Equal(t, tag, plumbing.ReferenceName(expectedReference))
 	assert.True(t, tag.IsTag(), "The addon reference %s is not a tag reference", tag)
 
-	expectedReference = "refs/tags/module-group-module-name-1.0.0"
-	module := v1alpha1.NewModule(t, "group/module-name/flavor", "1.0.0", false)
+	expectedReference = "refs/tags/module-category-module-name-1.0.0"
+	module := v1alpha1.NewModule(t, "category/module-name/flavor", "1.0.0", false)
 
 	tag = tagReferenceForPackage(module)
 	assert.Equal(t, tag, plumbing.ReferenceName(expectedReference))
@@ -62,14 +62,14 @@ func TestTagReferences(t *testing.T) {
 }
 
 func TestCloneOptions(t *testing.T) {
-	addon := v1alpha1.NewAddon(t, "group/addon-name", "1.0.0", false)
+	addon := v1alpha1.NewAddon(t, "category/addon-name", "1.0.0", false)
 	options := cloneOptionsForPackage(addon)
 
 	assert.Equal(t, options.URL, remoteURL())
 	assert.Nil(t, options.Auth)
 	assert.Equal(t, options.ReferenceName, tagReferenceForPackage(addon))
 
-	module := v1alpha1.NewModule(t, "group/module-name/flavor-name", "1.0.0", false)
+	module := v1alpha1.NewModule(t, "category/module-name/flavor-name", "1.0.0", false)
 	options = cloneOptionsForPackage(module)
 
 	assert.Equal(t, options.URL, remoteURL())
@@ -82,12 +82,12 @@ func TestFilterFilesForPackage(t *testing.T) {
 
 	logger := logger.DisabledLogger{}
 	t.Run("filter module files", func(t *testing.T) {
-		module := v1alpha1.NewModule(t, "group/test-module1/test-flavour1", "1.0.0", false)
+		module := v1alpha1.NewModule(t, "category/test-module1/test-flavour1", "1.0.0", false)
 
 		expectedArray := []*File{
-			NewFile("modules/group/test-module1/test-flavour1/file1.yaml", "./modules/group/test-module1", *fakeWorktree),
-			NewFile("modules/group/test-module1/test-flavour1/file2.yaml", "./modules/group/test-module1", *fakeWorktree),
-			NewFile("modules/group/test-module1/test-flavour2/file1.yaml", "./modules/group/test-module1", *fakeWorktree),
+			NewFile("modules/category/test-module1/test-flavour1/file1.yaml", "./modules/category/test-module1", *fakeWorktree),
+			NewFile("modules/category/test-module1/test-flavour1/file2.yaml", "./modules/category/test-module1", *fakeWorktree),
+			NewFile("modules/category/test-module1/test-flavour2/file1.yaml", "./modules/category/test-module1", *fakeWorktree),
 		}
 		files, err := filterWorktreeForPackage(logger, fakeWorktree, module)
 		assert.NoError(t, err)
@@ -95,11 +95,11 @@ func TestFilterFilesForPackage(t *testing.T) {
 	})
 
 	t.Run("filter addon files", func(t *testing.T) {
-		addon := v1alpha1.NewAddon(t, "group/test-addon1", "1.0.0", false)
+		addon := v1alpha1.NewAddon(t, "category/test-addon1", "1.0.0", false)
 
 		expectedArray := []*File{
-			NewFile("add-ons/group/test-addon1/file1.yaml", "./add-ons/group/test-addon1", *fakeWorktree),
-			NewFile("add-ons/group/test-addon1/subdir/file1.yaml", "./add-ons/group/test-addon1", *fakeWorktree),
+			NewFile("add-ons/category/test-addon1/file1.yaml", "./add-ons/category/test-addon1", *fakeWorktree),
+			NewFile("add-ons/category/test-addon1/subdir/file1.yaml", "./add-ons/category/test-addon1", *fakeWorktree),
 		}
 		files, err := filterWorktreeForPackage(logger, fakeWorktree, addon)
 		assert.NoError(t, err)
@@ -111,7 +111,7 @@ func TestFilterError(t *testing.T) {
 	fakeWorktree := testutils.PrepareFakeWorktree(t)
 
 	logger := logger.DisabledLogger{}
-	addon := v1alpha1.NewAddon(t, "group/test-addon4", "1.0.0", false)
+	addon := v1alpha1.NewAddon(t, "category/test-addon4", "1.0.0", false)
 
 	files, err := filterWorktreeForPackage(logger, fakeWorktree, addon)
 	assert.Error(t, err)
@@ -121,7 +121,7 @@ func TestFilterError(t *testing.T) {
 
 func TestGetFilesForPackage(t *testing.T) {
 	logger := logger.DisabledLogger{}
-	module := v1alpha1.NewModule(t, "group/test-module1/test-flavour1", "1.0.0", false)
+	module := v1alpha1.NewModule(t, "category/test-module1/test-flavour1", "1.0.0", false)
 
 	files, err := GetFilesForPackage(logger, testutils.FakeFilesGetter{Testing: t}, module)
 	if !assert.NoError(t, err) {

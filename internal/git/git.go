@@ -48,7 +48,7 @@ func remoteAuth() transport.AuthMethod {
 
 // tagReferenceForPackage return a valid tag reference for the package name and version
 func tagReferenceForPackage(pkg v1alpha1.Package) plumbing.ReferenceName {
-	tag := pkg.PackageType() + "-" + strings.Replace(pkg.GetName(), "/", "-", -1) + "-" + pkg.Version
+	tag := pkg.PackageType() + "-" + strings.ReplaceAll(pkg.GetName(), "/", "-") + "-" + pkg.Version
 	return plumbing.NewTagReferenceName(tag)
 }
 
