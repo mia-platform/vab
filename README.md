@@ -3,6 +3,9 @@
 `vab` is a cli for managing the installation of day 2 operation tools on multiple clusters for easier management and
 updates.
 
+`vab` is the acronym for Vehicle Assembly Building that is designed to assemble large pre-manufactured
+space vehicle components.
+
 ## Building
 
 `vab` provides various make command to handle various tasks that you may need during development, but you need at
