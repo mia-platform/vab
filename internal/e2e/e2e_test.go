@@ -22,6 +22,7 @@ import (
 	"os"
 	"path"
 
+	jpl "github.com/mia-platform/jpl/deploy"
 	"github.com/mia-platform/vab/internal/git"
 	"github.com/mia-platform/vab/pkg/apply"
 	initProj "github.com/mia-platform/vab/pkg/init"
@@ -65,6 +66,7 @@ var log logger.LogInterface
 var cfg *rest.Config
 var dynamicClient_cluster1 dynamic.Interface
 var dynamicClient_cluster2 dynamic.Interface
+var options *jpl.Options
 var testDirPath string
 var configPath string
 var projectPath string
@@ -96,6 +98,10 @@ var _ = BeforeSuite(func() {
 
 		dynamicClient_cluster1 = dynamic.NewForConfigOrDie(cluster1_cfg)
 		dynamicClient_cluster2 = dynamic.NewForConfigOrDie(cluster2_cfg)
+
+		options = jpl.NewOptions()
+		options.Context = "kind-vab-cluster-1"
+		options.Namespace = "default"
 
 		// initialize global paths and vars
 		testDirPath = os.TempDir()
@@ -213,7 +219,7 @@ spec:
 			err = os.WriteFile(path.Join(moduleOverridePath1, "kustomization.yaml"), []byte(moduleKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
-			err = apply.Apply(log, configPath, projectPath, false, "group1", "cluster1", projectPath)
+			err = apply.ApplyWithJpl(log, configPath, projectPath, false, "group1", "cluster1", projectPath, options)
 			Expect(err).NotTo(HaveOccurred())
 
 			dep, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
@@ -237,7 +243,7 @@ spec:
 			err = os.WriteFile(path.Join(pathToCluster, "kustomization.yaml"), []byte(kustomizationPatch1), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
-			err = apply.Apply(log, configPath, projectPath, false, "group1", "cluster1", projectPath)
+			err = apply.ApplyWithJpl(log, configPath, projectPath, false, "group1", "cluster1", projectPath, options)
 			Expect(err).NotTo(HaveOccurred())
 
 			dep, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
@@ -295,7 +301,7 @@ spec:
 			err = os.WriteFile(path.Join(addOnPath, "kustomization.yaml"), []byte(addonKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
-			err = apply.Apply(log, configPath, projectPath, false, "group1", "cluster1", projectPath)
+			err = apply.ApplyWithJpl(log, configPath, projectPath, false, "group1", "cluster1", projectPath, options)
 			Expect(err).NotTo(HaveOccurred())
 
 			depMod, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
@@ -359,7 +365,7 @@ spec:
 			err = os.WriteFile(path.Join(addOnOverridePath, "kustomization.yaml"), []byte(addonKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
-			err = apply.Apply(log, configPath, projectPath, false, "group1", "cluster1", projectPath)
+			err = apply.ApplyWithJpl(log, configPath, projectPath, false, "group1", "cluster1", projectPath, options)
 			Expect(err).NotTo(HaveOccurred())
 
 			depMod, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
@@ -400,7 +406,7 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 		})
 		It("updates the resources on the kind cluster", func() {
-			err := apply.Apply(log, configPath, projectPath, false, "group1", "cluster1", projectPath)
+			err := apply.ApplyWithJpl(log, configPath, projectPath, false, "group1", "cluster1", projectPath, options)
 			Expect(err).NotTo(HaveOccurred())
 
 			depMod, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
@@ -521,7 +527,7 @@ spec:
 			err = os.WriteFile(path.Join(moduleOverridePath2, "kustomization.yaml"), []byte(moduleKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
-			err = apply.Apply(log, configPath, projectPath, false, "group1", "", projectPath)
+			err = apply.ApplyWithJpl(log, configPath, projectPath, false, "group1", "", projectPath, options)
 			Expect(err).NotTo(HaveOccurred())
 
 			// cluster 1: module1-flavour1 deployed and patched, addon1 deployed (replicas == 3)
