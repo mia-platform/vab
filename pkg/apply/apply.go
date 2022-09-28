@@ -58,8 +58,8 @@ func ApplyWithJpl(logger logger.LogInterface, configPath string, outputDir strin
 	}
 	for _, clusterPath := range targetPaths {
 		buffer := new(bytes.Buffer)
-		// pathArray := strings.Split(clusterPath, "/")
-		// cluster := pathArray[len(pathArray)-1]
+		pathArray := strings.Split(clusterPath, "/")
+		cluster := pathArray[len(pathArray)-1]
 
 		targetPath := path.Join(cleanedContextPath, clusterPath)
 		if err := vabBuild.RunKustomizeBuild(targetPath, buffer); err != nil {
@@ -79,6 +79,13 @@ func ApplyWithJpl(logger logger.LogInterface, configPath string, outputDir strin
 		}
 
 		apply := jpl.DecorateDefaultApplyFunction()
+
+		context, err := getContext(configPath, groupName, cluster)
+		if err != nil {
+			return fmt.Errorf("error searching for context: %s", err)
+		}
+
+		options.Context = context
 
 		if err := jpl.Deploy(jpl.InitRealK8sClients(options), "default", resources, jpl.DeployConfig{}, apply); err != nil {
 			logger.V(5).Writef("Error applying resources in %s", targetPath)

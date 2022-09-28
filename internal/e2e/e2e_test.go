@@ -64,8 +64,8 @@ patches:
 
 var log logger.LogInterface
 var cfg *rest.Config
-var dynamicClient_cluster1 dynamic.Interface
-var dynamicClient_cluster2 dynamic.Interface
+var jplClients_cluster1 dynamic.Interface
+var jplClients_cluster2 dynamic.Interface
 var options *jpl.Options
 var testDirPath string
 var configPath string
@@ -96,8 +96,11 @@ var _ = BeforeSuite(func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(cluster2_cfg).ToNot(BeNil())
 
-		dynamicClient_cluster1 = dynamic.NewForConfigOrDie(cluster1_cfg)
-		dynamicClient_cluster2 = dynamic.NewForConfigOrDie(cluster2_cfg)
+		// jplClients_cluster1 = jpl.CreateK8sClients(cluster1_cfg)
+		// jplClients_cluster2 = jpl.CreateK8sClients(cluster2_cfg)
+
+		jplClients_cluster1 = dynamic.NewForConfigOrDie(cluster1_cfg)
+		jplClients_cluster2 = dynamic.NewForConfigOrDie(cluster2_cfg)
 
 		options = jpl.NewOptions()
 		options.Context = "kind-vab-cluster-1"
@@ -220,7 +223,7 @@ spec:
 			err = apply.ApplyWithJpl(log, configPath, projectPath, false, "group1", "cluster1", projectPath, options)
 			Expect(err).NotTo(HaveOccurred())
 
-			dep, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
+			dep, err := jplClients_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
 			Expect(dep).NotTo(BeNil())
 			Expect(err).NotTo(HaveOccurred())
 			modVer := dep.Object["spec"].(map[string]interface{})["template"].(map[string]interface{})["metadata"].(map[string]interface{})["labels"].(map[string]interface{})["version"]
@@ -244,7 +247,7 @@ spec:
 			err = apply.ApplyWithJpl(log, configPath, projectPath, false, "group1", "cluster1", projectPath, options)
 			Expect(err).NotTo(HaveOccurred())
 
-			dep, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
+			dep, err := jplClients_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dep).NotTo(BeNil())
 			Expect(dep.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 2))
@@ -302,7 +305,7 @@ spec:
 			err = apply.ApplyWithJpl(log, configPath, projectPath, false, "group1", "cluster1", projectPath, options)
 			Expect(err).NotTo(HaveOccurred())
 
-			depMod, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
+			depMod, err := jplClients_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depMod).NotTo(BeNil())
 			// module patched
@@ -366,7 +369,7 @@ spec:
 			err = apply.ApplyWithJpl(log, configPath, projectPath, false, "group1", "cluster1", projectPath, options)
 			Expect(err).NotTo(HaveOccurred())
 
-			depMod, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
+			depMod, err := jplClients_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depMod).NotTo(BeNil())
 			// module patched
@@ -407,7 +410,7 @@ spec:
 			err := apply.ApplyWithJpl(log, configPath, projectPath, false, "group1", "cluster1", projectPath, options)
 			Expect(err).NotTo(HaveOccurred())
 
-			depMod, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
+			depMod, err := jplClients_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depMod).NotTo(BeNil())
 			// module patched
@@ -424,42 +427,42 @@ spec:
 	Context("2 clusters, same group", func() {
 		It("syncs the project without errors", func() {
 			// clean up cluster 1
-			err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Delete(context.Background(), "module1-flavour1", v1.DeleteOptions{})
+			err := jplClients_cluster1.Resource(depsGvr).Namespace("default").Delete(context.Background(), "module1-flavour1", v1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
-			_, err = dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
+			_, err = jplClients_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
 			Expect(err).To(HaveOccurred())
 
 			config := `kind: ClustersConfiguration
-	apiVersion: vab.mia-platform.eu/v1alpha1
-	name: test-project
-	spec:
-	  modules:
-	    module1/flavour1:
-	      version: 0.1.0
-	    module2/flavour1:
-	      version: 0.1.0
-	  addOns:
-	    addon1:
-	      version: 0.1.0
-	  groups:
-	  - name: group1
-	    clusters:
-	    - name: cluster1
-	      context: kind-vab-cluster-1
-	      modules:
-	        module1/flavour1:
-	          version: 0.1.1
-	      addOns:
-	        addon1:
-	          version: 0.1.1
-	    - name: cluster2
-	      context: kind-vab-cluster-2
-	      modules:
-	        module2/flavour1:
-	          version: 0.1.1
-	      addOns:
-	        addon1:
-	          disable: true`
+apiVersion: vab.mia-platform.eu/v1alpha1
+name: test-project
+spec:
+  modules:
+    module1/flavour1:
+      version: 0.1.0
+    module2/flavour1:
+      version: 0.1.0
+  addOns:
+    addon1:
+      version: 0.1.0
+  groups:
+  - name: group1
+    clusters:
+    - name: cluster1
+      context: kind-vab-cluster-1
+      modules:
+        module1/flavour1:
+          version: 0.1.1
+      addOns:
+        addon1:
+          version: 0.1.1
+    - name: cluster2
+      context: kind-vab-cluster-2
+      modules:
+        module2/flavour1:
+          version: 0.1.1
+      addOns:
+        addon1:
+          disable: true`
 			err = os.WriteFile(configPath, []byte(config), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -468,26 +471,26 @@ spec:
 		})
 		It("applies the configuration to the correct cluster and context", func() {
 			sampleFile1 := `apiVersion: apps/v1
-	kind: Deployment
-	metadata:
-	  name: module2-flavour1
-	  namespace: default
-	spec:
-	  replicas: 1
-	  selector:
-	    matchLabels:
-	      app: module2-flavour1
-	  template:
-	    metadata:
-	      labels:
-	        app: module2-flavour1
-	        version: 0.1.0
-	    spec:
-	      containers:
-	      - image: k8s.gcr.io/echoserver:1.4
-	        name: echoserver
-	        ports:
-	        - containerPort: 8080`
+kind: Deployment
+metadata:
+  name: module2-flavour1
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: module2-flavour1
+  template:
+    metadata:
+      labels:
+        app: module2-flavour1
+        version: 0.1.0
+    spec:
+      containers:
+      - image: k8s.gcr.io/echoserver:1.4
+        name: echoserver
+        ports:
+        - containerPort: 8080`
 			err := os.MkdirAll(modulePath2, os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 			err = os.WriteFile(path.Join(modulePath2, "example.yaml"), []byte(sampleFile1), os.ModePerm)
@@ -496,26 +499,26 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 
 			sampleFile2 := `apiVersion: apps/v1
-	kind: Deployment
-	metadata:
-	  name: module2-flavour1
-	  namespace: default
-	spec:
-	  replicas: 1
-	  selector:
-	    matchLabels:
-	      app: module2-flavour1
-	  template:
-	    metadata:
-	      labels:
-	        app: module2-flavour1
-	        version: 0.1.1
-	    spec:
-	      containers:
-	      - image: k8s.gcr.io/echoserver:1.4
-	        name: echoserver
-	        ports:
-	        - containerPort: 8080`
+kind: Deployment
+metadata:
+  name: module2-flavour1
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: module2-flavour1
+  template:
+    metadata:
+      labels:
+        app: module2-flavour1
+        version: 0.1.1
+    spec:
+      containers:
+      - image: k8s.gcr.io/echoserver:1.4
+        name: echoserver
+        ports:
+        - containerPort: 8080`
 			err = os.MkdirAll(moduleOverridePath2, os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 			err = os.WriteFile(path.Join(moduleOverridePath2, "example.yaml"), []byte(sampleFile2), os.ModePerm)
@@ -527,7 +530,7 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 
 			// cluster 1: module1-flavour1 deployed and patched, addon1 deployed (replicas == 3)
-			depMod, err := dynamicClient_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
+			depMod, err := jplClients_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depMod).NotTo(BeNil())
 			Expect(depMod.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 3))
@@ -536,13 +539,13 @@ spec:
 			Expect(newSidecarPort).Should(BeNumerically("==", 9000))
 
 			// cluster 2: module2-flavour1 deployed and overridden
-			depMod, err = dynamicClient_cluster2.Resource(depsGvr).Namespace("default").Get(context.Background(), "module2-flavour1", v1.GetOptions{})
+			depMod, err = jplClients_cluster2.Resource(depsGvr).Namespace("default").Get(context.Background(), "module2-flavour1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depMod).NotTo(BeNil())
 			modVer := depMod.Object["spec"].(map[string]interface{})["template"].(map[string]interface{})["metadata"].(map[string]interface{})["labels"].(map[string]interface{})["version"]
 			Expect(modVer).To(BeIdenticalTo("0.1.1"))
 			// cluster 2: no module patch, addon-1 disabled (1 replica, no sidecar container)
-			depMod, err = dynamicClient_cluster2.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
+			depMod, err = jplClients_cluster2.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depMod).NotTo(BeNil())
 			Expect(depMod.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 1))
