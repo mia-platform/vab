@@ -6,7 +6,7 @@ require (
 	github.com/dchest/uniuri v0.0.0-20200228104902-7aecb25e1fe5
 	github.com/go-git/go-billy/v5 v5.3.1
 	github.com/go-git/go-git/v5 v5.4.2
-	github.com/mia-platform/jpl v0.0.0-20220926135626-28724d8582b9
+	github.com/mia-platform/jpl v0.0.0-20220928124122-312c6d01a1bf
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.20.2
 	github.com/spf13/cobra v1.5.0
@@ -21,7 +21,6 @@ require (
 	sigs.k8s.io/kustomize/api v0.12.1
 	sigs.k8s.io/kustomize/kustomize/v4 v4.5.7
 	sigs.k8s.io/kustomize/kyaml v0.13.9
-	sigs.k8s.io/yaml v1.3.0
 )
 
 require (
@@ -110,4 +109,5 @@ require (
 	k8s.io/utils v0.0.0-20220823124924-e9cbc92d1a73 // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
+	sigs.k8s.io/yaml v1.3.0 // indirect
 )

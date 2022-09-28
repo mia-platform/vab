@@ -22,7 +22,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	jpl "github.com/mia-platform/jpl/deploy"
@@ -31,11 +30,9 @@ import (
 	vabBuild "github.com/mia-platform/vab/pkg/build"
 	"github.com/mia-platform/vab/pkg/logger"
 	"golang.org/x/exp/slices"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/kubectl/pkg/cmd/apply"
 	"k8s.io/kubectl/pkg/cmd/util"
-	k8syaml "sigs.k8s.io/yaml"
 )
 
 const (
@@ -72,7 +69,7 @@ func ApplyWithJpl(logger logger.LogInterface, configPath string, outputDir strin
 			return fmt.Errorf("error searching for context: %s", err)
 		}
 
-		resources, err := NewResourcesFromBuffer(buffer.Bytes(), "default")
+		resources, err := jpl.NewResourcesFromBuffer(buffer.Bytes(), "default")
 		if err != nil {
 			logger.V(5).Writef("Error generating resources in %s", targetPath)
 			return err
@@ -207,32 +204,4 @@ func runKubectlApply(logger logger.LogInterface, fileName string, context string
 	}
 
 	return nil
-}
-
-// NewResourcesFromBuffer (temp) reimplements the NewResources fn from jpl library
-func NewResourcesFromBuffer(stream []byte, namespace string) ([]jpl.Resource, error) {
-	var resources []jpl.Resource
-	re := regexp.MustCompile(`\n---\n`)
-	for _, resourceYAML := range re.Split(string(stream), -1) {
-
-		if len(resourceYAML) == 0 {
-			continue
-		}
-
-		u := unstructured.Unstructured{Object: map[string]interface{}{}}
-		if err := k8syaml.Unmarshal([]byte(resourceYAML), &u.Object); err != nil {
-			return nil, err
-		}
-		gvk := u.GroupVersionKind()
-		u.SetNamespace(namespace)
-
-		resources = append(resources,
-			jpl.Resource{
-				Filepath:         "default",
-				GroupVersionKind: &gvk,
-				Object:           u,
-			})
-	}
-	resources = jpl.SortResourcesByKind(resources, nil)
-	return resources, nil
 }

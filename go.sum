@@ -269,8 +269,8 @@ github.com/mailru/easyjson v0.7.7 h1:UGYAvKxe3sBsEDzO8ZeWOSlIQfWFlxbzLZe7hwFURr0
 github.com/mailru/easyjson v0.7.7/go.mod h1:xzfreul335JAWq5oZzymOObrkdz5UnU4kGfJJLY9Nlc=
 github.com/matryer/is v1.2.0 h1:92UTHpy8CDwaJ08GqLDzhhuixiBUUD1p3AU6PHddz4A=
 github.com/matryer/is v1.2.0/go.mod h1:2fLPjFQM9rhQ15aVEtbuwhJinnOqrmgXPNdZsdwlWXA=
-github.com/mia-platform/jpl v0.0.0-20220926135626-28724d8582b9 h1:/RMJrP0q24HZq0xzDRNM9kt/cj3cj5cbOzuuzYoBUhg=
-github.com/mia-platform/jpl v0.0.0-20220926135626-28724d8582b9/go.mod h1:zsnnHVxYPASL3MYVOoENbpBE17DVXm9muGzqHGzaqxk=
+github.com/mia-platform/jpl v0.0.0-20220928124122-312c6d01a1bf h1:nBla4iTdVsGX0FKuilleIg6hHlyIXe3WpAc3y7jq6w4=
+github.com/mia-platform/jpl v0.0.0-20220928124122-312c6d01a1bf/go.mod h1:zsnnHVxYPASL3MYVOoENbpBE17DVXm9muGzqHGzaqxk=
 github.com/mitchellh/go-homedir v1.1.0 h1:lukF9ziXFxDFPkA1vsr5zpc1XuPDn/wFntq5mG+4E0Y=
 github.com/mitchellh/go-homedir v1.1.0/go.mod h1:SfyaCUpYCn1Vlf4IUYiD9fPX4A5wJrkLzIz1N1q0pr0=
 github.com/mitchellh/go-wordwrap v1.0.1 h1:TLuKupo69TCn6TQSyGxwI1EblZZEsQ0vMlAFQflz0v0=
