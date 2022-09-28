@@ -20,80 +20,47 @@ package apply
 import (
 	"fmt"
 	"io/fs"
-	"os"
 	"testing"
 
+	jpl "github.com/mia-platform/jpl/deploy"
 	"github.com/mia-platform/vab/internal/testutils"
 	"github.com/mia-platform/vab/pkg/logger"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBuildFunctionForASingleCluster(t *testing.T) {
-	log := logger.DisabledLogger{}
-	configPath := testutils.GetTestFile("apply", testBuildFolder, testConfigFileName)
-	outputDir := "./outputT1"
-	err := Apply(log, configPath, outputDir, true, testutils.TestGroupName2, testutils.TestClusterName1, testutils.GetTestFile("apply", testBuildFolder))
-
-	assert.FileExists(t, "./outputT1/test-cluster-res")
-
-	os.RemoveAll("./outputT1")
-	if !assert.NoError(t, err) {
-		return
-	}
-}
-
-func TestBuildFunctionForAGroup(t *testing.T) {
-	log := logger.DisabledLogger{}
-	configPath := testutils.GetTestFile("apply", testBuildFolder, testConfigFileName)
-	outputDir := "./outputT2"
-	err := Apply(log, configPath, outputDir, true, testutils.TestGroupName2, "", testutils.GetTestFile("apply", testBuildFolder))
-
-	assert.FileExists(t, "./outputT2/test-cluster-res")
-	assert.FileExists(t, "./outputT2/test-cluster2-res")
-
-	os.RemoveAll("./outputT2")
-	if !assert.NoError(t, err) {
-		return
-	}
-}
-
 func TestWrongContextPath(t *testing.T) {
 	log := logger.DisabledLogger{}
 	configPath := testutils.GetTestFile("apply", testBuildFolder, testConfigFileName)
-	outputDir := "./outputT3"
-	err := Apply(log, configPath, outputDir, true, "", "", testutils.InvalidFolderPath)
+	options := jpl.NewOptions()
+	err := Apply(log, configPath, true, "", "", testutils.InvalidFolderPath, options)
 
 	if assert.Error(t, err) {
 		assert.ErrorIs(t, err, fs.ErrNotExist)
 	}
 
-	err = Apply(log, configPath, outputDir, true, "", "", configPath)
+	err = Apply(log, configPath, true, "", "", configPath, options)
 	if assert.Error(t, err) {
 		assert.Equal(t, err.Error(), fmt.Sprintf("the target path %s is not a directory", configPath))
 	}
-
-	os.RemoveAll("./outputT3")
 }
 
 func TestBuildInvalidConfigPath(t *testing.T) {
 	log := logger.DisabledLogger{}
 	contextPath := testutils.GetTestFile("apply", testBuildFolder)
-	outputDir := "./outputT4"
-	err := Apply(log, testutils.InvalidFileName, outputDir, true, "", "", contextPath)
+	options := jpl.NewOptions()
+	err := Apply(log, testutils.InvalidFileName, true, "", "", contextPath, options)
 
 	if assert.Error(t, err) {
 		assert.ErrorIs(t, err, fs.ErrNotExist)
 	}
-	os.RemoveAll("./outputT4")
 }
 
 func TestBuildInvalidKustomization(t *testing.T) {
 	log := logger.DisabledLogger{}
 	configPath := testutils.GetTestFile("apply", testBuildFolder, testConfigFileName)
-	outputDir := "./outputT5"
-	err := Apply(log, configPath, outputDir, true, testutils.TestGroupName1, testutils.TestClusterName1, testutils.GetTestFile("apply", testBuildFolder))
+	options := jpl.NewOptions()
+	err := Apply(log, configPath, true, testutils.TestGroupName1, testutils.TestClusterName1, testutils.GetTestFile("apply", testBuildFolder), options)
 	assert.Error(t, err)
-	os.RemoveAll("./outputT5")
 }
 
 func TestGetContextError(t *testing.T) {

@@ -96,15 +96,11 @@ var _ = BeforeSuite(func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(cluster2_cfg).ToNot(BeNil())
 
-		// jplClients_cluster1 = jpl.CreateK8sClients(cluster1_cfg)
-		// jplClients_cluster2 = jpl.CreateK8sClients(cluster2_cfg)
-
 		jplClients_cluster1 = dynamic.NewForConfigOrDie(cluster1_cfg)
 		jplClients_cluster2 = dynamic.NewForConfigOrDie(cluster2_cfg)
 
 		options = jpl.NewOptions()
 		options.Context = "kind-vab-cluster-1"
-		options.Namespace = "default"
 
 		// initialize global paths and vars
 		testDirPath = os.TempDir()
@@ -220,7 +216,7 @@ spec:
 			err = os.WriteFile(path.Join(moduleOverridePath1, "kustomization.yaml"), []byte(moduleKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
-			err = apply.ApplyWithJpl(log, configPath, projectPath, false, "group1", "cluster1", projectPath, options)
+			err = apply.Apply(log, configPath, false, "group1", "cluster1", projectPath, options)
 			Expect(err).NotTo(HaveOccurred())
 
 			dep, err := jplClients_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
@@ -244,7 +240,7 @@ spec:
 			err = os.WriteFile(path.Join(pathToCluster, "kustomization.yaml"), []byte(kustomizationPatch1), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
-			err = apply.ApplyWithJpl(log, configPath, projectPath, false, "group1", "cluster1", projectPath, options)
+			err = apply.Apply(log, configPath, false, "group1", "cluster1", projectPath, options)
 			Expect(err).NotTo(HaveOccurred())
 
 			dep, err := jplClients_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
@@ -302,7 +298,7 @@ spec:
 			err = os.WriteFile(path.Join(addOnPath, "kustomization.yaml"), []byte(addonKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
-			err = apply.ApplyWithJpl(log, configPath, projectPath, false, "group1", "cluster1", projectPath, options)
+			err = apply.Apply(log, configPath, false, "group1", "cluster1", projectPath, options)
 			Expect(err).NotTo(HaveOccurred())
 
 			depMod, err := jplClients_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
@@ -366,7 +362,7 @@ spec:
 			err = os.WriteFile(path.Join(addOnOverridePath, "kustomization.yaml"), []byte(addonKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
-			err = apply.ApplyWithJpl(log, configPath, projectPath, false, "group1", "cluster1", projectPath, options)
+			err = apply.Apply(log, configPath, false, "group1", "cluster1", projectPath, options)
 			Expect(err).NotTo(HaveOccurred())
 
 			depMod, err := jplClients_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
@@ -407,7 +403,7 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 		})
 		It("updates the resources on the kind cluster", func() {
-			err := apply.ApplyWithJpl(log, configPath, projectPath, false, "group1", "cluster1", projectPath, options)
+			err := apply.Apply(log, configPath, false, "group1", "cluster1", projectPath, options)
 			Expect(err).NotTo(HaveOccurred())
 
 			depMod, err := jplClients_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
@@ -526,7 +522,7 @@ spec:
 			err = os.WriteFile(path.Join(moduleOverridePath2, "kustomization.yaml"), []byte(moduleKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
-			err = apply.ApplyWithJpl(log, configPath, projectPath, false, "group1", "", projectPath, options)
+			err = apply.Apply(log, configPath, false, "group1", "", projectPath, options)
 			Expect(err).NotTo(HaveOccurred())
 
 			// cluster 1: module1-flavour1 deployed and patched, addon1 deployed (replicas == 3)

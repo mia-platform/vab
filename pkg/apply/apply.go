@@ -21,7 +21,6 @@ import (
 	"io/fs"
 	"os"
 	"path"
-	"path/filepath"
 	"strings"
 
 	jpl "github.com/mia-platform/jpl/deploy"
@@ -30,9 +29,6 @@ import (
 	vabBuild "github.com/mia-platform/vab/pkg/build"
 	"github.com/mia-platform/vab/pkg/logger"
 	"golang.org/x/exp/slices"
-	"k8s.io/cli-runtime/pkg/genericclioptions"
-	"k8s.io/kubectl/pkg/cmd/apply"
-	"k8s.io/kubectl/pkg/cmd/util"
 )
 
 const (
@@ -40,7 +36,7 @@ const (
 	folderPermissions fs.FileMode = 0700
 )
 
-func ApplyWithJpl(logger logger.LogInterface, configPath string, outputDir string, isDryRun bool, groupName string, clusterName string, contextPath string, options *jpl.Options) error {
+func Apply(logger logger.LogInterface, configPath string, isDryRun bool, groupName string, clusterName string, contextPath string, options *jpl.Options) error {
 	cleanedContextPath := path.Clean(contextPath)
 	contextInfo, err := os.Stat(cleanedContextPath)
 	if err != nil {
@@ -92,65 +88,6 @@ func ApplyWithJpl(logger logger.LogInterface, configPath string, outputDir strin
 	return nil
 }
 
-// Apply builds the selected Kustomize resources and apply them in the context specified. The resources built are saved in files at the specified path.
-func Apply(logger logger.LogInterface, configPath string, outputDir string, isDryRun bool, groupName string, clusterName string, contextPath string) error {
-	cleanedContextPath := path.Clean(contextPath)
-	contextInfo, err := os.Stat(cleanedContextPath)
-	if err != nil {
-		return err
-	}
-	if !contextInfo.IsDir() {
-		return fmt.Errorf("the target path %s is not a directory", cleanedContextPath)
-	}
-
-	targetPaths, err := utils.BuildPaths(configPath, groupName, clusterName)
-	if err != nil {
-		return err
-	}
-
-	for _, clusterPath := range targetPaths {
-		buffer := new(bytes.Buffer)
-		pathArray := strings.Split(clusterPath, "/")
-		cluster := pathArray[len(pathArray)-1]
-
-		targetPath := path.Join(cleanedContextPath, clusterPath)
-		if err := vabBuild.RunKustomizeBuild(targetPath, buffer); err != nil {
-			logger.V(5).Writef("Error building kustomize in %s", targetPath)
-			return err
-		}
-
-		crdFilename := cluster + "-crds"
-		resourcesFilename := cluster + "-res"
-		crdsFilePath := filepath.Join(outputDir, crdFilename)
-		resourcesFilepath := filepath.Join(outputDir, resourcesFilename)
-
-		err := createResourcesFiles(outputDir, crdsFilePath, resourcesFilepath, *buffer)
-		if err != nil {
-			return fmt.Errorf("error creating resource files: %s", err)
-		}
-
-		context, err := getContext(configPath, groupName, cluster)
-		if err != nil {
-			return fmt.Errorf("error searching for context: %s", err)
-		}
-
-		if _, err := os.Stat(crdsFilePath); err == nil {
-			err = runKubectlApply(logger, crdsFilePath, context, isDryRun)
-			if err != nil {
-				return fmt.Errorf("error applying crds at %s: %s", crdsFilePath, err)
-			}
-		}
-
-		if _, err := os.Stat(resourcesFilepath); err == nil {
-			err = runKubectlApply(logger, resourcesFilepath, context, isDryRun)
-			if err != nil {
-				return fmt.Errorf("error applying resources at %s: %s", resourcesFilepath, err)
-			}
-		}
-	}
-	return nil
-}
-
 // getContext retrieves the context for the cluster/group from the config file.
 func getContext(configPath string, groupName string, clusterName string) (string, error) {
 	config, err := utils.ReadConfig(configPath)
@@ -169,39 +106,4 @@ func getContext(configPath string, groupName string, clusterName string) (string
 	}
 
 	return config.Spec.Groups[groupIdx].Clusters[clusterIdx].Context, nil
-}
-
-// runKubectlApply instantiates and executes the kubectl Apply command, with the correct parameters.
-func runKubectlApply(logger logger.LogInterface, fileName string, context string, isDryRun bool) error {
-	// default configflags
-	configFlags := genericclioptions.NewConfigFlags(false)
-	// the kubeconfig context used is equal to the fileName
-	configFlags.Context = &context
-
-	factory := util.NewFactory(configFlags)
-	streams := genericclioptions.IOStreams{
-		In:     os.Stdin,
-		Out:    os.Stdout,
-		ErrOut: os.Stderr,
-	}
-	args := []string{
-		"-f",
-		fileName,
-		"--wait",
-		"--server-side",
-	}
-	cmd := apply.NewCmdApply("kubectl", factory, streams)
-	cmd.SetArgs(args)
-
-	if !isDryRun {
-		fmt.Println("Apply")
-		err := cmd.Execute()
-		if err != nil {
-			return err
-		}
-	} else {
-		logger.V(5).Writef("Skipping apply on ", fileName, "...")
-	}
-
-	return nil
 }
