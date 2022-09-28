@@ -34,6 +34,7 @@ import (
 const (
 	filesPermissions  fs.FileMode = 0600
 	folderPermissions fs.FileMode = 0700
+	defaultContext                = "default"
 )
 
 func Apply(logger logger.LogInterface, configPath string, isDryRun bool, groupName string, clusterName string, contextPath string, options *jpl.Options) error {
@@ -92,17 +93,17 @@ func Apply(logger logger.LogInterface, configPath string, isDryRun bool, groupNa
 func getContext(configPath string, groupName string, clusterName string) (string, error) {
 	config, err := utils.ReadConfig(configPath)
 	if err != nil {
-		return "default", err
+		return defaultContext, err
 	}
 
 	groupIdx := slices.IndexFunc(config.Spec.Groups, func(g v1alpha1.Group) bool { return g.Name == groupName })
 	if groupIdx == -1 {
-		return "default", errors.New("Group " + groupName + " not found in configuration")
+		return defaultContext, errors.New("Group " + groupName + " not found in configuration")
 	}
 
 	clusterIdx := slices.IndexFunc(config.Spec.Groups[groupIdx].Clusters, func(c v1alpha1.Cluster) bool { return c.Name == clusterName })
 	if clusterIdx == -1 {
-		return "default", errors.New("Cluster " + clusterName + " not found in configuration")
+		return defaultContext, errors.New("Cluster " + clusterName + " not found in configuration")
 	}
 
 	return config.Spec.Groups[groupIdx].Clusters[clusterIdx].Context, nil
