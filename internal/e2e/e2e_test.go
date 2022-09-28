@@ -171,7 +171,6 @@ spec:
   selector:
     matchLabels:
       app: module1-flavour1
-      version: 0.1.0
   template:
     metadata:
       labels:
@@ -200,7 +199,6 @@ spec:
   selector:
     matchLabels:
       app: module1-flavour1
-      version: 0.1.1
   template:
     metadata:
       labels:
@@ -378,7 +376,7 @@ spec:
 			containersCount := len(depMod.Object["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{}))
 			Expect(containersCount).Should(BeNumerically("==", 2))
 			// add-on overridden
-			containerName := depMod.Object["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{})[1].(map[string]interface{})["name"]
+			containerName := depMod.Object["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{})[0].(map[string]interface{})["name"]
 			Expect(containerName).To(BeIdenticalTo("sidecar-v2"))
 		})
 	})
@@ -419,7 +417,7 @@ spec:
 			containersCount := len(depMod.Object["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{}))
 			Expect(containersCount).Should(BeNumerically("==", 2))
 			// add-on patched
-			newSidecarPort := depMod.Object["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{})[1].(map[string]interface{})["ports"].([]interface{})[1].(map[string]interface{})["containerPort"]
+			newSidecarPort := depMod.Object["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{})[0].(map[string]interface{})["ports"].([]interface{})[0].(map[string]interface{})["containerPort"]
 			Expect(newSidecarPort).Should(BeNumerically("==", 9000))
 		})
 	})
@@ -432,36 +430,36 @@ spec:
 			Expect(err).To(HaveOccurred())
 
 			config := `kind: ClustersConfiguration
-apiVersion: vab.mia-platform.eu/v1alpha1
-name: test-project
-spec:
-  modules:
-    module1/flavour1:
-      version: 0.1.0
-    module2/flavour1:
-      version: 0.1.0
-  addOns:
-    addon1:
-      version: 0.1.0
-  groups:
-  - name: group1
-    clusters:
-    - name: cluster1
-      context: kind-vab-cluster-1
-      modules:
-        module1/flavour1:
-          version: 0.1.1
-      addOns:
-        addon1:
-          version: 0.1.1
-    - name: cluster2
-      context: kind-vab-cluster-2
-      modules:
-        module2/flavour1:
-          version: 0.1.1
-      addOns:
-        addon1:
-          disable: true`
+	apiVersion: vab.mia-platform.eu/v1alpha1
+	name: test-project
+	spec:
+	  modules:
+	    module1/flavour1:
+	      version: 0.1.0
+	    module2/flavour1:
+	      version: 0.1.0
+	  addOns:
+	    addon1:
+	      version: 0.1.0
+	  groups:
+	  - name: group1
+	    clusters:
+	    - name: cluster1
+	      context: kind-vab-cluster-1
+	      modules:
+	        module1/flavour1:
+	          version: 0.1.1
+	      addOns:
+	        addon1:
+	          version: 0.1.1
+	    - name: cluster2
+	      context: kind-vab-cluster-2
+	      modules:
+	        module2/flavour1:
+	          version: 0.1.1
+	      addOns:
+	        addon1:
+	          disable: true`
 			err = os.WriteFile(configPath, []byte(config), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -470,27 +468,26 @@ spec:
 		})
 		It("applies the configuration to the correct cluster and context", func() {
 			sampleFile1 := `apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: module2-flavour1
-  namespace: default
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: module2-flavour1
-      version: 0.1.0
-  template:
-    metadata:
-      labels:
-        app: module2-flavour1
-        version: 0.1.0
-    spec:
-      containers:
-      - image: k8s.gcr.io/echoserver:1.4
-        name: echoserver
-        ports:
-        - containerPort: 8080`
+	kind: Deployment
+	metadata:
+	  name: module2-flavour1
+	  namespace: default
+	spec:
+	  replicas: 1
+	  selector:
+	    matchLabels:
+	      app: module2-flavour1
+	  template:
+	    metadata:
+	      labels:
+	        app: module2-flavour1
+	        version: 0.1.0
+	    spec:
+	      containers:
+	      - image: k8s.gcr.io/echoserver:1.4
+	        name: echoserver
+	        ports:
+	        - containerPort: 8080`
 			err := os.MkdirAll(modulePath2, os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 			err = os.WriteFile(path.Join(modulePath2, "example.yaml"), []byte(sampleFile1), os.ModePerm)
@@ -499,27 +496,26 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 
 			sampleFile2 := `apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: module2-flavour1
-  namespace: default
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: module2-flavour1
-      version: 0.1.1
-  template:
-    metadata:
-      labels:
-        app: module2-flavour1
-        version: 0.1.1
-    spec:
-      containers:
-      - image: k8s.gcr.io/echoserver:1.4
-        name: echoserver
-        ports:
-        - containerPort: 8080`
+	kind: Deployment
+	metadata:
+	  name: module2-flavour1
+	  namespace: default
+	spec:
+	  replicas: 1
+	  selector:
+	    matchLabels:
+	      app: module2-flavour1
+	  template:
+	    metadata:
+	      labels:
+	        app: module2-flavour1
+	        version: 0.1.1
+	    spec:
+	      containers:
+	      - image: k8s.gcr.io/echoserver:1.4
+	        name: echoserver
+	        ports:
+	        - containerPort: 8080`
 			err = os.MkdirAll(moduleOverridePath2, os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 			err = os.WriteFile(path.Join(moduleOverridePath2, "example.yaml"), []byte(sampleFile2), os.ModePerm)

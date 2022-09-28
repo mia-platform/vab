@@ -226,8 +226,6 @@ func NewResourcesFromBuffer(stream []byte, namespace string) ([]jpl.Resource, er
 				Object:           u,
 			})
 	}
-	fmt.Printf("PRIMA: %+v\n", resources)
 	resources = jpl.SortResourcesByKind(resources, nil)
-	fmt.Printf("DOPO: %+v\n", resources)
 	return resources, nil
 }
