@@ -17,6 +17,7 @@ package cmd
 import (
 	"fmt"
 
+	jpl "github.com/mia-platform/jpl/deploy"
 	"github.com/mia-platform/vab/internal/utils"
 	"github.com/mia-platform/vab/pkg/apply"
 	"github.com/mia-platform/vab/pkg/logger"
@@ -41,8 +42,7 @@ func NewApplyCommand(logger logger.LogInterface) *cobra.Command {
 			if len(args) == maxArgs {
 				cluster = args[1]
 			}
-
-			return apply.Apply(logger, flags.Config, flags.Output, flags.DryRun, group, cluster, context)
+			return apply.Apply(logger, flags.Config, flags.DryRun, group, cluster, context, jpl.NewOptions())
 		},
 	}
 	applyCmd.Flags().StringVarP(&flags.Output, "output", "o", utils.DefaultOutputDir, "specify a different path for the applied files")

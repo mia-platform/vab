@@ -15,8 +15,6 @@
 package v1alpha1
 
 import (
-	"fmt"
-
 	"gopkg.in/yaml.v3"
 )
 
@@ -48,7 +46,6 @@ func (configSpec *ConfigSpec) UnmarshalYAML(value *yaml.Node) error {
 		return err
 	}
 
-	fmt.Println("Hi!")
 	configSpec.Groups = temporaryConfig.Groups
 
 	newModules := map[string]Package{}
