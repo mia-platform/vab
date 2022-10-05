@@ -28,17 +28,23 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	crdDefaultRetries  = 10
+	testBuildFolder    = "apply-test"
+	testConfigFileName = "testconfig.yaml"
+)
+
 func TestWrongContextPath(t *testing.T) {
 	log := logger.DisabledLogger{}
 	configPath := testutils.GetTestFile("apply", testBuildFolder, testConfigFileName)
 	options := jpl.NewOptions()
-	err := Apply(log, configPath, true, "", "", testutils.InvalidFolderPath, options)
+	err := Apply(log, configPath, true, "", "", testutils.InvalidFolderPath, options, crdDefaultRetries)
 
 	if assert.Error(t, err) {
 		assert.ErrorIs(t, err, fs.ErrNotExist)
 	}
 
-	err = Apply(log, configPath, true, "", "", configPath, options)
+	err = Apply(log, configPath, true, "", "", configPath, options, crdDefaultRetries)
 	if assert.Error(t, err) {
 		assert.Equal(t, err.Error(), fmt.Sprintf("the target path %s is not a directory", configPath))
 	}
@@ -48,7 +54,7 @@ func TestBuildInvalidConfigPath(t *testing.T) {
 	log := logger.DisabledLogger{}
 	contextPath := testutils.GetTestFile("apply", testBuildFolder)
 	options := jpl.NewOptions()
-	err := Apply(log, testutils.InvalidFileName, true, "", "", contextPath, options)
+	err := Apply(log, testutils.InvalidFileName, true, "", "", contextPath, options, crdDefaultRetries)
 
 	if assert.Error(t, err) {
 		assert.ErrorIs(t, err, fs.ErrNotExist)
@@ -59,7 +65,7 @@ func TestBuildInvalidKustomization(t *testing.T) {
 	log := logger.DisabledLogger{}
 	configPath := testutils.GetTestFile("apply", testBuildFolder, testConfigFileName)
 	options := jpl.NewOptions()
-	err := Apply(log, configPath, true, testutils.TestGroupName1, testutils.TestClusterName1, testutils.GetTestFile("apply", testBuildFolder), options)
+	err := Apply(log, configPath, true, testutils.TestGroupName1, testutils.TestClusterName1, testutils.GetTestFile("apply", testBuildFolder), options, crdDefaultRetries)
 	assert.Error(t, err)
 }
 
@@ -75,8 +81,3 @@ func TestGetContextError(t *testing.T) {
 	_, err = getContext(configPathError, "test-group", "test-cluster")
 	assert.Error(t, err)
 }
-
-const (
-	testBuildFolder    = "apply-test"
-	testConfigFileName = "testconfig.yaml"
-)

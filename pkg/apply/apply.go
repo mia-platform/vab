@@ -136,6 +136,7 @@ func checkCRDsStatus(clients *jpl.K8sClients, retries int) error {
 			}
 		}
 		if len(crdList.Items) == establishedCount {
+			fmt.Printf("Established CRDs: %d\n", establishedCount)
 			return nil
 		}
 		if retries == 0 {

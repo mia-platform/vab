@@ -182,9 +182,74 @@ spec:
         name: echoserver
         ports:
         - containerPort: 8080`
+			crd1 := `apiVersion: apiextensions.k8s.io/v1
+      kind: CustomResourceDefinition
+      metadata:
+        name: projects.example.vab.com
+        namespace: default
+      spec:
+        group: example.vab.com
+        versions:
+          - name: v1
+            served: true
+            storage: true
+            schema:
+              openAPIV3Schema:
+                required: [spec]
+                type: object
+                properties:
+                  spec:
+                    required: [replicas]
+                    type: object
+                    properties:
+                      replicas:
+                        type: integer
+                        minimum: 1
+        scope: Namespaced
+        names:
+          plural: projects
+          singular: project
+          kind: Project
+          shortNames:
+          - pj`
+			crd2 := `apiVersion: apiextensions.k8s.io/v1
+      kind: CustomResourceDefinition
+      metadata:
+        name: foobar.example.vab.com
+        namespace: default
+      spec:
+        group: example.vab.com
+        versions:
+          - name: v1
+            served: true
+            storage: true
+            schema:
+              openAPIV3Schema:
+                required: [spec]
+                type: object
+                properties:
+                  spec:
+                    required: [replicas]
+                    type: object
+                    properties:
+                      replicas:
+                        type: integer
+                        minimum: 1
+        scope: Namespaced
+        names:
+          plural: foobars
+          singular: foobar
+          kind: FooBar
+          shortNames:
+          - fb`
+
 			err := os.MkdirAll(modulePath1, os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 			err = os.WriteFile(path.Join(modulePath1, "example.yaml"), []byte(sampleFile1), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			err = os.WriteFile(path.Join(modulePath1, "project.crd.yaml"), []byte(crd1), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			err = os.WriteFile(path.Join(modulePath1, "foobar.crd.yaml"), []byte(crd2), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 			err = os.WriteFile(path.Join(modulePath1, "kustomization.yaml"), []byte(moduleKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
