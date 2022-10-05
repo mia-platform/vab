@@ -6,7 +6,7 @@ require (
 	github.com/dchest/uniuri v0.0.0-20200228104902-7aecb25e1fe5
 	github.com/go-git/go-billy/v5 v5.3.1
 	github.com/go-git/go-git/v5 v5.4.2
-	github.com/mia-platform/jpl v0.0.0-20220929143736-7a93265d2b53
+	github.com/mia-platform/jpl v0.0.0-20221005144815-da4c3edb30ad
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.20.2
 	github.com/spf13/cobra v1.5.0

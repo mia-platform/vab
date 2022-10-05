@@ -16,12 +16,14 @@ package apply
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
 	"os"
 	"path"
 	"strings"
+	"time"
 
 	jpl "github.com/mia-platform/jpl/deploy"
 	"github.com/mia-platform/vab/internal/utils"
@@ -29,6 +31,9 @@ import (
 	vabBuild "github.com/mia-platform/vab/pkg/build"
 	"github.com/mia-platform/vab/pkg/logger"
 	"golang.org/x/exp/slices"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 const (
@@ -37,7 +42,12 @@ const (
 	defaultContext                = "default"
 )
 
-func Apply(logger logger.LogInterface, configPath string, isDryRun bool, groupName string, clusterName string, contextPath string, options *jpl.Options) error {
+var (
+	gvrCRDs = schema.GroupVersionResource{Group: "apiextensions.k8s.io", Version: "v1", Resource: "customresourcedefinitions"}
+)
+
+// Apply builds the cluster resources and applies them by calling the jpl deploy function
+func Apply(logger logger.LogInterface, configPath string, isDryRun bool, groupName string, clusterName string, contextPath string, options *jpl.Options, crdStatusCheckRetries int) error {
 	cleanedContextPath := path.Clean(contextPath)
 	contextInfo, err := os.Stat(cleanedContextPath)
 	if err != nil {
@@ -66,7 +76,7 @@ func Apply(logger logger.LogInterface, configPath string, isDryRun bool, groupNa
 			return fmt.Errorf("error searching for context: %s", err)
 		}
 
-		resources, err := jpl.NewResourcesFromBuffer(buffer.Bytes(), "default")
+		crds, resources, err := jpl.NewResourcesFromBuffer(buffer.Bytes(), "default")
 		if err != nil {
 			logger.V(5).Writef("Error generating resources in %s", targetPath)
 			return err
@@ -74,19 +84,65 @@ func Apply(logger logger.LogInterface, configPath string, isDryRun bool, groupNa
 
 		apply := jpl.DecorateDefaultApplyFunction()
 
-		context, err := getContext(configPath, groupName, cluster)
+		k8sContext, err := getContext(configPath, groupName, cluster)
 		if err != nil {
 			return fmt.Errorf("error searching for context: %s", err)
 		}
 
-		options.Context = context
+		options.Context = k8sContext
+		clients := jpl.InitRealK8sClients(options)
+		deployConfig := jpl.DeployConfig{}
 
-		if err := jpl.Deploy(jpl.InitRealK8sClients(options), "default", resources, jpl.DeployConfig{}, apply); err != nil {
+		// if there are any CRDs, deploy them first
+		if len(crds) != 0 {
+			if err := jpl.Deploy(clients, "", crds, deployConfig, apply); err != nil {
+				logger.V(5).Writef("Error applying CRDs in %s", targetPath)
+				return fmt.Errorf("deploy of crds failed with error: %w", err)
+			}
+			// wait until all the CRDs satisfy the "Established" condition
+			if err := checkCRDsStatus(clients, crdStatusCheckRetries); err != nil {
+				logger.V(5).Writef("The check of CRDs status failed", targetPath)
+				return fmt.Errorf("crds check failed with error: %w", err)
+			}
+		}
+
+		if err := jpl.Deploy(clients, "", resources, jpl.DeployConfig{}, apply); err != nil {
 			logger.V(5).Writef("Error applying resources in %s", targetPath)
-			return err
+			return fmt.Errorf("deploy of resources failed with error: %w", err)
 		}
 	}
 	return nil
+}
+
+// checkCRDsStatus loops over the deployed CRDs to check whether the condition
+// `Established` evaluates to true. If the condition is not met for any CRD
+// before `retries` times, the function returns an error
+func checkCRDsStatus(clients *jpl.K8sClients, retries int) error {
+	for {
+		establishedCount := 0
+		crdList, err := jpl.GetDynamicClient(clients).Resource(gvrCRDs).List(context.Background(), metav1.ListOptions{})
+		if err != nil && !apierrors.IsNotFound(err) {
+			fmt.Printf("fails to check CRDs: %s", err)
+			return err
+		}
+		for _, crd := range crdList.Items {
+			crdConditions := crd.Object["Status"].(map[string]interface{})["conditions"].([]interface{})
+			for _, condition := range crdConditions {
+				conditionType := condition.(map[string]interface{})["type"]
+				conditionStatus := condition.(map[string]interface{})["status"]
+				if conditionType == "Established" && conditionStatus == "true" {
+					establishedCount++
+				}
+			}
+		}
+		if len(crdList.Items) == establishedCount {
+			return nil
+		}
+		if retries == 0 {
+			return fmt.Errorf("reached limit of %d retries for CRDs status check", retries)
+		}
+		time.Sleep(1 * time.Second)
+	}
 }
 
 // getContext retrieves the context for the cluster/group from the config file.

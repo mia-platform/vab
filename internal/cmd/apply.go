@@ -42,11 +42,12 @@ func NewApplyCommand(logger logger.LogInterface) *cobra.Command {
 			if len(args) == maxArgs {
 				cluster = args[1]
 			}
-			return apply.Apply(logger, flags.Config, flags.DryRun, group, cluster, context, jpl.NewOptions())
+			return apply.Apply(logger, flags.Config, flags.DryRun, group, cluster, context, jpl.NewOptions(), flags.CRDStatusCheckRetries)
 		},
 	}
 	applyCmd.Flags().StringVarP(&flags.Output, "output", "o", utils.DefaultOutputDir, "specify a different path for the applied files")
 	applyCmd.Flags().BoolVar(&flags.DryRun, "dry-run", false, "if true does not apply the configurations")
+	applyCmd.Flags().IntVar(&flags.CRDStatusCheckRetries, "crd-check-retries", 10, "specify the number of max retries when checking CRDs status")
 
 	return applyCmd
 }
