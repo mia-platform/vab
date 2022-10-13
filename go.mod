@@ -6,7 +6,7 @@ require (
 	github.com/dchest/uniuri v0.0.0-20200228104902-7aecb25e1fe5
 	github.com/go-git/go-billy/v5 v5.3.1
 	github.com/go-git/go-git/v5 v5.4.2
-	github.com/mia-platform/jpl v0.0.0-20221005144815-da4c3edb30ad
+	github.com/mia-platform/jpl v0.0.0-20221011122342-467055c9858e
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.20.2
 	github.com/spf13/cobra v1.5.0
@@ -90,6 +90,7 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/api v0.25.2 // indirect
+	k8s.io/apiextensions-apiserver v0.25.0 // indirect
 	k8s.io/cli-runtime v0.25.2 // indirect
 	k8s.io/klog/v2 v2.80.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20220928191237-829ce0c27909 // indirect
