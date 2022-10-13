@@ -65,7 +65,6 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 resources:
   - bases
 patches:
-  - path: module.patch.yaml
   - path: addon.patch.yaml`
 )
 
@@ -137,7 +136,7 @@ var _ = BeforeSuite(func() {
 
 var _ = AfterSuite(func() {
 	By("tearing down the test environment...", func() {
-		//os.RemoveAll(testDirPath)
+		os.RemoveAll(testDirPath)
 	})
 }, 60)
 

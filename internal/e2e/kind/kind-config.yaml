@@ -4,6 +4,6 @@ networking:
   ipFamily: ipv4
 nodes:
 - role: control-plane
-  image: kindest/node:v1.22.15
+  image: kindest/node:v1.22.15@sha256:bfd5eaae36849bfb3c1e3b9442f3da17d730718248939d9d547e86bbac5da586
 # - role: worker
 # - role: worker

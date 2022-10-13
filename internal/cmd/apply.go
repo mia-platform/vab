@@ -15,8 +15,6 @@
 package cmd
 
 import (
-	"fmt"
-
 	jpl "github.com/mia-platform/jpl/deploy"
 	"github.com/mia-platform/vab/internal/utils"
 	"github.com/mia-platform/vab/pkg/apply"
@@ -38,10 +36,10 @@ func NewApplyCommand(logger logger.LogInterface) *cobra.Command {
 			group := args[0]
 			cluster := ""
 			context := args[len(args)-1]
-			fmt.Println(group, cluster, context)
 			if len(args) == maxArgs {
 				cluster = args[1]
 			}
+
 			return apply.Apply(logger, flags.Config, flags.DryRun, group, cluster, context, jpl.NewOptions(), flags.CRDStatusCheckRetries)
 		},
 	}

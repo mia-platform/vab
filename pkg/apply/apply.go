@@ -74,6 +74,11 @@ func Apply(logger logger.LogInterface, configPath string, isDryRun bool, groupNa
 			return fmt.Errorf("error searching for context: %s", err)
 		}
 
+		k8sContext, err := getContext(configPath, groupName, cluster)
+		if err != nil {
+			return fmt.Errorf("error searching for context: %s", err)
+		}
+		options.Context = k8sContext
 		clients := jpl.InitRealK8sClients(options)
 		crds, resources, err := jpl.NewResourcesFromBuffer(buffer.Bytes(), "default", jpl.RealSupportedResourcesGetter{}, clients)
 		if err != nil {
@@ -81,13 +86,7 @@ func Apply(logger logger.LogInterface, configPath string, isDryRun bool, groupNa
 			return err
 		}
 
-		k8sContext, err := getContext(configPath, groupName, cluster)
-		if err != nil {
-			return fmt.Errorf("error searching for context: %s", err)
-		}
-
 		apply := jpl.DecorateDefaultApplyFunction()
-		options.Context = k8sContext
 		deployConfig := jpl.DeployConfig{}
 
 		// if there are any CRDs, deploy them first
