@@ -81,7 +81,7 @@ else
 endif
 
 .PHONY: test-e2e
-test-e2e: kind-start e2e kind-stop
+test-e2e: start-kind e2e stop-kind
 
 e2e:
 ifneq ($(TEST_VERBOSE), "false")
@@ -90,19 +90,10 @@ else
 	go test ./... -tags=e2e || true
 endif
 
-kind-start:
-ifeq (1, $(shell kind get clusters | grep ${KIND_CLUSTER_1_NAME} | wc -l))
-	@echo "Kind test cluster 1 already exists!"
-else
-	@kind create cluster --config internal/e2e/kind/kind-config.yaml --name ${KIND_CLUSTER_1_NAME} --kubeconfig ~/.kube/config
-endif
-ifeq (1, $(shell kind get clusters | grep ${KIND_CLUSTER_2_NAME} | wc -l))
-	@echo "Kind test cluster 2 already exists!"
-else
-	@kind create cluster --config internal/e2e/kind/kind-config.yaml --name ${KIND_CLUSTER_2_NAME} --kubeconfig ~/.kube/config
-endif
+start-kind:
+	@./tools/start-kind.sh ${KIND_CLUSTER_1_NAME} ${KIND_CLUSTER_2_NAME}
 
-kind-stop:
+stop-kind:
 	@kind delete cluster --name ${KIND_CLUSTER_1_NAME}
 	@kind delete cluster --name ${KIND_CLUSTER_2_NAME}
 
