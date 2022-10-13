@@ -38,12 +38,18 @@ import (
 )
 
 const (
-	crdDefaultRetries   = 10
-	testProjectName     = "test-e2e"
-	moduleKustomization = `kind: Kustomization
+	crdDefaultRetries        = 10
+	testProjectName          = "test-e2e"
+	sipleModuleKustomization = `kind: Kustomization
 apiVersion: kustomize.config.k8s.io/v1beta1
 resources:
   - example.yaml`
+	moduleWithCRDsKustomization = `kind: Kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+resources:
+  - example.yaml
+  - project.crd.yaml
+  - foobar.crd.yaml`
 	addonKustomization = `kind: Component
 apiVersion: kustomize.config.k8s.io/v1alpha1
 patches:
@@ -131,7 +137,7 @@ var _ = BeforeSuite(func() {
 
 var _ = AfterSuite(func() {
 	By("tearing down the test environment...", func() {
-		os.RemoveAll(testDirPath)
+		//os.RemoveAll(testDirPath)
 	})
 }, 60)
 
@@ -183,65 +189,63 @@ spec:
         ports:
         - containerPort: 8080`
 			crd1 := `apiVersion: apiextensions.k8s.io/v1
-      kind: CustomResourceDefinition
-      metadata:
-        name: projects.example.vab.com
-        namespace: default
-      spec:
-        group: example.vab.com
-        versions:
-          - name: v1
-            served: true
-            storage: true
-            schema:
-              openAPIV3Schema:
-                required: [spec]
-                type: object
-                properties:
-                  spec:
-                    required: [replicas]
-                    type: object
-                    properties:
-                      replicas:
-                        type: integer
-                        minimum: 1
-        scope: Namespaced
-        names:
-          plural: projects
-          singular: project
-          kind: Project
-          shortNames:
-          - pj`
+kind: CustomResourceDefinition
+metadata:
+  name: projects.example.vab.com
+spec:
+  group: example.vab.com
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          required: [spec]
+          type: object
+          properties:
+            spec:
+              required: [replicas]
+              type: object
+              properties:
+                replicas:
+                  type: integer
+                  minimum: 1
+  scope: Namespaced
+  names:
+    plural: projects
+    singular: project
+    kind: Project
+    shortNames:
+    - pj`
 			crd2 := `apiVersion: apiextensions.k8s.io/v1
-      kind: CustomResourceDefinition
-      metadata:
-        name: foobar.example.vab.com
-        namespace: default
-      spec:
-        group: example.vab.com
-        versions:
-          - name: v1
-            served: true
-            storage: true
-            schema:
-              openAPIV3Schema:
-                required: [spec]
-                type: object
-                properties:
-                  spec:
-                    required: [replicas]
-                    type: object
-                    properties:
-                      replicas:
-                        type: integer
-                        minimum: 1
-        scope: Namespaced
-        names:
-          plural: foobars
-          singular: foobar
-          kind: FooBar
-          shortNames:
-          - fb`
+kind: CustomResourceDefinition
+metadata:
+  name: foobars.example.vab.com
+spec:
+  group: example.vab.com
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          required: [spec]
+          type: object
+          properties:
+            spec:
+              required: [replicas]
+              type: object
+              properties:
+                replicas:
+                  type: integer
+                  minimum: 1
+  scope: Namespaced
+  names:
+    plural: foobars
+    singular: foobar
+    kind: FooBar
+    shortNames:
+    - fb`
 
 			err := os.MkdirAll(modulePath1, os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
@@ -251,7 +255,7 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 			err = os.WriteFile(path.Join(modulePath1, "foobar.crd.yaml"), []byte(crd2), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(modulePath1, "kustomization.yaml"), []byte(moduleKustomization), os.ModePerm)
+			err = os.WriteFile(path.Join(modulePath1, "kustomization.yaml"), []byte(moduleWithCRDsKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
 			sampleFile2 := `apiVersion: apps/v1
@@ -279,7 +283,11 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 			err = os.WriteFile(path.Join(moduleOverridePath1, "example.yaml"), []byte(sampleFile2), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(moduleOverridePath1, "kustomization.yaml"), []byte(moduleKustomization), os.ModePerm)
+			err = os.WriteFile(path.Join(moduleOverridePath1, "project.crd.yaml"), []byte(crd1), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			err = os.WriteFile(path.Join(moduleOverridePath1, "foobar.crd.yaml"), []byte(crd2), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			err = os.WriteFile(path.Join(moduleOverridePath1, "kustomization.yaml"), []byte(moduleWithCRDsKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
 			err = apply.Apply(log, configPath, false, "group1", "cluster1", projectPath, options, crdDefaultRetries)
@@ -557,7 +565,7 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 			err = os.WriteFile(path.Join(modulePath2, "example.yaml"), []byte(sampleFile1), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(modulePath2, "kustomization.yaml"), []byte(moduleKustomization), os.ModePerm)
+			err = os.WriteFile(path.Join(modulePath2, "kustomization.yaml"), []byte(sipleModuleKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
 			sampleFile2 := `apiVersion: apps/v1
@@ -585,7 +593,7 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 			err = os.WriteFile(path.Join(moduleOverridePath2, "example.yaml"), []byte(sampleFile2), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(moduleOverridePath2, "kustomization.yaml"), []byte(moduleKustomization), os.ModePerm)
+			err = os.WriteFile(path.Join(moduleOverridePath2, "kustomization.yaml"), []byte(sipleModuleKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
 			err = apply.Apply(log, configPath, false, "group1", "", projectPath, options, crdDefaultRetries)
