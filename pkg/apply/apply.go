@@ -116,7 +116,6 @@ func Apply(logger logger.LogInterface, configPath string, isDryRun bool, groupNa
 func checkCRDsStatus(clients *jpl.K8sClients, retries int) error {
 	var establishedCount int
 	for ; retries > 0; retries-- {
-		fmt.Printf("RETRY NUMBER %d\n\n", retries)
 		establishedCount = 0
 		crdList, err := jpl.ListResources(gvrCRDs, clients)
 		if err != nil && !apierrors.IsNotFound(err) {
