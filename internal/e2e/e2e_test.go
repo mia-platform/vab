@@ -19,6 +19,7 @@ package e2e_test
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path"
 
@@ -165,7 +166,7 @@ spec:
 			err = sync.Sync(log, git.RealFilesGetter{}, configPath, projectPath, true)
 			Expect(err).NotTo(HaveOccurred())
 		})
-		It("applies the configuration to the kind cluster", func() {
+		It("returns an error due to CRD status check", func() {
 			sampleFile1 := `apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -187,6 +188,113 @@ spec:
         name: echoserver
         ports:
         - containerPort: 8080`
+			crd1 := `apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: projects.example.vab.com
+spec:
+  group: example.vab.com
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          required: [spec]
+          type: object
+          properties:
+            spec:
+              required: [replicas]
+              type: object
+              properties:
+                replicas:
+                  type: integer
+                  minimum: 1
+  scope: Namespaced
+  names:
+    plural: projects
+    singular: project
+    kind: Project
+    shortNames:
+    - pj`
+			brokenCrd := `apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: foobars.example.vab.com
+spec:
+  group: example.vab.com
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          required: [spec]
+          type: object
+          properties:
+            spec:
+              required: [replicas]
+              type: object
+              properties:
+                replicas:
+                  type: integer
+                  minimum: 1
+  scope: Namespaced
+  names:
+    plural: foobars
+    singular: project
+    kind: FooBar
+    shortNames:
+    - pj`
+
+			err := os.MkdirAll(modulePath1, os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			err = os.WriteFile(path.Join(modulePath1, "example.yaml"), []byte(sampleFile1), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			err = os.WriteFile(path.Join(modulePath1, "project.crd.yaml"), []byte(crd1), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			err = os.WriteFile(path.Join(modulePath1, "foobar.crd.yaml"), []byte(brokenCrd), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			err = os.WriteFile(path.Join(modulePath1, "kustomization.yaml"), []byte(moduleWithCRDsKustomization), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+
+			sampleFile2 := `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: module1-flavour1
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: module1-flavour1
+  template:
+    metadata:
+      labels:
+        app: module1-flavour1
+        version: 0.1.1
+    spec:
+      containers:
+      - image: k8s.gcr.io/echoserver:1.4
+        name: echoserver
+        ports:
+        - containerPort: 8080`
+			err = os.MkdirAll(moduleOverridePath1, os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			err = os.WriteFile(path.Join(moduleOverridePath1, "example.yaml"), []byte(sampleFile2), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			err = os.WriteFile(path.Join(moduleOverridePath1, "project.crd.yaml"), []byte(crd1), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			err = os.WriteFile(path.Join(moduleOverridePath1, "foobar.crd.yaml"), []byte(brokenCrd), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			err = os.WriteFile(path.Join(moduleOverridePath1, "kustomization.yaml"), []byte(moduleWithCRDsKustomization), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = apply.Apply(log, configPath, false, "group1", "cluster1", projectPath, options, crdDefaultRetries)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(BeIdenticalTo(fmt.Sprintf("crds check failed with error: reached limit of max retries for CRDs status check")))
+		})
+		It("applies the configuration to the kind cluster", func() {
 			crd1 := `apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
@@ -246,47 +354,14 @@ spec:
     shortNames:
     - fb`
 
-			err := os.MkdirAll(modulePath1, os.ModePerm)
-			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(modulePath1, "example.yaml"), []byte(sampleFile1), os.ModePerm)
-			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(modulePath1, "project.crd.yaml"), []byte(crd1), os.ModePerm)
+			err := os.WriteFile(path.Join(modulePath1, "project.crd.yaml"), []byte(crd1), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 			err = os.WriteFile(path.Join(modulePath1, "foobar.crd.yaml"), []byte(crd2), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(modulePath1, "kustomization.yaml"), []byte(moduleWithCRDsKustomization), os.ModePerm)
-			Expect(err).NotTo(HaveOccurred())
 
-			sampleFile2 := `apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: module1-flavour1
-  namespace: default
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: module1-flavour1
-  template:
-    metadata:
-      labels:
-        app: module1-flavour1
-        version: 0.1.1
-    spec:
-      containers:
-      - image: k8s.gcr.io/echoserver:1.4
-        name: echoserver
-        ports:
-        - containerPort: 8080`
-			err = os.MkdirAll(moduleOverridePath1, os.ModePerm)
-			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(moduleOverridePath1, "example.yaml"), []byte(sampleFile2), os.ModePerm)
-			Expect(err).NotTo(HaveOccurred())
 			err = os.WriteFile(path.Join(moduleOverridePath1, "project.crd.yaml"), []byte(crd1), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 			err = os.WriteFile(path.Join(moduleOverridePath1, "foobar.crd.yaml"), []byte(crd2), os.ModePerm)
-			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(moduleOverridePath1, "kustomization.yaml"), []byte(moduleWithCRDsKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
 			err = apply.Apply(log, configPath, false, "group1", "cluster1", projectPath, options, crdDefaultRetries)
@@ -492,6 +567,9 @@ spec:
 			newSidecarPort := depMod.Object["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{})[0].(map[string]interface{})["ports"].([]interface{})[0].(map[string]interface{})["containerPort"]
 			Expect(newSidecarPort).Should(BeNumerically("==", 9000))
 		})
+	})
+	Context("broken CRD", func() {
+
 	})
 	Context("2 clusters, same group", func() {
 		It("syncs the project without errors", func() {
