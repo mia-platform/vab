@@ -141,14 +141,13 @@ func checkCRDsStatus(clients *jpl.K8sClients, retries int) error {
 		}
 		if len(crdList.Items) == establishedCount {
 			fmt.Printf("Established %d CRDs\n", establishedCount)
-			break
+			return nil
 		}
 		time.Sleep(1 * time.Second)
 	}
-	if retries == 0 {
-		return fmt.Errorf("reached limit of max retries for CRDs status check")
-	}
-	return nil
+
+	return fmt.Errorf("reached limit of max retries for CRDs status check")
+
 }
 
 // getContext retrieves the context for the cluster/group from the config file.

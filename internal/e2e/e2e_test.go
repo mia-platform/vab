@@ -39,7 +39,7 @@ import (
 )
 
 const (
-	crdDefaultRetries        = 10
+	crdDefaultRetries        = 1
 	testProjectName          = "test-e2e"
 	sipleModuleKustomization = `kind: Kustomization
 apiVersion: kustomize.config.k8s.io/v1beta1
