@@ -36,9 +36,9 @@ func Sync(logger logger.LogInterface, filesGetter git.FilesGetter, configPath st
 		return fmt.Errorf("sync error: %w", err)
 	}
 	defaultModules := kustomizehelper.PackagesMapForPaths(config.Spec.Modules)
-	fmt.Println("default modules:", defaultModules)
+	logger.V(5).Writef("modules:", defaultModules)
 	defaultAddOns := kustomizehelper.PackagesMapForPaths(config.Spec.AddOns)
-	fmt.Println("default addons:", defaultAddOns)
+	logger.V(5).Writef("addons:", defaultAddOns)
 
 	// update the default bases in the all-groups directory
 	if err := UpdateBases(logger, filesGetter, basePath, path.Join(basePath, utils.AllGroupsDirPath), defaultModules, defaultAddOns, config, dryRun); err != nil {
@@ -127,9 +127,10 @@ func UpdateBases(logger logger.LogInterface, filesGetter git.FilesGetter, basePa
 		}
 		syncedKustomization = *kustomizehelper.SyncKustomizeResources(&modules, &addons, *kustomization, targetPath)
 	}
+
 	// if dryRun is true, skip modules and addons update (ClonePackages + MoveToDisk)
 	if dryRun {
-		logger.V(0).Writef("[warn] Dry-run mode enabled, skipping package cloning for %s. The following packages may be missing in the vendors directory.\nSkipped modules: %+v\nSkipped add-ons: %+v",
+		logger.Warn().Writef("Dry-run mode enabled, skipping package cloning for %s. The following packages may be missing in the vendors directory.\nSkipped modules: %+v\nSkipped add-ons: %+v",
 			targetPath, modules, addons)
 	} else {
 		if err := DownloadPackages(logger, modules, basePath, filesGetter); err != nil {

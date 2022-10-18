@@ -99,7 +99,7 @@ func Apply(logger logger.LogInterface, configPath string, isDryRun bool, groupNa
 				return fmt.Errorf("deploy of crds failed with error: %w", err)
 			}
 			// wait until all the CRDs satisfy the "Established" condition
-			if err := checkCRDsStatus(clients, crdStatusCheckRetries); err != nil {
+			if err := checkCRDsStatus(logger, clients, crdStatusCheckRetries); err != nil {
 				logger.V(5).Writef("The check of CRDs status failed", targetPath)
 				return fmt.Errorf("crds check failed with error: %w", err)
 			}
@@ -116,14 +116,13 @@ func Apply(logger logger.LogInterface, configPath string, isDryRun bool, groupNa
 // checkCRDsStatus loops over the deployed CRDs to check whether the condition
 // `Established` evaluates to true. If the condition is not met for any CRD
 // before `retries` times, the function returns an error
-func checkCRDsStatus(clients *jpl.K8sClients, retries int) error {
+func checkCRDsStatus(logger logger.LogInterface, clients *jpl.K8sClients, retries int) error {
 	var establishedCount int
 	for check := retries; check > 0; check-- {
 		establishedCount = 0
 		crdList, err := jpl.ListResources(gvrCRDs, clients)
 		if err != nil && !apierrors.IsNotFound(err) {
-			fmt.Printf("fails to check CRDs: %s", err)
-			return err
+			return fmt.Errorf("fails to check CRDs: %s", err)
 		}
 
 		for _, crd := range crdList.Items {
@@ -137,8 +136,9 @@ func checkCRDsStatus(clients *jpl.K8sClients, retries int) error {
 				establishedCount++
 			}
 		}
+
 		if len(crdList.Items) == establishedCount {
-			fmt.Printf("Established %d CRDs\n", establishedCount)
+			logger.V(10).Writef("Established %d CRDs\n", establishedCount)
 			return nil
 		}
 		time.Sleep(1 * time.Second)

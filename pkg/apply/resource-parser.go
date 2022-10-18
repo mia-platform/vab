@@ -50,14 +50,12 @@ func createResourcesFiles(outputDir string, crdPath string, resourcesPath string
 	}
 
 	if customResources.Len() != 0 {
-		fmt.Println("creating Crds at ", crdPath)
 		err = os.WriteFile(crdPath, customResources.Bytes(), filesPermissions)
 		if err != nil {
 			return fmt.Errorf("error creating crd file (%s): %s", crdPath, err)
 		}
 	}
 
-	fmt.Println("creating Resources at ", resourcesPath)
 	if resources.Len() != 0 {
 		err = os.WriteFile(resourcesPath, resources.Bytes(), filesPermissions)
 		if err != nil {
