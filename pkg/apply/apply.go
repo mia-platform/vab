@@ -30,7 +30,10 @@ import (
 	vabBuild "github.com/mia-platform/vab/pkg/build"
 	"github.com/mia-platform/vab/pkg/logger"
 	"golang.org/x/exp/slices"
+	"k8s.io/apiextensions-apiserver/pkg/apihelpers"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -115,28 +118,23 @@ func Apply(logger logger.LogInterface, configPath string, isDryRun bool, groupNa
 // before `retries` times, the function returns an error
 func checkCRDsStatus(clients *jpl.K8sClients, retries int) error {
 	var establishedCount int
-	for ; retries > 0; retries-- {
+	for check := retries; check > 0; check-- {
 		establishedCount = 0
 		crdList, err := jpl.ListResources(gvrCRDs, clients)
 		if err != nil && !apierrors.IsNotFound(err) {
 			fmt.Printf("fails to check CRDs: %s", err)
 			return err
 		}
+
 		for _, crd := range crdList.Items {
-			crdStatus := crd.Object["status"]
-			if crdStatus == nil {
-				continue
+			var crdSpec apiextensionsv1.CustomResourceDefinition
+			err = runtime.DefaultUnstructuredConverter.FromUnstructured(crd.Object, &crdSpec)
+			if err != nil {
+				return err
 			}
-			crdConditions := crdStatus.(map[string]interface{})["conditions"]
-			if crdConditions == nil {
-				continue
-			}
-			for _, condition := range crdConditions.([]interface{}) {
-				conditionType := condition.(map[string]interface{})["type"]
-				conditionStatus := condition.(map[string]interface{})["status"]
-				if conditionType == "Established" && conditionStatus == "True" {
-					establishedCount++
-				}
+
+			if apihelpers.IsCRDConditionTrue(&crdSpec, apiextensionsv1.Established) {
+				establishedCount++
 			}
 		}
 		if len(crdList.Items) == establishedCount {
@@ -147,7 +145,6 @@ func checkCRDsStatus(clients *jpl.K8sClients, retries int) error {
 	}
 
 	return fmt.Errorf("reached limit of max retries for CRDs status check")
-
 }
 
 // getContext retrieves the context for the cluster/group from the config file.
