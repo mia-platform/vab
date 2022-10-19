@@ -23,10 +23,12 @@ CMDNAME := vab
 TOOLS_DIR := $(PROJECT_DIR)/tools
 TOOLS_BIN := $(TOOLS_DIR)/bin
 
-KIND_CLUSTER_1_NAME ?= vab-cluster-1
-KIND_CLUSTER_2_NAME ?= vab-cluster-2
-GOLANCI_LINT_VERSION=1.49.0
-DEEPCOPY_GEN_VERSION=0.25.1
+KIND_CLUSTER_1_NAME := vab-cluster-1
+KIND_CLUSTER_2_NAME := vab-cluster-2
+
+KIND_IMAGE_VERSION ?= kindest/node:v1.22.15@sha256:bfd5eaae36849bfb3c1e3b9442f3da17d730718248939d9d547e86bbac5da586
+GOLANCI_LINT_VERSION := 1.49.0
+DEEPCOPY_GEN_VERSION := 0.25.1
 
 SUPPORTED_PLATFORMS := linux/386,linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6
 $(eval BUILD_PLATFORMS = $(shell echo "$(SUPPORTED_PLATFORMS)" | sed "s#,# #g;s#/#.#g"))
@@ -81,7 +83,7 @@ else
 endif
 
 .PHONY: test-e2e
-test-e2e: kind-start e2e kind-stop
+test-e2e: start-kind e2e stop-kind
 
 e2e:
 ifneq ($(TEST_VERBOSE), "false")
@@ -90,19 +92,10 @@ else
 	go test ./... -tags=e2e || true
 endif
 
-kind-start:
-ifeq (1, $(shell kind get clusters | grep ${KIND_CLUSTER_1_NAME} | wc -l))
-	@echo "Kind test cluster 1 already exists!"
-else
-	@kind create cluster --config internal/e2e/kind/kind-config.yaml --name ${KIND_CLUSTER_1_NAME} --kubeconfig ~/.kube/config
-endif
-ifeq (1, $(shell kind get clusters | grep ${KIND_CLUSTER_2_NAME} | wc -l))
-	@echo "Kind test cluster 2 already exists!"
-else
-	@kind create cluster --config internal/e2e/kind/kind-config.yaml --name ${KIND_CLUSTER_2_NAME} --kubeconfig ~/.kube/config
-endif
+start-kind:
+	@./tools/start-kind.sh ${KIND_IMAGE_VERSION} ${KIND_CLUSTER_1_NAME} ${KIND_CLUSTER_2_NAME}
 
-kind-stop:
+stop-kind:
 	@kind delete cluster --name ${KIND_CLUSTER_1_NAME}
 	@kind delete cluster --name ${KIND_CLUSTER_2_NAME}
 

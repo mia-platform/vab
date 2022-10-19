@@ -46,7 +46,7 @@ func TestInvalidKustomizeBuildPath(t *testing.T) {
 	buffer := new(bytes.Buffer)
 	err := RunKustomizeBuild(testutils.InvalidFolderPath, buffer)
 	if assert.Error(t, err) {
-		assert.ErrorIs(t, err, fs.ErrNotExist)
+		assert.ErrorContains(t, err, "no such file or directory")
 	}
 }
 
