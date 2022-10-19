@@ -26,7 +26,6 @@ import (
 // WritePkgToDir writes the files in memory to the target path on disk
 func WritePkgToDir(files []*git.File, targetPath string) error {
 	for _, gitFile := range files {
-
 		err := os.MkdirAll(path.Dir(path.Join(targetPath, gitFile.FilePath())), os.ModePerm)
 		if err != nil {
 			return fmt.Errorf("error creating directory: %s : %w", path.Dir(gitFile.FilePath()), err)
