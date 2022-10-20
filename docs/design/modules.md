@@ -34,7 +34,7 @@ With the previous rules in mind, we envisioned the following folder structure in
 
 The CLI will pull modules versioned via git tags inside the repository. However, since you can have multiple modules
 inside a repository, the tags must be in the form of
-`module-<module-category>-<module-name>-<`[`semver`][semver]`-version>`.  
+`module-<module-category>-<module-name>-`[`<semver-version>`][semver].  
 The CLI will match the `module-category/module-name` with the folder name included in the `modules` directory
 and will pull all the files contained in it, so you will have all the different flavors contained in it to
 ease the cross dependencies between them.
