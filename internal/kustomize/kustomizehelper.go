@@ -32,8 +32,8 @@ import (
 
 // SyncKustomizeResources updates the clusters' kustomization resources to the latest sync
 func SyncKustomizeResources(modules *map[string]v1alpha1.Package, addons *map[string]v1alpha1.Package, k kustomize.Kustomization, targetPath string) *kustomize.Kustomization {
-	modulesList := getSortedModulesList(modules, targetPath)
-	addonsList := getSortedAddOnsList(addons, targetPath)
+	modulesList := getSortedPackagesList(modules, targetPath)
+	addonsList := getSortedPackagesList(addons, targetPath)
 
 	// If the file already includes a non-empty list of resources, this function
 	// collects all the custom modules that were added manually by the user
@@ -66,13 +66,19 @@ func SyncKustomizeResources(modules *map[string]v1alpha1.Package, addons *map[st
 	return &k
 }
 
-// getSortedModulesList returns the list of modules names in lexicographic order.
-func getSortedModulesList(packages *map[string]v1alpha1.Package, targetPath string) []string {
+// getSortedPackagesList returns the list of modules names in lexicographic order.
+func getSortedPackagesList(packages *map[string]v1alpha1.Package, targetPath string) []string {
 	sordtedList := make([]string, 0, len(*packages))
 
-	for aoName, ao := range *packages {
-		if !ao.Disable {
-			sordtedList = append(sordtedList, aoName)
+	for name, pkg := range *packages {
+		if !pkg.Disable {
+			var pkgPath string
+			if pkg.IsModule() {
+				pkgPath = filepath.Join(name, pkg.GetFlavorName())
+			} else {
+				pkgPath = name
+			}
+			sordtedList = append(sordtedList, pkgPath)
 		}
 	}
 
@@ -81,23 +87,6 @@ func getSortedModulesList(packages *map[string]v1alpha1.Package, targetPath stri
 	})
 
 	return *fixResourcesPath(sordtedList, targetPath, true)
-}
-
-// getSortedAddOnsList returns the list of addons names in lexicographic order
-func getSortedAddOnsList(packages *map[string]v1alpha1.Package, targetPath string) []string {
-	sordtedList := make([]string, 0, len(*packages))
-
-	for aoName, ao := range *packages {
-		if !ao.Disable {
-			sordtedList = append(sordtedList, aoName)
-		}
-	}
-
-	sort.SliceStable(sordtedList, func(i, j int) bool {
-		return sordtedList[i] < sordtedList[j]
-	})
-
-	return *fixResourcesPath(sordtedList, targetPath, false)
 }
 
 // ReadKustomization reads a kustomization file given its path
@@ -184,13 +173,7 @@ func PackagesMapForPaths(packages map[string]v1alpha1.Package) map[string]v1alph
 	pathsMap := make(map[string]v1alpha1.Package, len(packages))
 
 	for _, pkg := range packages {
-		var newKey string
-		if pkg.IsModule() {
-			newKey = pkg.GetName() + "-" + pkg.Version + string(filepath.Separator) + pkg.GetFlavorName()
-		} else {
-			newKey = pkg.GetName() + "-" + pkg.Version
-		}
-
+		newKey := pkg.GetName() + "-" + pkg.Version
 		pathsMap[newKey] = pkg
 	}
 

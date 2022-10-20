@@ -17,6 +17,7 @@ package git
 import (
 	"fmt"
 	"io/fs"
+	"path/filepath"
 	"strings"
 
 	"github.com/go-git/go-billy/v5"
@@ -79,9 +80,9 @@ func worktreeForPackage(pkg v1alpha1.Package) (*billy.Filesystem, error) {
 func filterWorktreeForPackage(log logger.LogInterface, worktree *billy.Filesystem, pkg v1alpha1.Package) ([]*File, error) {
 	var packageFolder string
 	if pkg.IsModule() {
-		packageFolder = "./modules/" + pkg.GetName()
+		packageFolder = filepath.Join("modules", pkg.GetName())
 	} else {
-		packageFolder = "./add-ons/" + pkg.GetName()
+		packageFolder = filepath.Join("add-ons", pkg.GetName())
 	}
 
 	log.V(10).Writef("Extracting file paths from package in %s", packageFolder)

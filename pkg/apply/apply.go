@@ -35,6 +35,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
 const (
@@ -83,7 +84,7 @@ func Apply(logger logger.LogInterface, configPath string, isDryRun bool, groupNa
 		}
 		options.Context = k8sContext
 		clients := jpl.InitRealK8sClients(options)
-		crds, resources, err := jpl.NewResourcesFromBuffer(buffer.Bytes(), "default", jpl.RealSupportedResourcesGetter{}, clients)
+		crds, resources, err := jpl.NewResourcesFromBuffer(buffer.Bytes(), "", jpl.RealSupportedResourcesGetter{}, clients)
 		if err != nil {
 			logger.V(5).Writef("Error generating resources in %s", targetPath)
 			return err
@@ -132,6 +133,7 @@ func checkCRDsStatus(logger logger.LogInterface, clients *jpl.K8sClients, retrie
 				return err
 			}
 
+			logger.V(10).Writef("CRD %s status: %+v", crdSpec.GetName(), crdSpec.Status)
 			if apihelpers.IsCRDConditionTrue(&crdSpec, apiextensionsv1.Established) {
 				establishedCount++
 			}
