@@ -84,7 +84,7 @@ func Apply(logger logger.LogInterface, configPath string, isDryRun bool, groupNa
 		}
 		options.Context = k8sContext
 		clients := jpl.InitRealK8sClients(options)
-		crds, resources, err := jpl.NewResourcesFromBuffer(buffer.Bytes(), "", jpl.RealSupportedResourcesGetter{}, clients)
+		crds, resources, err := jpl.NewResourcesFromBuffer(buffer.Bytes())
 		if err != nil {
 			logger.V(5).Writef("Error generating resources in %s", targetPath)
 			return err
@@ -95,7 +95,7 @@ func Apply(logger logger.LogInterface, configPath string, isDryRun bool, groupNa
 
 		// if there are any CRDs, deploy them first
 		if len(crds) != 0 {
-			if err := jpl.Deploy(clients, "", crds, deployConfig, apply); err != nil {
+			if err := jpl.Deploy(clients, "", crds, deployConfig, jpl.RealSupportedResourcesGetter{}, apply); err != nil {
 				logger.V(5).Writef("Error applying CRDs in %s", targetPath)
 				return fmt.Errorf("deploy of crds failed with error: %w", err)
 			}
@@ -106,7 +106,7 @@ func Apply(logger logger.LogInterface, configPath string, isDryRun bool, groupNa
 			}
 		}
 
-		if err := jpl.Deploy(clients, "", resources, jpl.DeployConfig{}, apply); err != nil {
+		if err := jpl.Deploy(clients, "", resources, jpl.DeployConfig{}, jpl.RealSupportedResourcesGetter{}, apply); err != nil {
 			logger.V(5).Writef("Error applying resources in %s", targetPath)
 			return fmt.Errorf("deploy of resources failed with error: %w", err)
 		}
@@ -133,7 +133,6 @@ func checkCRDsStatus(logger logger.LogInterface, clients *jpl.K8sClients, retrie
 				return err
 			}
 
-			logger.V(10).Writef("CRD %s status: %+v", crdSpec.GetName(), crdSpec.Status)
 			if apihelpers.IsCRDConditionTrue(&crdSpec, apiextensionsv1.Established) {
 				establishedCount++
 			}

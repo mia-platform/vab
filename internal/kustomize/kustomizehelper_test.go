@@ -71,7 +71,7 @@ func TestSortedModulesList(t *testing.T) {
 	)
 
 	expectedList := []string{"../../../vendors/modules/m1-1.0.0/f1", "../../../vendors/modules/m2-1.0.0/f1", "../../../vendors/modules/m3-1.0.0/f1", "../../../vendors/modules/m4a-1.0.0/f1", "../../../vendors/modules/m4b-1.0.0/f1"}
-	list := getSortedModulesList(&modules, utils.AllGroupsDirPath)
+	list := getSortedPackagesList(&modules, utils.AllGroupsDirPath)
 
 	assert.Equal(t, expectedList, list, "Unexpected modules list.")
 }
