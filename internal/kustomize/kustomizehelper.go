@@ -32,8 +32,8 @@ import (
 
 // SyncKustomizeResources updates the clusters' kustomization resources to the latest sync
 func SyncKustomizeResources(modules *map[string]v1alpha1.Package, addons *map[string]v1alpha1.Package, k kustomize.Kustomization, targetPath string) *kustomize.Kustomization {
-	modulesList := getSortedPackagesList(modules, targetPath, true)
-	addonsList := getSortedPackagesList(addons, targetPath, false)
+	modulesList := getSortedPackagesList(modules, targetPath, utils.VendorsModulesPath)
+	addonsList := getSortedPackagesList(addons, targetPath, utils.VendorsAddOnsPath)
 
 	// If the file already includes a non-empty list of resources, this function
 	// collects all the custom modules that were added manually by the user
@@ -67,7 +67,7 @@ func SyncKustomizeResources(modules *map[string]v1alpha1.Package, addons *map[st
 }
 
 // getSortedPackagesList returns the list of modules names in lexicographic order.
-func getSortedPackagesList(packages *map[string]v1alpha1.Package, targetPath string, isModulesList bool) []string {
+func getSortedPackagesList(packages *map[string]v1alpha1.Package, targetPath string, basePath string) []string {
 	sordtedList := make([]string, 0, len(*packages))
 
 	for name, pkg := range *packages {
@@ -86,7 +86,7 @@ func getSortedPackagesList(packages *map[string]v1alpha1.Package, targetPath str
 		return sordtedList[i] < sordtedList[j]
 	})
 
-	return *fixResourcesPath(sordtedList, targetPath, isModulesList)
+	return *fixResourcesPath(sordtedList, targetPath, basePath)
 }
 
 // ReadKustomization reads a kustomization file given its path
@@ -115,14 +115,10 @@ func ReadKustomization(targetPath string) (*kustomize.Kustomization, error) {
 }
 
 // fixResourcesPath returns the list of resources with the actual path
-func fixResourcesPath(resourcesList []string, targetPath string, isModulesList bool) *[]string {
+func fixResourcesPath(resourcesList []string, targetPath string, basePath string) *[]string {
 	fixedResourcesList := make([]string, 0, len(resourcesList))
 	for _, res := range resourcesList {
-		if isModulesList {
-			fixedResourcesList = append(fixedResourcesList, getVendorPackageRelativePath(targetPath, path.Join(utils.VendorsModulesPath, res)))
-		} else {
-			fixedResourcesList = append(fixedResourcesList, getVendorPackageRelativePath(targetPath, path.Join(utils.VendorsAddOnsPath, res)))
-		}
+		fixedResourcesList = append(fixedResourcesList, getVendorPackageRelativePath(targetPath, path.Join(basePath, res)))
 	}
 	return &fixedResourcesList
 }

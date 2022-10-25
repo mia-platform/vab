@@ -71,7 +71,7 @@ func TestSortedModulesList(t *testing.T) {
 	)
 
 	expectedList := []string{"../../../vendors/modules/cat1/m1-1.0.0/f1", "../../../vendors/modules/cat2/m2-1.0.0/f1", "../../../vendors/modules/cat3/m3-1.0.0/f1", "../../../vendors/modules/cat4/m4a-1.0.0/f1", "../../../vendors/modules/cat4/m4b-1.0.0/f1"}
-	list := getSortedPackagesList(&modules, utils.AllGroupsDirPath, true)
+	list := getSortedPackagesList(&modules, utils.AllGroupsDirPath, utils.VendorsModulesPath)
 
 	assert.Equal(t, expectedList, list, "Unexpected modules list.")
 }
@@ -203,7 +203,7 @@ func TestFixModulesPath(t *testing.T) {
 		"test-module2-1.0.0/test-flavour2",
 		"test-module3-1.0.0/test-flavour3",
 	}
-	fixedList := fixResourcesPath(modulesList, utils.AllGroupsDirPath, true)
+	fixedList := fixResourcesPath(modulesList, utils.AllGroupsDirPath, utils.VendorsModulesPath)
 	expectedList := []string{
 		"../../../vendors/modules/test-module1-1.0.0/test-flavour1",
 		"../../../vendors/modules/test-module2-1.0.0/test-flavour2",
@@ -218,7 +218,7 @@ func TestFixAddOnsPath(t *testing.T) {
 		"test-addon1-1.0.0",
 		"test-addon2-1.0.0",
 	}
-	fixedList := fixResourcesPath(modulesList, utils.AllGroupsDirPath, false)
+	fixedList := fixResourcesPath(modulesList, utils.AllGroupsDirPath, utils.VendorsAddOnsPath)
 	expectedList := []string{
 		"../../../vendors/add-ons/test-addon1-1.0.0",
 		"../../../vendors/add-ons/test-addon2-1.0.0",
