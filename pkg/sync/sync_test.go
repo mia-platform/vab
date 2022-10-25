@@ -124,19 +124,19 @@ func TestUpdateBasesAllGroups(t *testing.T) {
 		return
 	}
 	modules := make(map[string]v1alpha1.Package)
-	modules["category/test-module3-1.0.0/test-flavour1"] = v1alpha1.NewModule(
+	modules["category/test-module3-1.0.0"] = v1alpha1.NewModule(
 		t,
 		"category/test-module3/test-flavour1",
 		"1.0.0",
 		false,
 	)
-	modules["category/test-module2-1.0.0/test-flavour1"] = v1alpha1.NewModule(
+	modules["category/test-module2-1.0.0"] = v1alpha1.NewModule(
 		t,
 		"category/test-module2/test-flavour1",
 		"1.0.0",
 		false,
 	)
-	modules["category/test-module1-1.0.0/test-flavour1"] = v1alpha1.NewModule(
+	modules["category/test-module1-1.0.0"] = v1alpha1.NewModule(
 		t,
 		"category/test-module1/test-flavour1",
 		"1.0.0",
@@ -362,54 +362,54 @@ func TestUpdateClusterModulesNoOverrides(t *testing.T) {
 // UpdateClusterModules returns the correct map of modules (w/ overrides)
 func TestUpdateClusterModules(t *testing.T) {
 	defaultModules := make(map[string]v1alpha1.Package)
-	defaultModules["test-module3/test-flavour1"] = v1alpha1.NewModule(
+	defaultModules["category/test-module3"] = v1alpha1.NewModule(
 		t,
-		"test-module3/test-flavour1",
+		"category/test-module3/test-flavour1",
 		"1.0.0",
 		false,
 	)
-	defaultModules["test-module2/test-flavour1"] = v1alpha1.NewModule(
+	defaultModules["category/test-module2"] = v1alpha1.NewModule(
 		t,
-		"test-module2/test-flavour1",
+		"category/test-module2/test-flavour1",
 		"1.0.0",
 		false,
 	)
-	defaultModules["test-module1/test-flavour1"] = v1alpha1.NewModule(
+	defaultModules["category/test-module1"] = v1alpha1.NewModule(
 		t,
-		"test-module1/test-flavour1",
+		"category/test-module1/test-flavour1",
 		"1.0.0",
 		false,
 	)
 	overrides := make(map[string]v1alpha1.Package)
-	overrides["test-module3/test-flavour1"] = v1alpha1.NewModule(
+	overrides["category/test-module3"] = v1alpha1.NewModule(
 		t,
-		"test-module3/test-flavour1",
+		"category/test-module3/test-flavour1",
 		"1.0.1",
 		false,
 	)
-	overrides["test-module2/test-flavour1"] = v1alpha1.NewModule(
+	overrides["category/test-module2"] = v1alpha1.NewModule(
 		t,
-		"test-module2/test-flavour1",
+		"category/test-module2/test-flavour1",
 		"",
 		true,
 	)
-	overrides["test-module1/test-flavour1"] = v1alpha1.NewModule(
+	overrides["category/test-module1"] = v1alpha1.NewModule(
 		t,
-		"test-module1/test-flavour1",
+		"category/test-module1/test-flavour1",
 		"1.0.0",
 		false,
 	)
 	output := MergePackages(defaultModules, overrides)
 	expectedOutput := make(map[string]v1alpha1.Package)
-	expectedOutput["test-module1-1.0.0/test-flavour1"] = v1alpha1.NewModule(
+	expectedOutput["category/test-module1-1.0.0"] = v1alpha1.NewModule(
 		t,
-		"test-module1/test-flavour1",
+		"category/test-module1/test-flavour1",
 		"1.0.0",
 		false,
 	)
-	expectedOutput["test-module3-1.0.1/test-flavour1"] = v1alpha1.NewModule(
+	expectedOutput["category/test-module3-1.0.1"] = v1alpha1.NewModule(
 		t,
-		"test-module3/test-flavour1",
+		"category/test-module3/test-flavour1",
 		"1.0.1",
 		false,
 	)

@@ -70,6 +70,7 @@ func DownloadPackages(logger logger.LogInterface, packages map[string]v1alpha1.P
 			vendorsPath = utils.VendorsAddOnsPath
 		}
 		pkgPath := path.Join(targetPath, vendorsPath, name)
+		logger.V(10).Writef("disk path for package %s: %s", name, pkgPath)
 		if err := MoveToDisk(logger, files, name, pkgPath); err != nil {
 			return fmt.Errorf("error moving packages to disk for %s %s: %w", pkg.PackageType(), name, err)
 		}

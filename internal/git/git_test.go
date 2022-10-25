@@ -85,9 +85,9 @@ func TestFilterFilesForPackage(t *testing.T) {
 		module := v1alpha1.NewModule(t, "category/test-module1/test-flavour1", "1.0.0", false)
 
 		expectedArray := []*File{
-			NewFile("modules/category/test-module1/test-flavour1/file1.yaml", "./modules/category/test-module1", *fakeWorktree),
-			NewFile("modules/category/test-module1/test-flavour1/file2.yaml", "./modules/category/test-module1", *fakeWorktree),
-			NewFile("modules/category/test-module1/test-flavour2/file1.yaml", "./modules/category/test-module1", *fakeWorktree),
+			NewFile("modules/category/test-module1/test-flavour1/file1.yaml", "modules/category/test-module1", *fakeWorktree),
+			NewFile("modules/category/test-module1/test-flavour1/file2.yaml", "modules/category/test-module1", *fakeWorktree),
+			NewFile("modules/category/test-module1/test-flavour2/file1.yaml", "modules/category/test-module1", *fakeWorktree),
 		}
 		files, err := filterWorktreeForPackage(logger, fakeWorktree, module)
 		assert.NoError(t, err)
@@ -98,8 +98,8 @@ func TestFilterFilesForPackage(t *testing.T) {
 		addon := v1alpha1.NewAddon(t, "category/test-addon1", "1.0.0", false)
 
 		expectedArray := []*File{
-			NewFile("add-ons/category/test-addon1/file1.yaml", "./add-ons/category/test-addon1", *fakeWorktree),
-			NewFile("add-ons/category/test-addon1/subdir/file1.yaml", "./add-ons/category/test-addon1", *fakeWorktree),
+			NewFile("add-ons/category/test-addon1/file1.yaml", "add-ons/category/test-addon1", *fakeWorktree),
+			NewFile("add-ons/category/test-addon1/subdir/file1.yaml", "add-ons/category/test-addon1", *fakeWorktree),
 		}
 		files, err := filterWorktreeForPackage(logger, fakeWorktree, addon)
 		assert.NoError(t, err)
