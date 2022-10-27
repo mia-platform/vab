@@ -4,5 +4,5 @@ resources:
   - ../../../../vendors/modules/category/test-module1-1.0.1/test-flavour1
   - ../../../../vendors/modules/category/test-module3-1.0.0/test-flavour1
 components:
-  - ../../../../vendors/add-ons/category/test-addon1-1.0.0
-  - ../../../../vendors/add-ons/category/test-addon2-1.0.0
+  - ../../../../vendors/addons/category/test-addon1-1.0.0
+  - ../../../../vendors/addons/category/test-addon2-1.0.0

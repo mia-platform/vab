@@ -120,8 +120,8 @@ var _ = BeforeSuite(func() {
 		moduleOverridePath1 = path.Join(projectPath, "vendors", "modules", "module1-0.1.1", "flavour1")
 		modulePath2 = path.Join(projectPath, "vendors", "modules", "module2-0.1.0", "flavour1")
 		moduleOverridePath2 = path.Join(projectPath, "vendors", "modules", "module2-0.1.1", "flavour1")
-		addOnPath = path.Join(projectPath, "vendors", "add-ons", "addon1-0.1.0")
-		addOnOverridePath = path.Join(projectPath, "vendors", "add-ons", "addon1-0.1.1")
+		addOnPath = path.Join(projectPath, "vendors", "addons", "addon1-0.1.0")
+		addOnOverridePath = path.Join(projectPath, "vendors", "addons", "addon1-0.1.1")
 		depsGvr = schema.GroupVersionResource{
 			Group:    "apps",
 			Version:  "v1",

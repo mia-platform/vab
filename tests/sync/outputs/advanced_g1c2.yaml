@@ -5,4 +5,4 @@ resources:
   - ../../../../vendors/modules/category/test-module2-1.0.0/test-flavour1
   - ../../../../vendors/modules/category/test-module3-1.0.0/test-flavour1
 components:
-  - ../../../../vendors/add-ons/category/test-addon2-1.0.1
+  - ../../../../vendors/addons/category/test-addon2-1.0.1

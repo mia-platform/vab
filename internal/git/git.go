@@ -78,12 +78,7 @@ func worktreeForPackage(pkg v1alpha1.Package) (*billy.Filesystem, error) {
 }
 
 func filterWorktreeForPackage(log logger.LogInterface, worktree *billy.Filesystem, pkg v1alpha1.Package) ([]*File, error) {
-	var packageFolder string
-	if pkg.IsModule() {
-		packageFolder = filepath.Join("modules", pkg.GetName())
-	} else {
-		packageFolder = filepath.Join("add-ons", pkg.GetName())
-	}
+	packageFolder := filepath.Join(pkg.PackageType()+"s", pkg.GetName())
 
 	log.V(10).Writef("Extracting file paths from package in %s", packageFolder)
 	files := []*File{}

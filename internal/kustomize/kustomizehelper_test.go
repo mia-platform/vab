@@ -127,7 +127,7 @@ func TestSyncEmptyKustomization(t *testing.T) {
 
 	finalKustomization := SyncKustomizeResources(&modules, &addons, emptyKustomization, utils.AllGroupsDirPath)
 	expectedResources := []string{"../../../vendors/modules/cat1/m1-1.0.0/f1", "../../../vendors/modules/cat1/m2-1.0.0/f1", "../../../vendors/modules/cat2/m3-1.0.0/f1"}
-	expectedComponents := []string{"../../../vendors/add-ons/cat1/ao1-1.0.0", "../../../vendors/add-ons/cat1/ao2-1.0.0"}
+	expectedComponents := []string{"../../../vendors/addons/cat1/ao1-1.0.0", "../../../vendors/addons/cat1/ao2-1.0.0"}
 
 	assert.Equal(t, expectedResources, finalKustomization.Resources, "Unexpected resources in Kustomization.")
 	assert.Equal(t, expectedComponents, finalKustomization.Components, "Unexpected resources in Kustomization.")
@@ -146,9 +146,9 @@ func TestSyncExistingKustomization(t *testing.T) {
 		"./local/mod-1.0.0/f1",
 	}
 	kustomization.Components = []string{
-		"../../../vendors/add-ons/ao1-1.0.0",
-		"../../../vendors/add-ons/ao2-1.0.0",
-		"../../../vendors/add-ons/ao3-1.0.0",
+		"../../../vendors/addons/ao1-1.0.0",
+		"../../../vendors/addons/ao2-1.0.0",
+		"../../../vendors/addons/ao3-1.0.0",
 		"./local/ao-1.0.0",
 	}
 	modules := make(map[string]v1alpha1.Package)
@@ -187,8 +187,8 @@ func TestSyncExistingKustomization(t *testing.T) {
 		"./local/mod-1.0.0/f1",
 	}
 	expectedComponents := []string{
-		"../../../vendors/add-ons/cat1/ao1-2.0.0",
-		"../../../vendors/add-ons/cat2/ao3-1.0.0",
+		"../../../vendors/addons/cat1/ao1-2.0.0",
+		"../../../vendors/addons/cat2/ao3-1.0.0",
 		"./local/ao-1.0.0",
 	}
 
@@ -220,8 +220,8 @@ func TestFixAddOnsPath(t *testing.T) {
 	}
 	fixedList := fixResourcesPath(modulesList, utils.AllGroupsDirPath, utils.VendorsAddOnsPath)
 	expectedList := []string{
-		"../../../vendors/add-ons/test-addon1-1.0.0",
-		"../../../vendors/add-ons/test-addon2-1.0.0",
+		"../../../vendors/addons/test-addon1-1.0.0",
+		"../../../vendors/addons/test-addon2-1.0.0",
 	}
 	assert.Equal(t, expectedList, *fixedList, "Unexpected elements in the resulting list of paths")
 }

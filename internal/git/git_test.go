@@ -98,8 +98,8 @@ func TestFilterFilesForPackage(t *testing.T) {
 		addon := v1alpha1.NewAddon(t, "category/test-addon1", "1.0.0", false)
 
 		expectedArray := []*File{
-			NewFile("add-ons/category/test-addon1/file1.yaml", "add-ons/category/test-addon1", *fakeWorktree),
-			NewFile("add-ons/category/test-addon1/subdir/file1.yaml", "add-ons/category/test-addon1", *fakeWorktree),
+			NewFile("addons/category/test-addon1/file1.yaml", "addons/category/test-addon1", *fakeWorktree),
+			NewFile("addons/category/test-addon1/subdir/file1.yaml", "addons/category/test-addon1", *fakeWorktree),
 		}
 		files, err := filterWorktreeForPackage(logger, fakeWorktree, addon)
 		assert.NoError(t, err)

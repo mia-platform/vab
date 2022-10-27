@@ -14,7 +14,7 @@ Forbidding dependency between add-ons is required to increase compatibility betw
 With the previous rules in mind, we envisioned the following folder structure inside the repository:
 
 ```txt
-./add-ons
+./addons
 |   ├── add-on-category-1
 |   |   ├── add-on-1
 |   |   |..
@@ -30,7 +30,7 @@ With the previous rules in mind, we envisioned the following folder structure in
 
 The CLI will pull add-ons that are versioned via git tags inside the repository, but because inside a repository you
 can have multiple add-ons the tags must be in the form of
-`add-on-<add-on-category>-<add-on-name>-<`[`semver`][semver]`-version>`.  
+`addon-<add-on-category>-<add-on-name>-<`[`semver`][semver]`-version>`.  
 The CLI will match the `add-on-category/add-on-name` path inside the `add-ons` folder; and will pull all
 the files contained in it.
 
