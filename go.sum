@@ -284,10 +284,8 @@ github.com/mailru/easyjson v0.7.6 h1:8yTIVnZgCoiM1TgqoeTl+LfU5Jg6/xL3QhGQnimLYnA
 github.com/mailru/easyjson v0.7.6/go.mod h1:xzfreul335JAWq5oZzymOObrkdz5UnU4kGfJJLY9Nlc=
 github.com/matryer/is v1.2.0 h1:92UTHpy8CDwaJ08GqLDzhhuixiBUUD1p3AU6PHddz4A=
 github.com/matryer/is v1.2.0/go.mod h1:2fLPjFQM9rhQ15aVEtbuwhJinnOqrmgXPNdZsdwlWXA=
-github.com/mia-platform/jpl v0.1.1 h1:vdcd2Jl4ssC0PghluEo2TGUSiSfXqa4D8woKJWkpks8=
-github.com/mia-platform/jpl v0.1.1/go.mod h1:D+l5Qm7f6lF/jQJG3x5IHh7dbvmajr5yx76j3OHvA1Y=
-github.com/mia-platform/jpl v0.1.2-0.20221026153621-807ecc5c1ede h1:pliF+njRaDj6mohj4C55iKphOGlSaMyW/mN3G1mDJHM=
-github.com/mia-platform/jpl v0.1.2-0.20221026153621-807ecc5c1ede/go.mod h1:D+l5Qm7f6lF/jQJG3x5IHh7dbvmajr5yx76j3OHvA1Y=
+github.com/mia-platform/jpl v0.1.2 h1:g92IGGNQSlB9eDUpPDDBPym2qGwVKt5bbnGkRoRuma8=
+github.com/mia-platform/jpl v0.1.2/go.mod h1:D+l5Qm7f6lF/jQJG3x5IHh7dbvmajr5yx76j3OHvA1Y=
 github.com/mitchellh/go-homedir v1.1.0 h1:lukF9ziXFxDFPkA1vsr5zpc1XuPDn/wFntq5mG+4E0Y=
 github.com/mitchellh/go-homedir v1.1.0/go.mod h1:SfyaCUpYCn1Vlf4IUYiD9fPX4A5wJrkLzIz1N1q0pr0=
 github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421/go.mod h1:6dJC0mAP4ikYIbvyc7fijjWJddQyLn8Ig3JB5CqoB9Q=
