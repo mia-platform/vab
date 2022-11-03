@@ -3,7 +3,7 @@
   "build": {
     "dockerfile": "Dockerfile",
     "args": {
-      "VARIANT": "1.18.6",
+      "VARIANT": "1.18.8",
       "USERNAME": "vscode"
     }
   },
