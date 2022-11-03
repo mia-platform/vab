@@ -20,7 +20,7 @@ package utils
 import (
 	"io/fs"
 	"os"
-	"path"
+	"path/filepath"
 	"testing"
 
 	"github.com/mia-platform/vab/internal/testutils"
@@ -41,7 +41,7 @@ func TestWriteEmptyConfig(t *testing.T) {
 	emptyConfig := v1alpha1.EmptyConfig(testConfigName)
 
 	if err := WriteConfig(*emptyConfig, testDirPath); assert.NoError(t, err) {
-		testFileContent, _ := os.ReadFile(path.Join(testDirPath, DefaultConfigFilename))
+		testFileContent, _ := os.ReadFile(filepath.Join(testDirPath, DefaultConfigFilename))
 		expectedFileContent, _ := os.ReadFile(testutils.GetTestFile("utils", emptyConfigFile))
 		assert.Equal(t, testFileContent, expectedFileContent, "Unexpected file content.")
 	}
@@ -51,7 +51,7 @@ func TestWriteEmptyConfig(t *testing.T) {
 func TestCustomConfigName(t *testing.T) {
 	testDirPath := t.TempDir()
 	fileName := "custom_config.yaml"
-	filePath := path.Join(testDirPath, fileName)
+	filePath := filepath.Join(testDirPath, fileName)
 
 	emptyConfig := v1alpha1.EmptyConfig(testConfigName)
 
@@ -91,7 +91,7 @@ func TestPathPermError(t *testing.T) {
 // Test that no error is returned if the config file already exists
 func TestEmptyExistingConfig(t *testing.T) {
 	testDirPath := t.TempDir()
-	writeErr := os.WriteFile(path.Join(testDirPath, "config.yaml"), []byte{}, defaultFilePermissions)
+	writeErr := os.WriteFile(filepath.Join(testDirPath, "config.yaml"), []byte{}, defaultFilePermissions)
 
 	if assert.NoError(t, writeErr) {
 		emptyConfig := v1alpha1.EmptyConfig(testConfigName)
@@ -105,7 +105,7 @@ func TestWriteEmptyKustomization(t *testing.T) {
 	testDirPath := t.TempDir()
 
 	if err := WriteKustomization(EmptyKustomization(), testDirPath); assert.NoError(t, err, err) {
-		testFileContent, _ := os.ReadFile(path.Join(testDirPath, konfig.DefaultKustomizationFileName()))
+		testFileContent, _ := os.ReadFile(filepath.Join(testDirPath, konfig.DefaultKustomizationFileName()))
 		expectedFileContent, _ := os.ReadFile(testutils.GetTestFile("utils", "empty_kustomization.yaml"))
 		assert.Equal(t, testFileContent, expectedFileContent, "Unexpected file content.")
 	}
@@ -114,12 +114,12 @@ func TestWriteEmptyKustomization(t *testing.T) {
 // Test that the correct error is returned if the file is not named kustomization.yaml
 func TestWrongKustomizationFileName(t *testing.T) {
 	testDirPath := t.TempDir()
-	file, fileErr := os.Create(path.Join(testDirPath, "notkustomization.yaml"))
+	file, fileErr := os.Create(filepath.Join(testDirPath, "notkustomization.yaml"))
 	if !assert.NoError(t, fileErr, "Error while creating test file") {
 		return
 	}
 
-	expectedError := NewWrongFileNameError(konfig.DefaultKustomizationFileName(), path.Base(file.Name()))
+	expectedError := NewWrongFileNameError(konfig.DefaultKustomizationFileName(), filepath.Base(file.Name()))
 	err := WriteKustomization(EmptyKustomization(), file.Name())
 
 	if assert.Error(t, err, "Expected: %s", expectedError) {
@@ -154,7 +154,7 @@ func TestKustomizationPathPermError(t *testing.T) {
 // Test that no error is returned if the Kustomization file already exists
 func TestEmptyExistingKustomization(t *testing.T) {
 	testDirPath := t.TempDir()
-	writeErr := os.WriteFile(path.Join(testDirPath, "kustomization.yaml"), []byte{}, defaultFilePermissions)
+	writeErr := os.WriteFile(filepath.Join(testDirPath, "kustomization.yaml"), []byte{}, defaultFilePermissions)
 	if assert.NoError(t, writeErr) {
 		return
 	}
@@ -183,7 +183,7 @@ func TestReadConfigInvalidPath(t *testing.T) {
 // ReadConfig returns ErrPermission if the path is not accessible
 func TestReadConfigErrPermission(t *testing.T) {
 	testDirPath := t.TempDir()
-	dstPath := path.Join(testDirPath, "foo")
+	dstPath := filepath.Join(testDirPath, "foo")
 	if err := os.Mkdir(dstPath, 0); !assert.NoError(t, err) {
 		return
 	}

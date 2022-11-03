@@ -17,7 +17,7 @@ package git
 import (
 	"errors"
 	"io"
-	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/go-git/go-billy/v5"
@@ -61,7 +61,7 @@ func (f *File) Close() error {
 }
 
 func (f *File) FilePath() string {
-	return path.Clean(path.Join(".", strings.TrimPrefix(f.path, f.baseFolder)))
+	return filepath.Join(".", strings.TrimPrefix(f.path, f.baseFolder))
 }
 
 func (f *File) String() string {

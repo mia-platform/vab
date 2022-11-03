@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
+	"path/filepath"
 
 	"github.com/mia-platform/vab/internal/utils"
 	"github.com/mia-platform/vab/pkg/logger"
@@ -29,7 +29,7 @@ import (
 // Build kustomization configurations for a given groupName clusters or a single clusterName in groupName
 // based on the passed configPath
 func Build(logger logger.LogInterface, configPath string, groupName string, clusterName string, contextPath string, writer io.Writer) error {
-	cleanedContextPath := path.Clean(contextPath)
+	cleanedContextPath := filepath.Clean(contextPath)
 	contextInfo, err := os.Stat(cleanedContextPath)
 	if err != nil {
 		return err
@@ -47,7 +47,7 @@ func Build(logger logger.LogInterface, configPath string, groupName string, clus
 	logger.V(10).Writef("Found the following paths %s", targetPaths)
 	for _, clusterPath := range targetPaths {
 		fmt.Fprintf(writer, "### BUILD RESULTS FOR: %s ###\n", clusterPath)
-		targetPath := path.Join(cleanedContextPath, clusterPath)
+		targetPath := filepath.Join(cleanedContextPath, clusterPath)
 		if err := RunKustomizeBuild(targetPath, writer); err != nil {
 			logger.V(5).Writef("Error building kustomize in %s", targetPath)
 			return err

@@ -16,7 +16,7 @@ package utils
 
 const (
 	DefaultConfigFilename = "config.yaml"
-	DefaultOutputDir      = "./outputs"
+	DefaultOutputDir      = "outputs"
 	ClustersDirName       = "clusters"
 	AllGroupsDirPath      = "clusters/all-groups"
 	VendorsModulesPath    = "vendors/modules"

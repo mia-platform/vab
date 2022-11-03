@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"path"
 	"path/filepath"
 
 	"github.com/mia-platform/vab/internal/utils"
@@ -56,9 +55,9 @@ func NewProject(logger logger.LogInterface, currentPath string, optionalName str
 // ensureProjectPath will return a cleaned and complete path based on currentPath and optional name
 // ensuring that the appropriate folders are present on file system
 func ensureProjectPath(basePath string, name string) (string, error) {
-	projectPath := path.Clean(basePath)
+	projectPath := filepath.Clean(basePath)
 	if name != "" {
-		projectPath = path.Join(projectPath, name)
+		projectPath = filepath.Join(projectPath, name)
 	}
 
 	if err := os.Mkdir(projectPath, fs.ModePerm); err != nil && !errors.Is(err, fs.ErrExist) {
@@ -70,8 +69,7 @@ func ensureProjectPath(basePath string, name string) (string, error) {
 
 // createClusterOverride creates the directory structure for clusterName's overrides in the specified configPath
 func createClusterOverride(configPath string, clusterName string) error {
-	cleanedConfigPath := path.Clean(configPath)
-	clusterDir := path.Join(cleanedConfigPath, utils.ClustersDirName, clusterName)
+	clusterDir := filepath.Join(configPath, utils.ClustersDirName, clusterName)
 	if err := os.MkdirAll(clusterDir, os.ModePerm); err != nil {
 		return err
 	}
@@ -85,13 +83,12 @@ func createClusterOverride(configPath string, clusterName string) error {
 
 // initAllGroups initializes the all-groups directory
 func initAllGroups(configPath string) error {
-	cleanedConfigPath := path.Clean(configPath)
-	allGroupsDir := path.Join(cleanedConfigPath, utils.AllGroupsDirPath)
+	allGroupsDir := filepath.Join(configPath, utils.AllGroupsDirPath)
 	if err := os.MkdirAll(allGroupsDir, os.ModePerm); err != nil {
 		return fmt.Errorf("error creating path %s: %w", allGroupsDir, err)
 	}
-	basesDir := path.Join(allGroupsDir, utils.BasesDir)
-	customResourcesDir := path.Join(allGroupsDir, utils.CustomResourcesDir)
+	basesDir := filepath.Join(allGroupsDir, utils.BasesDir)
+	customResourcesDir := filepath.Join(allGroupsDir, utils.CustomResourcesDir)
 	if err := os.Mkdir(basesDir, os.ModePerm); err != nil {
 		return fmt.Errorf("error creating directory %s: %w", basesDir, err)
 	}
@@ -101,11 +98,12 @@ func initAllGroups(configPath string) error {
 	if err := utils.WriteKustomization(utils.EmptyKustomization(), basesDir); err != nil {
 		return fmt.Errorf("error writing kustomization file in %s: %w", basesDir, err)
 	}
-	if err := utils.WriteKustomization(utils.EmptyKustomization(), customResourcesDir); err != nil {
+	if err := utils.WriteKustomization(utils.EmptyComponent(), customResourcesDir); err != nil {
 		return fmt.Errorf("error writing kustomization file in %s: %w", customResourcesDir, err)
 	}
 	allGroupsKustomization := utils.EmptyKustomization()
-	allGroupsKustomization.Resources = append(allGroupsKustomization.Resources, utils.BasesDir, utils.CustomResourcesDir)
+	allGroupsKustomization.Resources = append(allGroupsKustomization.Resources, utils.BasesDir)
+	allGroupsKustomization.Components = append(allGroupsKustomization.Components, utils.CustomResourcesDir)
 	if err := utils.WriteKustomization(allGroupsKustomization, allGroupsDir); err != nil {
 		return fmt.Errorf("error writing kustomization file in %s: %w", allGroupsDir, err)
 	}

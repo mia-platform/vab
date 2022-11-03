@@ -21,7 +21,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 
 	jpl "github.com/mia-platform/jpl/deploy"
 	"github.com/mia-platform/vab/internal/git"
@@ -93,7 +93,7 @@ var _ = BeforeSuite(func() {
 		homeDir, err := os.UserHomeDir()
 		Expect(err).ToNot(HaveOccurred())
 
-		kubeConfigPath := path.Join(homeDir, ".kube/config")
+		kubeConfigPath := filepath.Join(homeDir, ".kube/config")
 
 		cluster1_cfg, err := buildConfigFromFlags("kind-vab-cluster-1", kubeConfigPath)
 		Expect(err).ToNot(HaveOccurred())
@@ -112,16 +112,16 @@ var _ = BeforeSuite(func() {
 		// initialize global paths and vars
 		testDirPath = os.TempDir()
 		// testDirPath = "."
-		projectPath = path.Join(testDirPath, testProjectName)
-		configPath = path.Join(projectPath, "config.yaml")
-		clustersDirPath = path.Join(projectPath, "clusters")
-		allGroupsDirPath = path.Join(clustersDirPath, "all-groups")
-		modulePath1 = path.Join(projectPath, "vendors", "modules", "module1-0.1.0", "flavour1")
-		moduleOverridePath1 = path.Join(projectPath, "vendors", "modules", "module1-0.1.1", "flavour1")
-		modulePath2 = path.Join(projectPath, "vendors", "modules", "module2-0.1.0", "flavour1")
-		moduleOverridePath2 = path.Join(projectPath, "vendors", "modules", "module2-0.1.1", "flavour1")
-		addOnPath = path.Join(projectPath, "vendors", "addons", "addon1-0.1.0")
-		addOnOverridePath = path.Join(projectPath, "vendors", "addons", "addon1-0.1.1")
+		projectPath = filepath.Join(testDirPath, testProjectName)
+		configPath = filepath.Join(projectPath, "config.yaml")
+		clustersDirPath = filepath.Join(projectPath, "clusters")
+		allGroupsDirPath = filepath.Join(clustersDirPath, "all-groups")
+		modulePath1 = filepath.Join(projectPath, "vendors", "modules", "module1-0.1.0", "flavour1")
+		moduleOverridePath1 = filepath.Join(projectPath, "vendors", "modules", "module1-0.1.1", "flavour1")
+		modulePath2 = filepath.Join(projectPath, "vendors", "modules", "module2-0.1.0", "flavour1")
+		moduleOverridePath2 = filepath.Join(projectPath, "vendors", "modules", "module2-0.1.1", "flavour1")
+		addOnPath = filepath.Join(projectPath, "vendors", "addons", "addon1-0.1.0")
+		addOnOverridePath = filepath.Join(projectPath, "vendors", "addons", "addon1-0.1.1")
 		depsGvr = schema.GroupVersionResource{
 			Group:    "apps",
 			Version:  "v1",
@@ -249,13 +249,13 @@ spec:
 
 			err := os.MkdirAll(modulePath1, os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(modulePath1, "example.yaml"), []byte(sampleFile1), os.ModePerm)
+			err = os.WriteFile(filepath.Join(modulePath1, "example.yaml"), []byte(sampleFile1), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(modulePath1, "project.crd.yaml"), []byte(crd1), os.ModePerm)
+			err = os.WriteFile(filepath.Join(modulePath1, "project.crd.yaml"), []byte(crd1), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(modulePath1, "foobar.crd.yaml"), []byte(brokenCrd), os.ModePerm)
+			err = os.WriteFile(filepath.Join(modulePath1, "foobar.crd.yaml"), []byte(brokenCrd), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(modulePath1, "kustomization.yaml"), []byte(moduleWithCRDsKustomization), os.ModePerm)
+			err = os.WriteFile(filepath.Join(modulePath1, "kustomization.yaml"), []byte(moduleWithCRDsKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
 			sampleFile2 := `apiVersion: apps/v1
@@ -281,13 +281,13 @@ spec:
         - containerPort: 8080`
 			err = os.MkdirAll(moduleOverridePath1, os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(moduleOverridePath1, "example.yaml"), []byte(sampleFile2), os.ModePerm)
+			err = os.WriteFile(filepath.Join(moduleOverridePath1, "example.yaml"), []byte(sampleFile2), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(moduleOverridePath1, "project.crd.yaml"), []byte(crd1), os.ModePerm)
+			err = os.WriteFile(filepath.Join(moduleOverridePath1, "project.crd.yaml"), []byte(crd1), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(moduleOverridePath1, "foobar.crd.yaml"), []byte(brokenCrd), os.ModePerm)
+			err = os.WriteFile(filepath.Join(moduleOverridePath1, "foobar.crd.yaml"), []byte(brokenCrd), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(moduleOverridePath1, "kustomization.yaml"), []byte(moduleWithCRDsKustomization), os.ModePerm)
+			err = os.WriteFile(filepath.Join(moduleOverridePath1, "kustomization.yaml"), []byte(moduleWithCRDsKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
 			err = apply.Apply(log, configPath, false, "group1", "cluster1", projectPath, options, crdDefaultRetries)
@@ -325,10 +325,10 @@ spec:
     shortNames:
     - fb`
 
-			err := os.WriteFile(path.Join(modulePath1, "foobar.crd.yaml"), []byte(crd2), os.ModePerm)
+			err := os.WriteFile(filepath.Join(modulePath1, "foobar.crd.yaml"), []byte(crd2), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
-			err = os.WriteFile(path.Join(moduleOverridePath1, "foobar.crd.yaml"), []byte(crd2), os.ModePerm)
+			err = os.WriteFile(filepath.Join(moduleOverridePath1, "foobar.crd.yaml"), []byte(crd2), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
 			err = apply.Apply(log, configPath, false, "group1", "cluster1", projectPath, options, crdDefaultRetries)
@@ -349,10 +349,10 @@ metadata:
   name: module1-flavour1
 spec:
   replicas: 2`
-			pathToCluster := path.Join(clustersDirPath, "group1", "cluster1")
-			err := os.WriteFile(path.Join(pathToCluster, "module.patch.yaml"), []byte(patch), os.ModePerm)
+			pathToCluster := filepath.Join(clustersDirPath, "group1", "cluster1")
+			err := os.WriteFile(filepath.Join(pathToCluster, "module.patch.yaml"), []byte(patch), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(pathToCluster, "kustomization.yaml"), []byte(kustomizationPatch1), os.ModePerm)
+			err = os.WriteFile(filepath.Join(pathToCluster, "kustomization.yaml"), []byte(kustomizationPatch1), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
 			err = apply.Apply(log, configPath, false, "group1", "cluster1", projectPath, options, crdDefaultRetries)
@@ -408,9 +408,9 @@ spec:
         - containerPort: 8080`
 			err := os.MkdirAll(addOnPath, os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(addOnPath, "example.yaml"), []byte(sampleFile), os.ModePerm)
+			err = os.WriteFile(filepath.Join(addOnPath, "example.yaml"), []byte(sampleFile), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(addOnPath, "kustomization.yaml"), []byte(addonKustomization), os.ModePerm)
+			err = os.WriteFile(filepath.Join(addOnPath, "kustomization.yaml"), []byte(addonKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
 			err = apply.Apply(log, configPath, false, "group1", "cluster1", projectPath, options, crdDefaultRetries)
@@ -472,9 +472,9 @@ spec:
         - containerPort: 8080`
 			err := os.MkdirAll(addOnOverridePath, os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(addOnOverridePath, "example.yaml"), []byte(sampleFile), os.ModePerm)
+			err = os.WriteFile(filepath.Join(addOnOverridePath, "example.yaml"), []byte(sampleFile), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(addOnOverridePath, "kustomization.yaml"), []byte(addonKustomization), os.ModePerm)
+			err = os.WriteFile(filepath.Join(addOnOverridePath, "kustomization.yaml"), []byte(addonKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
 			err = apply.Apply(log, configPath, false, "group1", "cluster1", projectPath, options, crdDefaultRetries)
@@ -508,10 +508,10 @@ spec:
       - name: sidecar-v2
         ports:
         - containerPort: 9000`
-			pathToCluster := path.Join(clustersDirPath, "group1", "cluster1")
-			err := os.WriteFile(path.Join(pathToCluster, "addon.patch.yaml"), []byte(patch), os.ModePerm)
+			pathToCluster := filepath.Join(clustersDirPath, "group1", "cluster1")
+			err := os.WriteFile(filepath.Join(pathToCluster, "addon.patch.yaml"), []byte(patch), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(pathToCluster, "kustomization.yaml"), []byte(kustomizationPatch2), os.ModePerm)
+			err = os.WriteFile(filepath.Join(pathToCluster, "kustomization.yaml"), []byte(kustomizationPatch2), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
 			err = sync.Sync(log, git.RealFilesGetter{}, configPath, projectPath, true)
@@ -607,9 +607,9 @@ spec:
         - containerPort: 8080`
 			err := os.MkdirAll(modulePath2, os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(modulePath2, "example.yaml"), []byte(sampleFile1), os.ModePerm)
+			err = os.WriteFile(filepath.Join(modulePath2, "example.yaml"), []byte(sampleFile1), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(modulePath2, "kustomization.yaml"), []byte(sipleModuleKustomization), os.ModePerm)
+			err = os.WriteFile(filepath.Join(modulePath2, "kustomization.yaml"), []byte(sipleModuleKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
 			sampleFile2 := `apiVersion: apps/v1
@@ -635,9 +635,9 @@ spec:
         - containerPort: 8080`
 			err = os.MkdirAll(moduleOverridePath2, os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(moduleOverridePath2, "example.yaml"), []byte(sampleFile2), os.ModePerm)
+			err = os.WriteFile(filepath.Join(moduleOverridePath2, "example.yaml"), []byte(sampleFile2), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.WriteFile(path.Join(moduleOverridePath2, "kustomization.yaml"), []byte(sipleModuleKustomization), os.ModePerm)
+			err = os.WriteFile(filepath.Join(moduleOverridePath2, "kustomization.yaml"), []byte(sipleModuleKustomization), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
 			err = apply.Apply(log, configPath, false, "group1", "", projectPath, options, crdDefaultRetries)

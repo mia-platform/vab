@@ -18,7 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"golang.org/x/exp/slices"
@@ -49,12 +49,12 @@ func BuildPaths(configPath string, groupName string, clusterName string) ([]stri
 		if clusterIdx == -1 {
 			return nil, errors.New("Cluster " + clusterName + " not found in configuration")
 		}
-		targetPaths = append(targetPaths, path.Join(ClustersDirName, groupName, clusterName))
+		targetPaths = append(targetPaths, filepath.Join(ClustersDirName, groupName, clusterName))
 	} else {
 		// If no cluster is specified and the group exists, return all the paths to
 		// the clusters in the group.
 		for _, cluster := range group.Clusters {
-			targetPaths = append(targetPaths, path.Join(ClustersDirName, groupName, cluster.Name))
+			targetPaths = append(targetPaths, filepath.Join(ClustersDirName, groupName, cluster.Name))
 		}
 	}
 

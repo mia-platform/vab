@@ -18,7 +18,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 
 	"github.com/mia-platform/vab/internal/git"
 )
@@ -26,18 +26,18 @@ import (
 // WritePkgToDir writes the files in memory to the target path on disk
 func WritePkgToDir(files []*git.File, targetPath string) error {
 	for _, gitFile := range files {
-		err := os.MkdirAll(path.Dir(path.Join(targetPath, gitFile.FilePath())), os.ModePerm)
+		err := os.MkdirAll(filepath.Dir(filepath.Join(targetPath, gitFile.FilePath())), os.ModePerm)
 		if err != nil {
-			return fmt.Errorf("error creating directory: %s : %w", path.Dir(gitFile.FilePath()), err)
+			return fmt.Errorf("error creating directory: %s : %w", filepath.Dir(gitFile.FilePath()), err)
 		}
 
 		err = gitFile.Open()
 		if err != nil {
 			return fmt.Errorf("error opening file: %s : %w", gitFile.String(), err)
 		}
-		outFile, err := os.Create(path.Join(targetPath, gitFile.FilePath()))
+		outFile, err := os.Create(filepath.Join(targetPath, gitFile.FilePath()))
 		if err != nil {
-			return fmt.Errorf("error opening file: %s : %w", path.Join(targetPath, gitFile.FilePath()), err)
+			return fmt.Errorf("error opening file: %s : %w", filepath.Join(targetPath, gitFile.FilePath()), err)
 		}
 
 		r := bufio.NewReader(gitFile)

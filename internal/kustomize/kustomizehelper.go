@@ -18,10 +18,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"sort"
-	"strings"
 
 	"github.com/mia-platform/vab/internal/utils"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
@@ -30,47 +28,83 @@ import (
 	kustomize "sigs.k8s.io/kustomize/api/types"
 )
 
-// SyncKustomizeResources updates the clusters' kustomization resources to the latest sync
-func SyncKustomizeResources(modules *map[string]v1alpha1.Package, addons *map[string]v1alpha1.Package, k kustomize.Kustomization, targetPath string) *kustomize.Kustomization {
-	modulesList := getSortedPackagesList(modules, targetPath, utils.VendorsModulesPath)
-	addonsList := getSortedPackagesList(addons, targetPath, utils.VendorsAddOnsPath)
-
-	// If the file already includes a non-empty list of resources, this function
-	// collects all the custom modules that were added manually by the user
-	// (i.e. all those modules that are not present in the vendors folder, thus
-	// without "vendors" in their path). Then, the custom modules are appended
-	// to the updated modules list that will substitute the already existing one.
-	if k.Resources != nil {
-		// since we are overriding the vendors we need to drop the references to the
-		// vendors contained in all-groups/bases
-		// if the only resource in the kustomization is the whole all-groups directory,
-		// change it to point to the custom-resources directory only
-		if len(k.Resources) == 1 && k.Resources[0] == "../../../all-groups" {
-			k.Resources[0] = "../../../all-groups/custom-resources"
-		}
-		for _, r := range k.Resources {
-			if !strings.Contains(r, "vendors/") {
-				modulesList = append(modulesList, r)
-			}
-		}
-		for _, r := range k.Components {
-			if !strings.Contains(r, "vendors/") {
-				addonsList = append(addonsList, r)
-			}
-		}
+// SyncKustomization read the kustomization file ath path and sync its resources and components properties with
+// the content of modules and addOns
+func SyncAllClusterKustomization(basePath string, modules, addOns map[string]v1alpha1.Package) error {
+	allGroupsPath := filepath.Join(basePath, utils.AllGroupsDirPath, utils.BasesDir)
+	kustomization, err := ReadKustomization(allGroupsPath)
+	if err != nil {
+		return fmt.Errorf("failed to read kustomization at path %s: %w", allGroupsPath, err)
 	}
 
-	k.Resources = modulesList
-	k.Components = addonsList
+	resources, err := sortedPackagesPathList(modules, allGroupsPath, filepath.Join(basePath, utils.VendorsModulesPath))
+	if err != nil {
+		return fmt.Errorf("failed to create a sorted list for modules: %w", err)
+	}
 
-	return &k
+	components, err := sortedPackagesPathList(addOns, allGroupsPath, filepath.Join(basePath, utils.VendorsAddOnsPath))
+	if err != nil {
+		return fmt.Errorf("failed to create a sorted list for addons: %w", err)
+	}
+
+	kustomization.Resources = resources
+	kustomization.Components = components
+
+	if err := utils.WriteKustomization(*kustomization, allGroupsPath); err != nil {
+		return fmt.Errorf("failed to write kustomization at path %s: %w", allGroupsPath, err)
+	}
+	return nil
 }
 
-// getSortedPackagesList returns the list of modules names in lexicographic order.
-func getSortedPackagesList(packages *map[string]v1alpha1.Package, targetPath string, basePath string) []string {
-	sordtedList := make([]string, 0, len(*packages))
+// SyncKustomization read the kustomization file ath path and sync its resources and components properties with
+// the content of modules and addOns specifically for clusters
+func SyncClusterKustomization(basePath, clusterPath string, modules, addOns map[string]v1alpha1.Package) error {
+	kustomization, err := ReadKustomization(clusterPath)
+	if err != nil {
+		return fmt.Errorf("failed to read kustomization at path %s: %w", clusterPath, err)
+	}
 
-	for name, pkg := range *packages {
+	var resources, components []string
+	allGroupsDirPath := filepath.Join(basePath, utils.AllGroupsDirPath)
+	if len(modules) == 0 && len(addOns) == 0 {
+		allGroupsPath, err := filepath.Rel(clusterPath, allGroupsDirPath)
+		if err != nil {
+			return fmt.Errorf("failed to create link to all groups bases: %w", err)
+		}
+		resources = []string{allGroupsPath}
+	} else {
+		resources, err = sortedPackagesPathList(modules, clusterPath, filepath.Join(basePath, utils.VendorsModulesPath))
+		if err != nil {
+			return fmt.Errorf("failed to create a sorted list for modules: %w", err)
+		}
+
+		components, err = sortedPackagesPathList(addOns, clusterPath, filepath.Join(basePath, utils.VendorsAddOnsPath))
+		if err != nil {
+			return fmt.Errorf("failed to create a sorted list for addons: %w", err)
+		}
+
+		customResourcePath := filepath.Join(allGroupsDirPath, utils.CustomResourcesDir)
+		customResourceseRelativePath, err := filepath.Rel(clusterPath, customResourcePath)
+		if err != nil {
+			return fmt.Errorf("failed to create link to all custom resources: %w", err)
+		}
+		components = append(components, customResourceseRelativePath)
+	}
+
+	kustomization.Resources = resources
+	kustomization.Components = components
+
+	if err := utils.WriteKustomization(*kustomization, clusterPath); err != nil {
+		return fmt.Errorf("failed to write kustomization at path %s: %w", clusterPath, err)
+	}
+	return nil
+}
+
+// sortedPackagesPathList return a sorted array of path for the given packages map with paths relative to basePath
+func sortedPackagesPathList(packages map[string]v1alpha1.Package, basePath, targetPath string) ([]string, error) {
+	sortedList := make([]string, 0)
+
+	for name, pkg := range packages {
 		if !pkg.Disable {
 			var pkgPath string
 			if pkg.IsModule() {
@@ -78,15 +112,19 @@ func getSortedPackagesList(packages *map[string]v1alpha1.Package, targetPath str
 			} else {
 				pkgPath = name
 			}
-			sordtedList = append(sordtedList, pkgPath)
+			modulePath, err := filepath.Rel(basePath, filepath.Join(targetPath, pkgPath))
+			if err != nil {
+				return nil, err
+			}
+			sortedList = append(sortedList, modulePath)
 		}
 	}
 
-	sort.SliceStable(sordtedList, func(i, j int) bool {
-		return sordtedList[i] < sordtedList[j]
+	sort.SliceStable(sortedList, func(i, j int) bool {
+		return sortedList[i] < sortedList[j]
 	})
 
-	return *fixResourcesPath(sordtedList, targetPath, basePath)
+	return sortedList, nil
 }
 
 // ReadKustomization reads a kustomization file given its path
@@ -114,20 +152,11 @@ func ReadKustomization(targetPath string) (*kustomize.Kustomization, error) {
 	return output, nil
 }
 
-// fixResourcesPath returns the list of resources with the actual path
-func fixResourcesPath(resourcesList []string, targetPath string, basePath string) *[]string {
-	fixedResourcesList := make([]string, 0, len(resourcesList))
-	for _, res := range resourcesList {
-		fixedResourcesList = append(fixedResourcesList, getVendorPackageRelativePath(targetPath, path.Join(basePath, res)))
-	}
-	return &fixedResourcesList
-}
-
 // getKustomizationFilePath checks if a kustomization file exists and creates it if missing,
 // initializing the TypeMeta fields
 func getKustomizationFilePath(targetPath string) (string, error) {
 	for _, validFileName := range konfig.RecognizedKustomizationFileNames() {
-		kustomizationPath := path.Join(targetPath, validFileName)
+		kustomizationPath := filepath.Join(targetPath, validFileName)
 		_, err := os.Stat(kustomizationPath)
 		switch {
 		case err == nil:
@@ -140,7 +169,7 @@ func getKustomizationFilePath(targetPath string) (string, error) {
 	}
 	// If the execution gets here, it means that no kustomization file with a valid name
 	// was found. A new kustomization file is created (with initialized TypeMeta)
-	kustomizationPath := path.Join(targetPath, konfig.DefaultKustomizationFileName())
+	kustomizationPath := filepath.Join(targetPath, konfig.DefaultKustomizationFileName())
 	newKustomization := utils.EmptyKustomization()
 	newKustomization.TypeMeta = kustomize.TypeMeta{
 		Kind:       kustomize.KustomizationKind,
@@ -150,18 +179,6 @@ func getKustomizationFilePath(targetPath string) (string, error) {
 		return "", fmt.Errorf("error writing kustomization file %s: %w", targetPath, err)
 	}
 	return kustomizationPath, nil
-}
-
-// getVendorPackageRelativePath returns the relative path to the vendor package
-// for the Kustomization file
-func getVendorPackageRelativePath(targetPath string, pkgPath string) string {
-	var vendorPackageRelativePath string
-	if strings.Contains(targetPath, utils.AllGroupsDirPath) {
-		vendorPackageRelativePath = path.Join("..", "..", "..", pkgPath)
-	} else {
-		vendorPackageRelativePath = path.Join("..", "..", "..", "..", pkgPath)
-	}
-	return vendorPackageRelativePath
 }
 
 // PackagesMapForPaths return the package map with key the disk path for kustomize

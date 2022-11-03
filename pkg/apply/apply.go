@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -50,7 +50,7 @@ var (
 
 // Apply builds the cluster resources and applies them by calling the jpl deploy function
 func Apply(logger logger.LogInterface, configPath string, isDryRun bool, groupName string, clusterName string, contextPath string, options *jpl.Options, crdStatusCheckRetries int) error {
-	cleanedContextPath := path.Clean(contextPath)
+	cleanedContextPath := filepath.Clean(contextPath)
 	contextInfo, err := os.Stat(cleanedContextPath)
 	if err != nil {
 		return err
@@ -67,7 +67,7 @@ func Apply(logger logger.LogInterface, configPath string, isDryRun bool, groupNa
 		pathArray := strings.Split(clusterPath, "/")
 		cluster := pathArray[len(pathArray)-1]
 
-		targetPath := path.Join(cleanedContextPath, clusterPath)
+		targetPath := filepath.Join(cleanedContextPath, clusterPath)
 		if err := vabBuild.RunKustomizeBuild(targetPath, buffer); err != nil {
 			logger.V(5).Writef("Error building kustomize in %s", targetPath)
 			return err

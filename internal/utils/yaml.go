@@ -19,7 +19,6 @@ import (
 	"errors"
 	"io/fs"
 	"os"
-	"path"
 	"path/filepath"
 
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
@@ -94,7 +93,7 @@ func WriteConfig(config v1alpha1.ClustersConfiguration, dirOrFilePath string) er
 
 	var dstPath string
 	if err == nil && dirOrFile.IsDir() {
-		dstPath = path.Join(dirOrFilePath, DefaultConfigFilename)
+		dstPath = filepath.Join(dirOrFilePath, DefaultConfigFilename)
 	} else {
 		dstPath = dirOrFilePath
 	}
@@ -114,7 +113,7 @@ func WriteKustomization(kustomization kustomize.Kustomization, dirOrFilePath str
 	var dstPathCond bool
 	switch dstPathCond {
 	case dstPathCond == (err == nil && dirOrFile.IsDir()):
-		dstPath = path.Join(dirOrFilePath, konfig.DefaultKustomizationFileName())
+		dstPath = filepath.Join(dirOrFilePath, konfig.DefaultKustomizationFileName())
 	case dstPathCond == (!slices.Contains(konfig.RecognizedKustomizationFileNames(), filepath.Base(dirOrFilePath))):
 		return NewWrongFileNameError(konfig.DefaultKustomizationFileName(), filepath.Base(dirOrFilePath))
 	default:
@@ -128,6 +127,15 @@ func WriteKustomization(kustomization kustomize.Kustomization, dirOrFilePath str
 func EmptyKustomization() kustomize.Kustomization {
 	// mini hack for generating a valid kustomization structure as kustomize intend
 	empty := kustomize.Kustomization{}
+	empty.FixKustomizationPostUnmarshalling()
+	return empty
+}
+
+// EmptyKustomization return a valid empty kustomization with valid kind and apiVersion fields
+func EmptyComponent() kustomize.Kustomization {
+	// mini hack for generating a valid kustomization structure as kustomize intend
+	empty := kustomize.Kustomization{}
+	empty.Kind = kustomize.ComponentKind
 	empty.FixKustomizationPostUnmarshalling()
 	return empty
 }

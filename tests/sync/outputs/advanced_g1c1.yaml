@@ -6,3 +6,4 @@ resources:
 components:
   - ../../../../vendors/addons/category/test-addon1-1.0.0
   - ../../../../vendors/addons/category/test-addon2-1.0.0
+  - ../../../all-groups/custom-resources

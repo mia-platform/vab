@@ -19,7 +19,7 @@ package utils
 
 import (
 	"os"
-	"path"
+	"path/filepath"
 	"testing"
 
 	"github.com/mia-platform/vab/internal/testutils"
@@ -35,7 +35,7 @@ func TestGetClusterPath(t *testing.T) {
 	configPath := testutils.GetTestFile("utils", testGroupsFile)
 	buildPath, err := BuildPaths(configPath, testutils.TestGroupName1, testutils.TestClusterName1)
 	if assert.NoError(t, err) {
-		expectedPath := path.Join(ClustersDirName, testutils.TestGroupName1, testutils.TestClusterName1)
+		expectedPath := filepath.Join(ClustersDirName, testutils.TestGroupName1, testutils.TestClusterName1)
 		assert.Equal(t, buildPath[0], expectedPath)
 	}
 }
@@ -46,8 +46,8 @@ func TestGetGroupPath(t *testing.T) {
 	buildPaths, err := BuildPaths(configPath, testutils.TestGroupName1, "")
 	assert.Nil(t, err, err)
 	if assert.NoError(t, err) {
-		clusterPath1 := path.Join(ClustersDirName, testutils.TestGroupName1, testutils.TestClusterName1)
-		clusterPath2 := path.Join(ClustersDirName, testutils.TestGroupName1, testutils.TestClusterName2)
+		clusterPath1 := filepath.Join(ClustersDirName, testutils.TestGroupName1, testutils.TestClusterName1)
+		clusterPath2 := filepath.Join(ClustersDirName, testutils.TestGroupName1, testutils.TestClusterName2)
 		expectedPaths := []string{clusterPath1, clusterPath2}
 		assert.Equal(t, buildPaths, expectedPaths, "Unexpected paths. Expected: %v, actual: %v", expectedPaths, buildPaths)
 	}
@@ -74,7 +74,7 @@ func TestBuildPathsWrongCluster(t *testing.T) {
 // ValidatePath creates the correct path if missing
 func TestValidateMissingPath(t *testing.T) {
 	testDirPath := t.TempDir()
-	expectedPath := path.Join(testDirPath, "dir", "another_dir")
+	expectedPath := filepath.Join(testDirPath, "dir", "another_dir")
 	err := ValidatePath(expectedPath)
 	if !assert.NoError(t, err) {
 		return
@@ -85,7 +85,7 @@ func TestValidateMissingPath(t *testing.T) {
 // ValidatePath returns no error if the path exists
 func TestValidateExistingPath(t *testing.T) {
 	testDirPath := t.TempDir()
-	expectedPath := path.Join(testDirPath, "dir", "another_dir")
+	expectedPath := filepath.Join(testDirPath, "dir", "another_dir")
 	if err := os.MkdirAll(expectedPath, os.ModePerm); err != nil {
 		return
 	}

@@ -20,7 +20,7 @@ package init
 import (
 	"io/fs"
 	"os"
-	"path"
+	"path/filepath"
 	"testing"
 
 	"github.com/dchest/uniuri"
@@ -48,7 +48,7 @@ func TestCurrentPath(t *testing.T) {
 // Return path of a new project directory named "foo"
 func TestNewProjectPath(t *testing.T) {
 	testDirPath := t.TempDir()
-	expectedPath := path.Join(testDirPath, testName)
+	expectedPath := filepath.Join(testDirPath, testName)
 	dstPath, err := ensureProjectPath(testDirPath, testName)
 
 	if assert.NoError(t, err) {
@@ -88,7 +88,7 @@ func TestNewPathErrPermission(t *testing.T) {
 // If a directory with the specified name already exists, return the path to that directory
 func TestNewExistingPath(t *testing.T) {
 	testDirPath := t.TempDir()
-	expectedPath := path.Join(testDirPath, testName)
+	expectedPath := filepath.Join(testDirPath, testName)
 	if err := os.Mkdir(expectedPath, fs.ModePerm); !assert.NoError(t, err) {
 		return
 	}
@@ -102,7 +102,7 @@ func TestNewExistingPath(t *testing.T) {
 // Test that the directory for the new cluster is created correctly with its empty kustomization.yaml
 func TestNewClusterOverride(t *testing.T) {
 	testDirPath := t.TempDir()
-	if err := os.Mkdir(path.Join(testDirPath, utils.ClustersDirName), fs.ModePerm); !assert.NoError(t, err) {
+	if err := os.Mkdir(filepath.Join(testDirPath, utils.ClustersDirName), fs.ModePerm); !assert.NoError(t, err) {
 		return
 	}
 
@@ -111,7 +111,7 @@ func TestNewClusterOverride(t *testing.T) {
 		return
 	}
 
-	kustomizationPath := path.Join(testDirPath, utils.ClustersDirName, randomName, konfig.DefaultKustomizationFileName())
+	kustomizationPath := filepath.Join(testDirPath, utils.ClustersDirName, randomName, konfig.DefaultKustomizationFileName())
 	_, err := os.Stat(kustomizationPath)
 	assert.NoError(t, err)
 }
@@ -127,7 +127,7 @@ func TestMissingClustersDirectory(t *testing.T) {
 // Return ErrPermission if if access to the path is denied
 func TestNewClusterErrPermission(t *testing.T) {
 	testDirPath := t.TempDir()
-	if err := os.Mkdir(path.Join(testDirPath, utils.ClustersDirName), 0); assert.NoError(t, err) {
+	if err := os.Mkdir(filepath.Join(testDirPath, utils.ClustersDirName), 0); assert.NoError(t, err) {
 		return
 	}
 
@@ -155,7 +155,7 @@ func TestMissingClustersDirErrPermission(t *testing.T) {
 func TestInitProject(t *testing.T) {
 	testDirPath := t.TempDir()
 	testProjectName := "foo"
-	expectedProjectPath := path.Join(testDirPath, testProjectName)
+	expectedProjectPath := filepath.Join(testDirPath, testProjectName)
 	logger := logger.DisabledLogger{}
 	err := NewProject(logger, testDirPath, testProjectName)
 
@@ -163,7 +163,7 @@ func TestInitProject(t *testing.T) {
 		return
 	}
 
-	expectedConfigPath := path.Join(expectedProjectPath, utils.DefaultConfigFilename)
+	expectedConfigPath := filepath.Join(expectedProjectPath, utils.DefaultConfigFilename)
 	_, err = os.Stat(expectedConfigPath)
 	if !assert.NoError(t, err) {
 		return
@@ -173,7 +173,7 @@ func TestInitProject(t *testing.T) {
 
 	if assert.NoError(t, err) {
 		assert.Equal(t, config.Name, testProjectName, "Unexpected project name")
-		_, err = os.Stat(path.Join(expectedProjectPath, utils.ClustersDirName, "all-groups", konfig.DefaultKustomizationFileName()))
+		_, err = os.Stat(filepath.Join(expectedProjectPath, utils.ClustersDirName, "all-groups", konfig.DefaultKustomizationFileName()))
 		assert.NoError(t, err)
 	}
 }
@@ -185,12 +185,12 @@ func TestInitAllGroups(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	basesDir := path.Join(testDirPath, utils.AllGroupsDirPath, utils.BasesDir)
-	customResourcesDir := path.Join(testDirPath, utils.AllGroupsDirPath, utils.CustomResourcesDir)
+	basesDir := filepath.Join(testDirPath, utils.AllGroupsDirPath, utils.BasesDir)
+	customResourcesDir := filepath.Join(testDirPath, utils.AllGroupsDirPath, utils.CustomResourcesDir)
 	assert.DirExists(t, basesDir, "The bases directory does not exist")
 	assert.DirExists(t, customResourcesDir, "The custom-resources directory does not exist")
 
-	allGroupsKustomizationPath := path.Join(testDirPath, utils.AllGroupsDirPath, konfig.DefaultKustomizationFileName())
+	allGroupsKustomizationPath := filepath.Join(testDirPath, utils.AllGroupsDirPath, konfig.DefaultKustomizationFileName())
 	assert.FileExists(t, allGroupsKustomizationPath, "Missing kustomization file in the all-groups directory")
 	expectedKustomization, err := os.ReadFile(testutils.GetTestFile("init", "all_groups_kustomization.yaml"))
 	if !assert.NoError(t, err) {
@@ -202,9 +202,9 @@ func TestInitAllGroups(t *testing.T) {
 	}
 	assert.Equal(t, expectedKustomization, actualKustomization, "Unexpected file content")
 
-	basesDirKustomizationPath := path.Join(basesDir, konfig.DefaultKustomizationFileName())
+	basesDirKustomizationPath := filepath.Join(basesDir, konfig.DefaultKustomizationFileName())
 	assert.FileExists(t, basesDirKustomizationPath, "Missing kustomization file in the bases directory")
 
-	customResourcesKustomizationPath := path.Join(customResourcesDir, konfig.DefaultKustomizationFileName())
+	customResourcesKustomizationPath := filepath.Join(customResourcesDir, konfig.DefaultKustomizationFileName())
 	assert.FileExists(t, customResourcesKustomizationPath, "Missing kustomization file in the custom-resources directory")
 }

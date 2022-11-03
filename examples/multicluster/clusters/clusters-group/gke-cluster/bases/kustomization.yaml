@@ -19,3 +19,4 @@ components:
   - ../../../../vendors/addons/prometheus-operator/monitoring-stack-v0.0.1
   - ../../../../vendors/addons/prometheus-operator/rbac-manager-v0.0.1
   - ../../../../vendors/addons/prometheus-operator/traefik-v0.0.2
+  - ../../../all-groups/custom-resources

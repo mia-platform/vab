@@ -16,16 +16,15 @@ package sync
 
 import (
 	"fmt"
-	"path"
-	"strings"
+	"path/filepath"
 
 	"github.com/mia-platform/vab/internal/git"
 	kustomizehelper "github.com/mia-platform/vab/internal/kustomize"
 	"github.com/mia-platform/vab/internal/utils"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"github.com/mia-platform/vab/pkg/logger"
+	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
-	"sigs.k8s.io/kustomize/api/types"
 )
 
 // Sync synchronizes modules and add-ons to the latest configuration
@@ -35,29 +34,83 @@ func Sync(logger logger.LogInterface, filesGetter git.FilesGetter, configPath st
 	if err != nil {
 		return fmt.Errorf("sync error: %w", err)
 	}
-	defaultModules := kustomizehelper.PackagesMapForPaths(config.Spec.Modules)
-	logger.V(5).Writef("modules:", defaultModules)
-	defaultAddOns := kustomizehelper.PackagesMapForPaths(config.Spec.AddOns)
-	logger.V(5).Writef("addons:", defaultAddOns)
 
-	// update the default bases in the all-groups directory
-	if err := UpdateBases(logger, filesGetter, basePath, path.Join(basePath, utils.AllGroupsDirPath), defaultModules, defaultAddOns, config, dryRun); err != nil {
-		return fmt.Errorf("error updating kustomize bases for all-groups: %w", err)
-	}
-	// synchronize clusters to the latest configuration
-	if err := UpdateClusters(logger, filesGetter, config, basePath, dryRun); err != nil {
-		return fmt.Errorf("error syncing clusters: %w", err)
+	if err := syncAllGroups(config, basePath); err != nil {
+		return err
 	}
 
+	if err := syncClusters(config, basePath); err != nil {
+		return err
+	}
+
+	if err := downloadPackages(logger, config, basePath, filesGetter, dryRun); err != nil {
+		return err
+	}
 	return nil
 }
 
-// DownloadPackages download to targetPath packages using filesGetter
-func DownloadPackages(logger logger.LogInterface, packages map[string]v1alpha1.Package, targetPath string, filesGetter git.FilesGetter) error {
-	for name, pkg := range packages {
-		if pkg.Disable {
-			continue
+func syncAllGroups(config *v1alpha1.ClustersConfiguration, basePath string) error {
+	defaultModules := kustomizehelper.PackagesMapForPaths(config.Spec.Modules)
+	defaultAddOns := kustomizehelper.PackagesMapForPaths(config.Spec.AddOns)
+
+	if err := kustomizehelper.SyncAllClusterKustomization(basePath, defaultModules, defaultAddOns); err != nil {
+		return fmt.Errorf("error updating all-groups kustomize file: %w", err)
+	}
+	return nil
+}
+
+func syncClusters(config *v1alpha1.ClustersConfiguration, basePath string) error {
+	groups := config.Spec.Groups
+	modules := config.Spec.Modules
+	addons := config.Spec.AddOns
+
+	for _, group := range groups {
+		for _, cluster := range group.Clusters {
+			fullClusterName := filepath.Join(group.Name, cluster.Name)
+			clusterPath, err := checkClusterPath(fullClusterName, basePath)
+			if err != nil {
+				return fmt.Errorf("error retrieving path for cluster %s: %w", fullClusterName, err)
+			}
+
+			var clusterModules, clusterAddOns map[string]v1alpha1.Package
+			if len(cluster.Modules) == 0 && len(cluster.AddOns) == 0 {
+				clusterModules = make(map[string]v1alpha1.Package, 0)
+				clusterAddOns = make(map[string]v1alpha1.Package, 0)
+			} else {
+				clusterModules = mergePackages(modules, cluster.Modules)
+				clusterAddOns = mergePackages(addons, cluster.AddOns)
+			}
+
+			clusterBasePath := filepath.Join(clusterPath, utils.BasesDir)
+			if err := kustomizehelper.SyncClusterKustomization(basePath, clusterBasePath, clusterModules, clusterAddOns); err != nil {
+				return fmt.Errorf("error updating %s cluster kustomize file: %w", fullClusterName, err)
+			}
 		}
+	}
+	return nil
+}
+
+func downloadPackages(logger logger.LogInterface, config *v1alpha1.ClustersConfiguration, path string, filesGetter git.FilesGetter, dryRun bool) error {
+	if dryRun {
+		return nil
+	}
+
+	mergedPackages := make(map[string]v1alpha1.Package)
+	maps.Copy(mergedPackages, config.Spec.Modules)
+	maps.Copy(mergedPackages, config.Spec.AddOns)
+	for _, group := range config.Spec.Groups {
+		for _, cluster := range group.Clusters {
+			maps.Copy(mergedPackages, cluster.Modules)
+			maps.Copy(mergedPackages, cluster.AddOns)
+		}
+	}
+
+	return clonePackagesLocally(logger, mergedPackages, path, filesGetter)
+}
+
+// clonePackagesLocally download packages using filesGetter
+func clonePackagesLocally(logger logger.LogInterface, packages map[string]v1alpha1.Package, path string, filesGetter git.FilesGetter) error {
+	for name, pkg := range packages {
 		files, err := ClonePackages(logger, pkg, filesGetter)
 		if err != nil {
 			return fmt.Errorf("error cloning packages for %s %s: %w", pkg.PackageType(), name, err)
@@ -69,7 +122,8 @@ func DownloadPackages(logger logger.LogInterface, packages map[string]v1alpha1.P
 		} else {
 			vendorsPath = utils.VendorsAddOnsPath
 		}
-		pkgPath := path.Join(targetPath, vendorsPath, name)
+
+		pkgPath := filepath.Join(path, vendorsPath, name)
 		logger.V(10).Writef("disk path for package %s: %s", name, pkgPath)
 		if err := MoveToDisk(logger, files, name, pkgPath); err != nil {
 			return fmt.Errorf("error moving packages to disk for %s %s: %w", pkg.PackageType(), name, err)
@@ -100,58 +154,11 @@ func MoveToDisk(logger logger.LogInterface, files []*git.File, packageName strin
 	return nil
 }
 
-// UpdateBases updates the kustomize bases in the target path
-func UpdateBases(logger logger.LogInterface, filesGetter git.FilesGetter, basePath string, targetPath string, modules map[string]v1alpha1.Package, addons map[string]v1alpha1.Package, config *v1alpha1.ClustersConfiguration, dryRun bool) error {
-	targetKustomizationPath := path.Join(targetPath, utils.BasesDir)
-	kustomization, err := kustomizehelper.ReadKustomization(targetKustomizationPath)
-	if err != nil {
-		return fmt.Errorf("error reading kustomization file for %s: %w", targetPath, err)
-	}
-	var syncedKustomization types.Kustomization
-	// if modules and add-ons are nil and the path does not contains "clusters/all-groups",
-	// the target is a cluster that does not override the default configuration
-	if modules == nil && addons == nil && !strings.Contains(targetPath, utils.AllGroupsDirPath) {
-		// overwrite the kustomization to contain only the path to all-groups
-		syncedKustomization = utils.EmptyKustomization()
-		syncedKustomization.Resources = append(syncedKustomization.Resources, "../../../all-groups")
-		// in any other case we need to explicitly list the resources,
-		// whether it is the all-groups configuration or a single cluster override
-	} else {
-		// NB: one between the lists of modules and add-ons overrides may still be nil.
-		// If that's the case, assign the default list of relative packages to
-		// overwrite the corresponding kustomization
-		if modules == nil {
-			modules = kustomizehelper.PackagesMapForPaths(config.Spec.DeepCopy().Modules)
-		}
-		if addons == nil {
-			addons = kustomizehelper.PackagesMapForPaths(config.Spec.DeepCopy().AddOns)
-		}
-		syncedKustomization = *kustomizehelper.SyncKustomizeResources(&modules, &addons, *kustomization, targetPath)
-	}
-
-	// if dryRun is true, skip modules and addons update (ClonePackages + MoveToDisk)
-	if dryRun {
-		logger.Warn().Writef("Dry-run mode enabled, skipping package cloning for %s. The following packages may be missing in the vendors directory.\nSkipped modules: %+v\nSkipped add-ons: %+v",
-			targetPath, modules, addons)
-	} else {
-		if err := DownloadPackages(logger, modules, basePath, filesGetter); err != nil {
-			return fmt.Errorf("error syncing default modules %+v: %w", modules, err)
-		}
-		if err := DownloadPackages(logger, addons, basePath, filesGetter); err != nil {
-			return fmt.Errorf("error syncing default add-ons %+v: %w", addons, err)
-		}
-	}
-	if err := utils.WriteKustomization(syncedKustomization, targetKustomizationPath); err != nil {
-		return fmt.Errorf("error writing kustomization in path %s: %w", targetKustomizationPath, err)
-	}
-	return nil
-}
-
-// CheckClusterPath returns the path to the cluster folder, or creates it if it does not exist;
+// checkClusterPath returns the path to the cluster folder, or creates it if it does not exist;
 // it also initializes the cluster kustomization file for the user
 // clusterName must be <group-name>/<cluster-name>
-func CheckClusterPath(clusterName string, basePath string) (string, error) {
-	clusterPath := path.Join(basePath, utils.ClustersDirName, clusterName)
+func checkClusterPath(clusterName string, basePath string) (string, error) {
+	clusterPath := filepath.Join(basePath, utils.ClustersDirName, clusterName)
 	if err := utils.ValidatePath(clusterPath); err != nil {
 		return "", fmt.Errorf("error validating cluster path %s: %w", clusterPath, err)
 	}
@@ -169,42 +176,19 @@ func CheckClusterPath(clusterName string, basePath string) (string, error) {
 	return clusterPath, nil
 }
 
-// UpdateClusters synchronizes the clusters to the latest configuration
-func UpdateClusters(logger logger.LogInterface, filesGetter git.FilesGetter, config *v1alpha1.ClustersConfiguration, basePath string, dryRun bool) error {
-	groups := config.Spec.Groups
-	for _, group := range groups {
-		for _, cluster := range group.Clusters {
-			fullClusterName := path.Join(group.Name, cluster.Name)
-			clusterPath, err := CheckClusterPath(fullClusterName, basePath)
-			if err != nil {
-				return fmt.Errorf("error retrieving path for cluster %s: %w", fullClusterName, err)
-			}
-			syncedModules := MergePackages(config.Spec.DeepCopy().Modules, cluster.Modules)
-			syncedAddOns := MergePackages(config.Spec.DeepCopy().AddOns, cluster.AddOns)
-			if err := UpdateBases(logger, filesGetter, basePath, clusterPath, syncedModules, syncedAddOns, config, dryRun); err != nil {
-				return fmt.Errorf("error updating kustomize bases for cluster %s: %w", fullClusterName, err)
-			}
-		}
-	}
-	return nil
-}
-
-// MergePackages return a map of merged packages excluding disabled ones, if second has no elements return nil
-func MergePackages(first map[string]v1alpha1.Package, second map[string]v1alpha1.Package) map[string]v1alpha1.Package {
-	// return nil if there is no elements in the second map
-	if len(second) == 0 {
-		return nil
-	}
-
+// mergePackages return a map of merged packages excluding disabled ones, if second has no elements return nil
+func mergePackages(first, second map[string]v1alpha1.Package) map[string]v1alpha1.Package {
+	mergedMap := make(map[string]v1alpha1.Package)
+	maps.Copy(mergedMap, first)
 	for name, pkg := range second {
 		// if the current package is disabled and is present inside the first map remove it, if not override the value
-		if _, exists := first[name]; exists && pkg.Disable {
-			delete(first, name)
+		if _, exists := mergedMap[name]; exists && pkg.Disable {
+			delete(mergedMap, name)
 		} else {
-			first[name] = pkg
+			mergedMap[name] = pkg
 		}
 	}
 
 	// return the list of packages with the on disk path as key
-	return kustomizehelper.PackagesMapForPaths(first)
+	return kustomizehelper.PackagesMapForPaths(mergedMap)
 }

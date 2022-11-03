@@ -17,7 +17,7 @@ package testutils
 import (
 	"io/fs"
 	"os"
-	"path"
+	"path/filepath"
 	"testing"
 
 	"github.com/go-git/go-billy/v5"
@@ -51,7 +51,7 @@ func GetTestFile(module string, args ...string) string {
 	},
 		args...,
 	)
-	return path.Join(combinedElements...)
+	return filepath.Join(combinedElements...)
 }
 
 func populateWorktree(t *testing.T, fsys billy.Filesystem) {

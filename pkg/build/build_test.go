@@ -21,7 +21,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/fs"
-	"path"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -62,7 +62,7 @@ func TestBuildFunctionForASingleCluster(t *testing.T) {
 	writtenLogs := buffer.String()
 	writtenLines := strings.Split(writtenLogs, "\n")
 
-	expectedStarterMarker := fmt.Sprintf(startMarkerFormat, path.Join(utils.ClustersDirName, testutils.TestGroupName2, testutils.TestClusterName1))
+	expectedStarterMarker := fmt.Sprintf(startMarkerFormat, filepath.Join(utils.ClustersDirName, testutils.TestGroupName2, testutils.TestClusterName1))
 	assert.NotEqual(t, writtenLines, 15, "Unexpected line length")
 	assert.Contains(t, writtenLines, expectedStarterMarker, "Start marker for cluster not found")
 	assert.Contains(t, writtenLines, endMarkerString, "End marker not found")
@@ -81,8 +81,8 @@ func TestBuildFunctionForAGroup(t *testing.T) {
 	writtenLogs := buffer.String()
 	writtenLines := strings.Split(writtenLogs, "\n")
 
-	expectedStarterMarker := fmt.Sprintf(startMarkerFormat, path.Join(utils.ClustersDirName, testutils.TestGroupName2, testutils.TestClusterName1))
-	expectedSeparationMarker := fmt.Sprintf(startMarkerFormat, path.Join(utils.ClustersDirName, testutils.TestGroupName2, testutils.TestClusterName2))
+	expectedStarterMarker := fmt.Sprintf(startMarkerFormat, filepath.Join(utils.ClustersDirName, testutils.TestGroupName2, testutils.TestClusterName1))
+	expectedSeparationMarker := fmt.Sprintf(startMarkerFormat, filepath.Join(utils.ClustersDirName, testutils.TestGroupName2, testutils.TestClusterName2))
 	assert.NotEqual(t, writtenLines, 29, "Unexpected line length")
 	assert.Contains(t, writtenLines, expectedStarterMarker, "Start marker for cluster not found")
 	assert.Contains(t, writtenLines, expectedSeparationMarker, "Sepration for the two clusters not found")

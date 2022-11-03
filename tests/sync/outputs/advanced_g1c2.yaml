@@ -6,3 +6,4 @@ resources:
   - ../../../../vendors/modules/category/test-module3-1.0.0/test-flavour1
 components:
   - ../../../../vendors/addons/category/test-addon2-1.0.1
+  - ../../../all-groups/custom-resources

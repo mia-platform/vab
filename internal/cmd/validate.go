@@ -16,7 +16,7 @@ package cmd
 
 import (
 	"os"
-	"path"
+	"path/filepath"
 
 	"github.com/mia-platform/vab/pkg/logger"
 	"github.com/mia-platform/vab/pkg/validate"
@@ -33,7 +33,7 @@ func NewValidateCommand(logger logger.LogInterface) *cobra.Command {
 includes resources that do not exist in our catalogue.`,
 		Args: cobra.NoArgs,
 		RunE: func(_ *cobra.Command, _ []string) error {
-			configPath := path.Clean(flags.Config)
+			configPath := filepath.Clean(flags.Config)
 			logger.V(0).Writef("Validating configuration at %s...", configPath)
 			return validate.ConfigurationFile(logger, configPath, os.Stdout)
 		},
