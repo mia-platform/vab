@@ -2,16 +2,3 @@ kind: Kustomization
 apiVersion: kustomize.config.k8s.io/v1beta1
 resources:
 - bases
-patches:
-- target:
-    kind: Logging
-    name: logging
-  patch: |-
-    kind: Logging
-    metadata:
-      name: logging
-    spec:
-      fluentd:
-        resources:
-          requests:
-            cpu: 100m

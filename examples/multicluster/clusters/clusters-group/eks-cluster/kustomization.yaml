@@ -1,0 +1,11 @@
+kind: Kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+resources:
+- bases
+patches:
+- target:
+    labelSelector: distribution.mia-platform.eu/expose-webhook=true
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/hostNetwork
+      value: true

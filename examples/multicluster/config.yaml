@@ -4,49 +4,58 @@ name: multicluster
 spec:
   modules:
     ingress/traefik/base:
-      version: v0.0.1
+      version: v0.0.4
     security/cert-manager/base:
-      version: v0.0.1
+      version: v0.0.5
     scheduling/kube-green/base:
-      version: v0.0.0
+      version: v0.0.3
     observability/logging-operator/base:
-      version: v0.0.0
+      version: v0.0.1
     observability/prometheus-operator/base:
-      version: v0.0.1
+      version: v0.0.4
     security/rbac-manager/base:
-      version: v0.0.0
+      version: v0.0.2
     security/kyverno/base:
-      version: v0.0.1
+      version: v0.0.4
   addOns:
-    cert-manager/kube-green-webhook:
-      version: v0.0.1
-    cert-manager/prometheus-operator-webhook:
-      version: v0.0.1
+    cert-manager/kube-green-webhook-certificate:
+      version: v0.0.0
+    cert-manager/prometheus-operator-webhook-certificate:
+      version: v0.0.0
     logging-operator/logging-stack:
-      version: v0.0.1
+      version: v0.0.2
     prometheus-operator/monitoring-stack:
-      version: v0.0.1
+      version: v0.0.4
     prometheus-operator/cert-manager:
-      version: v0.0.1
+      version: v0.0.2
     prometheus-operator/kube-green:
-      version: v0.0.1
+      version: v0.0.2
     prometheus-operator/logging-operator:
-      version: v0.0.1
+      version: v0.0.2
     prometheus-operator/logging-stack:
       version: v0.0.1
     prometheus-operator/rbac-manager:
-      version: v0.0.1
+      version: v0.0.2
     prometheus-operator/traefik:
       version: v0.0.2
+    prometheus-operator/kyverno:
+      version: v0.0.0
   groups:
-    - name: clusters-group
-      clusters:
-        - name: kind-cluster
-          context: kind-cluster
-        - name: gke-cluster
-          context: gke-cluster
-          modules:
-            ingress/traefik/base:
-              disable: true
-            ingress/traefik/gke:
-              version: v0.0.1
+  - name: clusters-group
+    clusters:
+    - name: kind-cluster
+      context: kind-cluster
+    - name: gke-cluster
+      context: gke-cluster
+      modules:
+        ingress/traefik/base:
+          disable: true
+        ingress/traefik/gke:
+          version: v0.0.1
+    - name: eks-cluster
+      context: eks-cluster
+      modules:
+        ingress/traefik/base:
+          disable: true
+        ingress/traefik/eks:
+          version: v0.0.4
