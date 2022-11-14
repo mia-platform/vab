@@ -16,6 +16,7 @@ package sync
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/mia-platform/vab/internal/git"
@@ -95,13 +96,37 @@ func downloadPackages(logger logger.LogInterface, config *v1alpha1.ClustersConfi
 		return nil
 	}
 
+	if err := os.RemoveAll(filepath.Join(path, utils.VendorsModulesPath)); err != nil {
+		return fmt.Errorf("failed to remove vendors folder for modules: %w", err)
+	}
+	if err := os.RemoveAll(filepath.Join(path, utils.VendorsAddOnsPath)); err != nil {
+		return fmt.Errorf("failed to remove vendors folder for add-ons: %w", err)
+	}
+
 	mergedPackages := make(map[string]v1alpha1.Package)
-	maps.Copy(mergedPackages, config.Spec.Modules)
-	maps.Copy(mergedPackages, config.Spec.AddOns)
+	for _, pkg := range config.Spec.Modules {
+		if !pkg.Disable {
+			mergedPackages[pkg.GetName()+"_"+pkg.Version] = pkg
+		}
+	}
+	for _, pkg := range config.Spec.AddOns {
+		if !pkg.Disable {
+			mergedPackages[pkg.GetName()+"_"+pkg.Version] = pkg
+		}
+	}
+
 	for _, group := range config.Spec.Groups {
 		for _, cluster := range group.Clusters {
-			maps.Copy(mergedPackages, cluster.Modules)
-			maps.Copy(mergedPackages, cluster.AddOns)
+			for _, pkg := range cluster.Modules {
+				if !pkg.Disable {
+					mergedPackages[pkg.GetName()+"_"+pkg.Version] = pkg
+				}
+			}
+			for _, pkg := range cluster.AddOns {
+				if !pkg.Disable {
+					mergedPackages[pkg.GetName()+"_"+pkg.Version] = pkg
+				}
+			}
 		}
 	}
 
@@ -110,10 +135,10 @@ func downloadPackages(logger logger.LogInterface, config *v1alpha1.ClustersConfi
 
 // clonePackagesLocally download packages using filesGetter
 func clonePackagesLocally(logger logger.LogInterface, packages map[string]v1alpha1.Package, path string, filesGetter git.FilesGetter) error {
-	for name, pkg := range packages {
+	for _, pkg := range packages {
 		files, err := ClonePackages(logger, pkg, filesGetter)
 		if err != nil {
-			return fmt.Errorf("error cloning packages for %s %s: %w", pkg.PackageType(), name, err)
+			return fmt.Errorf("error cloning packages for %s %s: %w", pkg.PackageType(), pkg.GetName(), err)
 		}
 
 		var vendorsPath string
@@ -123,10 +148,10 @@ func clonePackagesLocally(logger logger.LogInterface, packages map[string]v1alph
 			vendorsPath = utils.VendorsAddOnsPath
 		}
 
-		pkgPath := filepath.Join(path, vendorsPath, name)
-		logger.V(10).Writef("disk path for package %s: %s", name, pkgPath)
-		if err := MoveToDisk(logger, files, name, pkgPath); err != nil {
-			return fmt.Errorf("error moving packages to disk for %s %s: %w", pkg.PackageType(), name, err)
+		pkgPath := filepath.Join(path, vendorsPath, pkg.GetName()+"-"+pkg.Version)
+		logger.V(10).Writef("disk path for package %s: %s", pkg.GetName(), pkgPath)
+		if err := MoveToDisk(logger, files, pkg.GetName(), pkgPath); err != nil {
+			return fmt.Errorf("error moving packages to disk for %s %s: %w", pkg.PackageType(), pkg.GetName(), err)
 		}
 	}
 	return nil
