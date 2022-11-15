@@ -40,9 +40,9 @@ func ConfigurationFile(logger logger.LogInterface, configurationPath string, wri
 	feedbackString += checkModules(&config.Spec.Modules, "", &code)
 	logger.V(5).Writef("Checking configuration modules ended with %d", code)
 	feedbackString += checkAddOns(&config.Spec.AddOns, "", &code)
-	logger.V(5).Writef("Checking configuration add-ons ended with %d", code)
+	logger.V(5).Writef("Checking configuration addons ended with %d", code)
 	feedbackString += checkGroups(logger, &config.Spec.Groups, &code)
-	logger.V(5).Writef("Checking configuration groups add-ons ended with %d", code)
+	logger.V(5).Writef("Checking configuration groups addons ended with %d", code)
 
 	fmt.Fprint(writer, feedbackString)
 	if code > 0 {
@@ -70,26 +70,26 @@ func checkTypeMeta(config *v1alpha1.TypeMeta, code *int) string {
 }
 
 // checkModules checks the modules listed in the config file
-func checkModules(modules *map[string]v1alpha1.Package, scope string, code *int) string {
+func checkModules(packages *map[string]v1alpha1.Package, scope string, code *int) string {
 	if scope == "" {
 		scope = defaultScope
 	}
 
 	outString := ""
-	if len(*modules) == 0 {
+	if len(*packages) == 0 {
 		outString += fmt.Sprintf("[warn][%s] no module found: check the config file if this behavior is unexpected\n", scope)
 		return outString
 	}
 
-	for m := range *modules {
+	for _, pkg := range *packages {
 		// TODO: add check for modules' uniqueness (only one flavor per module is allowed)
-		if (*modules)[m].Disable {
-			outString += fmt.Sprintf("[info][%s] disabling module %s\n", scope, m)
+		if pkg.Disable {
+			outString += fmt.Sprintf("[info][%s] disabling %s %s\n", scope, pkg.PackageType(), pkg.GetName())
 			continue
 		}
 
-		if (*modules)[m].Version == "" {
-			outString += fmt.Sprintf("[error][%s] missing version of module %s\n", scope, m)
+		if pkg.Version == "" {
+			outString += fmt.Sprintf("[error][%s] missing version of %s %s\n", scope, pkg.PackageType(), pkg.GetName())
 			*code = 1
 		}
 	}
@@ -97,23 +97,23 @@ func checkModules(modules *map[string]v1alpha1.Package, scope string, code *int)
 	return outString
 }
 
-// checkAddOns checks the add-ons listed in the config file
-func checkAddOns(addons *map[string]v1alpha1.Package, scope string, code *int) string {
+// checkAddOns checks the addons listed in the config file
+func checkAddOns(packages *map[string]v1alpha1.Package, scope string, code *int) string {
 	if scope == "" {
 		scope = defaultScope
 	}
 
 	outString := ""
-	if len(*addons) == 0 {
-		outString += fmt.Sprintf("[warn][%s] no add-on found: check the config file if this behavior is unexpected\n", scope)
+	if len(*packages) == 0 {
+		outString += fmt.Sprintf("[warn][%s] no addon found: check the config file if this behavior is unexpected\n", scope)
 		return outString
 	}
 
-	for m := range *addons {
-		if (*addons)[m].Disable {
-			outString += fmt.Sprintf("[info][%s] disabling add-on %s\n", scope, m)
-		} else if (*addons)[m].Version == "" {
-			outString += fmt.Sprintf("[error][%s] missing version of add-on %s\n", scope, m)
+	for _, pkg := range *packages {
+		if pkg.Disable {
+			outString += fmt.Sprintf("[info][%s] disabling %s %s\n", scope, pkg.PackageType(), pkg.GetName())
+		} else if pkg.Version == "" {
+			outString += fmt.Sprintf("[error][%s] missing version of %s %s\n", scope, pkg.PackageType(), pkg.GetName())
 			*code = 1
 		}
 	}
@@ -170,7 +170,7 @@ func checkClusters(logger logger.LogInterface, group *v1alpha1.Group, groupName 
 		outString += checkModules(&cluster.Modules, scope, code)
 		logger.V(5).Writef("Checking cluster %s modules ended with %d", scope, *code)
 		outString += checkAddOns(&cluster.AddOns, scope, code)
-		logger.V(5).Writef("Checking cluster %s add-on ended with %d", scope, *code)
+		logger.V(5).Writef("Checking cluster %s addon ended with %d", scope, *code)
 	}
 
 	return outString

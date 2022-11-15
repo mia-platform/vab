@@ -48,14 +48,10 @@ spec:
     - name: gke-cluster
       context: gke-cluster
       modules:
-        ingress/traefik/base:
-          disable: true
         ingress/traefik/gke:
-          version: v0.0.1
+          version: v0.0.4
     - name: eks-cluster
       context: eks-cluster
       modules:
-        ingress/traefik/base:
-          disable: true
         ingress/traefik/eks:
           version: v0.0.4

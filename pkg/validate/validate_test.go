@@ -81,27 +81,27 @@ func TestValidateOutput(t *testing.T) {
 
 const (
 	expectedOutput1 = `[warn][default] no module found: check the config file if this behavior is unexpected
-[warn][default] no add-on found: check the config file if this behavior is unexpected
+[warn][default] no addon found: check the config file if this behavior is unexpected
 [warn] no group found: check the config file if this behavior is unexpected
 The configuration is valid!
 `
 	expectedOutput2 = `[error] wrong kind: WrongKind - expected: ClustersConfiguration
 [error] wrong version: wrong.version.io/v1 - expected: vab.mia-platform.eu/v1alpha1
 [warn][default] no module found: check the config file if this behavior is unexpected
-[warn][default] no add-on found: check the config file if this behavior is unexpected
+[warn][default] no addon found: check the config file if this behavior is unexpected
 [warn] no group found: check the config file if this behavior is unexpected
 `
-	expectedOutput3 = `[error][default] missing version of module category/module-1/flavor-1
-[info][default] disabling module category/module-2/flavor-2
-[error][default] missing version of add-on category/addon-1
-[info][default] disabling add-on category/addon-2
+	expectedOutput3 = `[error][default] missing version of module category/module-1
+[info][default] disabling module category/module-2
+[error][default] missing version of addon category/addon-1
+[info][default] disabling addon category/addon-2
 [error] please specify a valid name for each group
 [error][undefined] missing cluster name in group: please specify a valid name for each cluster
 [error][undefined/undefined] missing cluster context: please specify a valid context for each cluster
 [warn][undefined/undefined] no module found: check the config file if this behavior is unexpected
-[warn][undefined/undefined] no add-on found: check the config file if this behavior is unexpected
+[warn][undefined/undefined] no addon found: check the config file if this behavior is unexpected
 [warn][undefined/cluster-1] no module found: check the config file if this behavior is unexpected
-[warn][undefined/cluster-1] no add-on found: check the config file if this behavior is unexpected
+[warn][undefined/cluster-1] no addon found: check the config file if this behavior is unexpected
 [warn][group-1] no cluster found in group: check the config file if this behavior is unexpected
 `
 )

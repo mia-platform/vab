@@ -1,7 +1,7 @@
 kind: Kustomization
 apiVersion: kustomize.config.k8s.io/v1beta1
 resources:
-  - ../../../../vendors/modules/ingress/traefik-v0.0.3/eks
+  - ../../../../vendors/modules/ingress/traefik-v0.0.4/eks
   - ../../../../vendors/modules/observability/logging-operator-v0.0.1/base
   - ../../../../vendors/modules/observability/prometheus-operator-v0.0.4/base
   - ../../../../vendors/modules/scheduling/kube-green-v0.0.3/base

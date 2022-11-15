@@ -103,7 +103,7 @@ func downloadPackages(logger logger.LogInterface, config *v1alpha1.ClustersConfi
 	mergedPackages := make(map[string]v1alpha1.Package)
 	for _, pkg := range config.Spec.Modules {
 		if !pkg.Disable {
-			mergedPackages[pkg.GetName()+"_"+pkg.Version] = pkg
+			mergedPackages[pkg.GetName()+pkg.GetFlavorName()+"_"+pkg.Version] = pkg
 		}
 	}
 	for _, pkg := range config.Spec.AddOns {
@@ -116,7 +116,7 @@ func downloadPackages(logger logger.LogInterface, config *v1alpha1.ClustersConfi
 		for _, cluster := range group.Clusters {
 			for _, pkg := range cluster.Modules {
 				if !pkg.Disable {
-					mergedPackages[pkg.GetName()+"_"+pkg.Version] = pkg
+					mergedPackages[pkg.GetName()+pkg.GetFlavorName()+"_"+pkg.Version] = pkg
 				}
 			}
 			for _, pkg := range cluster.AddOns {
@@ -203,15 +203,12 @@ func mergePackages(logger logger.LogInterface, first, second map[string]v1alpha1
 	mergedMap := make(map[string]v1alpha1.Package)
 	maps.Copy(mergedMap, first)
 	for name, pkg := range second {
-		// if the current package is disabled and is present inside the first map remove it, if not override the value
-		logger.V(5).Writef("Evaluating %s %s", pkg.PackageType(), pkg.GetName())
-		logger.V(10).Writef("with key %s", name)
-		if _, exists := mergedMap[name]; exists && pkg.Disable {
+		// if the current package is disabled remove it from the map
+		if pkg.Disable {
 			logger.V(10).Writef("Disable %s %s for cluster", pkg.PackageType(), pkg.GetName())
 			delete(mergedMap, name)
 		} else {
 			logger.V(10).Writef("Override %s %s for cluser", pkg.PackageType(), pkg.GetName())
-			logger.V(10).Writef("reasons:\n\t- package key found in map: %t\n\t- package is disabled: %t", exists, pkg.Disable)
 			mergedMap[name] = pkg
 		}
 	}

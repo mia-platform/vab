@@ -15,8 +15,30 @@
 package v1alpha1
 
 import (
+	"crypto/sha1"
+	"fmt"
+	"strings"
+
 	"gopkg.in/yaml.v3"
 )
+
+// moduleName return the actual name of a module from the key used in the configuration file
+func moduleName(moduleKey string) string {
+	splitStrings := strings.Split(moduleKey, "/")
+	return strings.Join(splitStrings[:len(splitStrings)-1], "/")
+}
+
+// moduleFlavorName return the flavor name of a module from the key used in the configuration file
+func moduleFlavorName(moduleKey string) string {
+	splitStrings := strings.Split(moduleKey, "/")
+	return splitStrings[len(splitStrings)-1]
+}
+
+// mapKeyForName return an abstract key for a package name consisting in the first 7 character of its sha1 shasum
+func mapKeyForName(name string) string {
+	sha1 := sha1.Sum([]byte(name))
+	return fmt.Sprintf("%x", sha1)[0:7]
+}
 
 type shadowConfigSpec struct {
 
@@ -50,9 +72,11 @@ func (configSpec *ConfigSpec) UnmarshalYAML(value *yaml.Node) error {
 
 	newModules := map[string]Package{}
 	for key, module := range temporaryConfig.Modules {
-		module.name = key
+		moduleName := moduleName(key)
+		module.name = moduleName
 		module.isModule = true
-		newModules[key] = module
+		module.flavor = moduleFlavorName(key)
+		newModules[mapKeyForName(moduleName)] = module
 	}
 	configSpec.Modules = newModules
 
@@ -60,7 +84,7 @@ func (configSpec *ConfigSpec) UnmarshalYAML(value *yaml.Node) error {
 	for key, addon := range temporaryConfig.AddOns {
 		addon.name = key
 		addon.isModule = false
-		newAddons[key] = addon
+		newAddons[mapKeyForName(key)] = addon
 	}
 	configSpec.AddOns = newAddons
 
@@ -104,9 +128,11 @@ func (cluster *Cluster) UnmarshalYAML(value *yaml.Node) error {
 
 	newModules := map[string]Package{}
 	for key, module := range temporaryCluster.Modules {
-		module.name = key
+		moduleName := moduleName(key)
+		module.name = moduleName
 		module.isModule = true
-		newModules[key] = module
+		module.flavor = moduleFlavorName(key)
+		newModules[mapKeyForName(moduleName)] = module
 	}
 	cluster.Modules = newModules
 
@@ -114,7 +140,7 @@ func (cluster *Cluster) UnmarshalYAML(value *yaml.Node) error {
 	for key, addon := range temporaryCluster.AddOns {
 		addon.name = key
 		addon.isModule = false
-		newAddons[key] = addon
+		newAddons[mapKeyForName(key)] = addon
 	}
 	cluster.AddOns = newAddons
 

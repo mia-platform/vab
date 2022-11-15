@@ -57,7 +57,7 @@ func TestTagReferences(t *testing.T) {
 	module := v1alpha1.NewModule(t, "category/module-name/flavor", "1.0.0", false)
 
 	tag = tagReferenceForPackage(module)
-	assert.Equal(t, tag, plumbing.ReferenceName(expectedReference))
+	assert.Equal(t, plumbing.ReferenceName(expectedReference), tag)
 	assert.True(t, tag.IsTag(), "The module reference %s is not a tag reference", tag)
 }
 

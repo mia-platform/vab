@@ -42,10 +42,11 @@ func EmptyConfig(name string) *ClustersConfiguration {
 func NewModule(t *testing.T, name string, version string, disable bool) Package {
 	t.Helper()
 	return Package{
-		name:     name,
+		name:     moduleName(name),
 		Version:  version,
 		Disable:  disable,
 		isModule: true,
+		flavor:   moduleFlavorName(name),
 	}
 }
 

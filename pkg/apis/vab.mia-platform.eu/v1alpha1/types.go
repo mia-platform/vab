@@ -14,10 +14,6 @@
 
 package v1alpha1
 
-import (
-	"strings"
-)
-
 // TypeMeta partially copies apimachinery/pkg/apis/meta/v1.TypeMeta
 type TypeMeta struct {
 	Kind       string `yaml:"kind,omitempty"`
@@ -108,6 +104,9 @@ type Package struct {
 
 	// isModule is a private property for setting if a package is a module or an addon
 	isModule bool
+
+	// flavor is a private property that contains the flavor name if is a module, or is an empty string otherwise
+	flavor string
 }
 
 // IsModule return the value of the private property with the same name
@@ -117,20 +116,12 @@ func (pkg Package) IsModule() bool {
 
 // GetName return the canonical name of the package
 func (pkg Package) GetName() string {
-	if pkg.isModule {
-		splitStrings := strings.Split(pkg.name, "/")
-		return strings.Join(splitStrings[:len(splitStrings)-1], "/")
-	}
 	return pkg.name
 }
 
 // GetFlavorName return the flavor name of the package if is a module or an empty string otherwise
 func (pkg Package) GetFlavorName() string {
-	if pkg.isModule {
-		splitStrings := strings.Split(pkg.name, "/")
-		return splitStrings[len(splitStrings)-1]
-	}
-	return ""
+	return pkg.flavor
 }
 
 // PackageType return the type of the package in string form
