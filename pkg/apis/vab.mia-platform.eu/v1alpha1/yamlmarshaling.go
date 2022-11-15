@@ -15,7 +15,7 @@
 package v1alpha1
 
 import (
-	"crypto/sha1"
+	"crypto/sha1" //#nosec G505
 	"fmt"
 	"strings"
 
@@ -36,7 +36,9 @@ func moduleFlavorName(moduleKey string) string {
 
 // mapKeyForName return an abstract key for a package name consisting in the first 7 character of its sha1 shasum
 func mapKeyForName(name string) string {
-	sha1 := sha1.Sum([]byte(name))
+	// using of sha1 is not a problem because we don't use this string for secure operations
+	// but only for generating unique ids for maps
+	sha1 := sha1.Sum([]byte(name)) //#nosec G401
 	return fmt.Sprintf("%x", sha1)[0:7]
 }
 
