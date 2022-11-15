@@ -294,10 +294,12 @@ func TestUpdateClusters(t *testing.T) {
 			},
 		},
 	}
+
+	logger := logger.DisabledLogger{}
 	config := v1alpha1.ClustersConfiguration{}
 	config.Spec.Groups = testGroups
 	testDirPath := t.TempDir()
-	err := syncClusters(&config, testDirPath)
+	err := syncClusters(logger, &config, testDirPath)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -314,6 +316,7 @@ func TestUpdateClusters(t *testing.T) {
 
 // UpdateClusterModules returns the correct map of modules (w/o overrides)
 func TestUpdateClusterModulesNoOverrides(t *testing.T) {
+	logger := logger.DisabledLogger{}
 	defaultModules := make(map[string]v1alpha1.Package)
 	defaultModules["test-module3/test-flavour1"] = v1alpha1.NewModule(
 		t,
@@ -335,77 +338,78 @@ func TestUpdateClusterModulesNoOverrides(t *testing.T) {
 	)
 	overrides := make(map[string]v1alpha1.Package)
 	expectedOutput := make(map[string]v1alpha1.Package)
-	expectedOutput["test-module3-1.0.0"] = v1alpha1.NewModule(
+	expectedOutput["test-module3/test-flavour1"] = v1alpha1.NewModule(
 		t,
 		"test-module3/test-flavour1",
 		"1.0.0",
 		false,
 	)
-	expectedOutput["test-module2-1.0.0"] = v1alpha1.NewModule(
+	expectedOutput["test-module2/test-flavour1"] = v1alpha1.NewModule(
 		t,
 		"test-module2/test-flavour1",
 		"1.0.0",
 		false,
 	)
-	expectedOutput["test-module1-1.0.0"] = v1alpha1.NewModule(
+	expectedOutput["test-module1/test-flavour1"] = v1alpha1.NewModule(
 		t,
 		"test-module1/test-flavour1",
 		"1.0.0",
 		false,
 	)
-	output := mergePackages(defaultModules, overrides)
+	output := mergePackages(logger, defaultModules, overrides)
 	assert.Equal(t, expectedOutput, output)
 }
 
 // UpdateClusterModules returns the correct map of modules (w/ overrides)
 func TestUpdateClusterModules(t *testing.T) {
+	logger := logger.DisabledLogger{}
 	defaultModules := make(map[string]v1alpha1.Package)
-	defaultModules["category/test-module3"] = v1alpha1.NewModule(
+	defaultModules["category/test-module3/test-flavour1"] = v1alpha1.NewModule(
 		t,
 		"category/test-module3/test-flavour1",
 		"1.0.0",
 		false,
 	)
-	defaultModules["category/test-module2"] = v1alpha1.NewModule(
+	defaultModules["category/test-module2/test-flavour1"] = v1alpha1.NewModule(
 		t,
 		"category/test-module2/test-flavour1",
 		"1.0.0",
 		false,
 	)
-	defaultModules["category/test-module1"] = v1alpha1.NewModule(
+	defaultModules["category/test-module1/test-flavour1"] = v1alpha1.NewModule(
 		t,
 		"category/test-module1/test-flavour1",
 		"1.0.0",
 		false,
 	)
 	overrides := make(map[string]v1alpha1.Package)
-	overrides["category/test-module3"] = v1alpha1.NewModule(
+	overrides["category/test-module3/test-flavour1"] = v1alpha1.NewModule(
 		t,
 		"category/test-module3/test-flavour1",
 		"1.0.1",
 		false,
 	)
-	overrides["category/test-module2"] = v1alpha1.NewModule(
+	overrides["category/test-module2/test-flavour1"] = v1alpha1.NewModule(
 		t,
 		"category/test-module2/test-flavour1",
 		"",
 		true,
 	)
-	overrides["category/test-module1"] = v1alpha1.NewModule(
+	overrides["category/test-module1/test-flavour1"] = v1alpha1.NewModule(
 		t,
 		"category/test-module1/test-flavour1",
 		"1.0.0",
 		false,
 	)
-	output := mergePackages(defaultModules, overrides)
+	output := mergePackages(logger, defaultModules, overrides)
 	expectedOutput := make(map[string]v1alpha1.Package)
-	expectedOutput["category/test-module1-1.0.0"] = v1alpha1.NewModule(
+	expectedOutput["category/test-module1/test-flavour1"] = v1alpha1.NewModule(
 		t,
 		"category/test-module1/test-flavour1",
 		"1.0.0",
 		false,
 	)
-	expectedOutput["category/test-module3-1.0.1"] = v1alpha1.NewModule(
+	expectedOutput["category/test-module3/test-flavour1"] = v1alpha1.NewModule(
 		t,
 		"category/test-module3/test-flavour1",
 		"1.0.1",
@@ -431,19 +435,20 @@ func TestUpdateClusterAddOnsNoOverrides(t *testing.T) {
 	)
 	overrides := make(map[string]v1alpha1.Package)
 	expectedOutput := make(map[string]v1alpha1.Package)
-	expectedOutput["test-addon1-1.0.0"] = v1alpha1.NewAddon(
+	expectedOutput["test-addon1"] = v1alpha1.NewAddon(
 		t,
 		"test-addon1",
 		"1.0.0",
 		false,
 	)
-	expectedOutput["test-addon2-1.0.0"] = v1alpha1.NewAddon(
+	expectedOutput["test-addon2"] = v1alpha1.NewAddon(
 		t,
 		"test-addon2",
 		"1.0.0",
 		false,
 	)
-	output := mergePackages(defaultAddOns, overrides)
+	logger := logger.DisabledLogger{}
+	output := mergePackages(logger, defaultAddOns, overrides)
 	assert.Equal(t, expectedOutput, output)
 }
 
@@ -475,9 +480,10 @@ func TestUpdateClusterAddOns(t *testing.T) {
 		"",
 		true,
 	)
-	output := mergePackages(defaultAddOns, overrides)
+	logger := logger.DisabledLogger{}
+	output := mergePackages(logger, defaultAddOns, overrides)
 	expectedOutput := make(map[string]v1alpha1.Package)
-	expectedOutput["test-addon1-1.0.1"] = v1alpha1.NewAddon(
+	expectedOutput["test-addon1"] = v1alpha1.NewAddon(
 		t,
 		"test-addon1",
 		"1.0.1",

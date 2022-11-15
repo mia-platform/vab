@@ -40,7 +40,7 @@ func Sync(logger logger.LogInterface, filesGetter git.FilesGetter, configPath st
 		return err
 	}
 
-	if err := syncClusters(config, basePath); err != nil {
+	if err := syncClusters(logger, config, basePath); err != nil {
 		return err
 	}
 
@@ -51,16 +51,13 @@ func Sync(logger logger.LogInterface, filesGetter git.FilesGetter, configPath st
 }
 
 func syncAllGroups(config *v1alpha1.ClustersConfiguration, basePath string) error {
-	defaultModules := kustomizehelper.PackagesMapForPaths(config.Spec.Modules)
-	defaultAddOns := kustomizehelper.PackagesMapForPaths(config.Spec.AddOns)
-
-	if err := kustomizehelper.SyncAllClusterKustomization(basePath, defaultModules, defaultAddOns); err != nil {
+	if err := kustomizehelper.SyncAllClusterKustomization(basePath, config.Spec.Modules, config.Spec.AddOns); err != nil {
 		return fmt.Errorf("error updating all-groups kustomize file: %w", err)
 	}
 	return nil
 }
 
-func syncClusters(config *v1alpha1.ClustersConfiguration, basePath string) error {
+func syncClusters(logger logger.LogInterface, config *v1alpha1.ClustersConfiguration, basePath string) error {
 	groups := config.Spec.Groups
 	modules := config.Spec.Modules
 	addons := config.Spec.AddOns
@@ -78,8 +75,8 @@ func syncClusters(config *v1alpha1.ClustersConfiguration, basePath string) error
 				clusterModules = make(map[string]v1alpha1.Package, 0)
 				clusterAddOns = make(map[string]v1alpha1.Package, 0)
 			} else {
-				clusterModules = mergePackages(modules, cluster.Modules)
-				clusterAddOns = mergePackages(addons, cluster.AddOns)
+				clusterModules = mergePackages(logger, modules, cluster.Modules)
+				clusterAddOns = mergePackages(logger, addons, cluster.AddOns)
 			}
 
 			clusterBasePath := filepath.Join(clusterPath, utils.BasesDir)
@@ -202,18 +199,23 @@ func checkClusterPath(clusterName string, basePath string) (string, error) {
 }
 
 // mergePackages return a map of merged packages excluding disabled ones, if second has no elements return nil
-func mergePackages(first, second map[string]v1alpha1.Package) map[string]v1alpha1.Package {
+func mergePackages(logger logger.LogInterface, first, second map[string]v1alpha1.Package) map[string]v1alpha1.Package {
 	mergedMap := make(map[string]v1alpha1.Package)
 	maps.Copy(mergedMap, first)
 	for name, pkg := range second {
 		// if the current package is disabled and is present inside the first map remove it, if not override the value
+		logger.V(5).Writef("Evaluating %s %s", pkg.PackageType(), pkg.GetName())
+		logger.V(10).Writef("with key %s", name)
 		if _, exists := mergedMap[name]; exists && pkg.Disable {
+			logger.V(10).Writef("Disable %s %s for cluster", pkg.PackageType(), pkg.GetName())
 			delete(mergedMap, name)
 		} else {
+			logger.V(10).Writef("Override %s %s for cluser", pkg.PackageType(), pkg.GetName())
+			logger.V(10).Writef("reasons:\n\t- package key found in map: %t\n\t- package is disabled: %t", exists, pkg.Disable)
 			mergedMap[name] = pkg
 		}
 	}
 
 	// return the list of packages with the on disk path as key
-	return kustomizehelper.PackagesMapForPaths(mergedMap)
+	return mergedMap
 }

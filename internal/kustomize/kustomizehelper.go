@@ -104,13 +104,14 @@ func SyncClusterKustomization(basePath, clusterPath string, modules, addOns map[
 func sortedPackagesPathList(packages map[string]v1alpha1.Package, basePath, targetPath string) ([]string, error) {
 	sortedList := make([]string, 0)
 
-	for name, pkg := range packages {
+	for _, pkg := range packages {
 		if !pkg.Disable {
 			var pkgPath string
+			versionedPath := pkg.GetName() + "-" + pkg.Version
 			if pkg.IsModule() {
-				pkgPath = filepath.Join(name, pkg.GetFlavorName())
+				pkgPath = filepath.Join(versionedPath, pkg.GetFlavorName())
 			} else {
-				pkgPath = name
+				pkgPath = versionedPath
 			}
 			modulePath, err := filepath.Rel(basePath, filepath.Join(targetPath, pkgPath))
 			if err != nil {
