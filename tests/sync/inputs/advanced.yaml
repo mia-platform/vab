@@ -3,11 +3,11 @@ apiVersion: vab.mia-platform.eu/v1alpha1
 name: advanced-sync
 spec:
   modules:
-    category/test-module1/test-flavour1:
+    category/test-module1/test-flavor1:
       version: 1.0.0
-    category/test-module2/test-flavour1:
+    category/test-module2/test-flavor1:
       version: 1.0.0
-    category/test-module3/test-flavour1:
+    category/test-module3/test-flavor1:
       version: 1.0.0
   addOns:
     category/test-addon1:
@@ -21,9 +21,9 @@ spec:
     - name: cluster-1
       context: context-1
       modules:
-        category/test-module1/test-flavour1: # override module version
+        category/test-module1/test-flavor1: # override module version
           version: 1.0.1
-        category/test-module2/test-flavour1: # disable module
+        category/test-module2/test-flavor1: # disable module
           disable: true
     # cluster-2 only overrides add-ons
     - name: cluster-2
@@ -39,7 +39,7 @@ spec:
     - name: cluster-3
       context: context-3
       modules:
-        category/test-module2/test-flavour1:
+        category/test-module2/test-flavor1:
           version: 1.0.0
       addOns:
         category/test-addon1:

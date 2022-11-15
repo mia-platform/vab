@@ -116,10 +116,10 @@ var _ = BeforeSuite(func() {
 		configPath = filepath.Join(projectPath, "config.yaml")
 		clustersDirPath = filepath.Join(projectPath, "clusters")
 		allGroupsDirPath = filepath.Join(clustersDirPath, "all-groups")
-		modulePath1 = filepath.Join(projectPath, "vendors", "modules", "module1-0.1.0", "flavour1")
-		moduleOverridePath1 = filepath.Join(projectPath, "vendors", "modules", "module1-0.1.1", "flavour1")
-		modulePath2 = filepath.Join(projectPath, "vendors", "modules", "module2-0.1.0", "flavour1")
-		moduleOverridePath2 = filepath.Join(projectPath, "vendors", "modules", "module2-0.1.1", "flavour1")
+		modulePath1 = filepath.Join(projectPath, "vendors", "modules", "module1-0.1.0", "flavor1")
+		moduleOverridePath1 = filepath.Join(projectPath, "vendors", "modules", "module1-0.1.1", "flavor1")
+		modulePath2 = filepath.Join(projectPath, "vendors", "modules", "module2-0.1.0", "flavor1")
+		moduleOverridePath2 = filepath.Join(projectPath, "vendors", "modules", "module2-0.1.1", "flavor1")
 		addOnPath = filepath.Join(projectPath, "vendors", "addons", "addon1-0.1.0")
 		addOnOverridePath = filepath.Join(projectPath, "vendors", "addons", "addon1-0.1.1")
 		depsGvr = schema.GroupVersionResource{
@@ -149,7 +149,7 @@ apiVersion: vab.mia-platform.eu/v1alpha1
 name: test-project
 spec:
   modules:
-    module1/flavour1:
+    module1/flavor1:
       version: 0.1.0
   addOns: {}
   groups:
@@ -158,7 +158,7 @@ spec:
     - name: cluster1
       context: kind-vab-cluster-1
       modules:
-        module1/flavour1:
+        module1/flavor1:
           version: 0.1.1`
 			err := os.WriteFile(configPath, []byte(config), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
@@ -170,17 +170,17 @@ spec:
 			sampleFile1 := `apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: module1-flavour1
+  name: module1-flavor1
   namespace: default
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: module1-flavour1
+      app: module1-flavor1
   template:
     metadata:
       labels:
-        app: module1-flavour1
+        app: module1-flavor1
         version: 0.1.0
     spec:
       containers:
@@ -261,17 +261,17 @@ spec:
 			sampleFile2 := `apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: module1-flavour1
+  name: module1-flavor1
   namespace: default
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: module1-flavour1
+      app: module1-flavor1
   template:
     metadata:
       labels:
-        app: module1-flavour1
+        app: module1-flavor1
         version: 0.1.1
     spec:
       containers:
@@ -334,7 +334,7 @@ spec:
 			err = apply.Apply(log, configPath, false, "group1", "cluster1", projectPath, options, crdDefaultRetries)
 			Expect(err).NotTo(HaveOccurred())
 
-			dep, err := jplClients_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
+			dep, err := jplClients_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavor1", v1.GetOptions{})
 			Expect(dep).NotTo(BeNil())
 			Expect(err).NotTo(HaveOccurred())
 			modVer := dep.Object["spec"].(map[string]interface{})["template"].(map[string]interface{})["metadata"].(map[string]interface{})["labels"].(map[string]interface{})["version"]
@@ -346,7 +346,7 @@ spec:
 			patch := `apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: module1-flavour1
+  name: module1-flavor1
 spec:
   replicas: 2`
 			pathToCluster := filepath.Join(clustersDirPath, "group1", "cluster1")
@@ -358,7 +358,7 @@ spec:
 			err = apply.Apply(log, configPath, false, "group1", "cluster1", projectPath, options, crdDefaultRetries)
 			Expect(err).NotTo(HaveOccurred())
 
-			dep, err := jplClients_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
+			dep, err := jplClients_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavor1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dep).NotTo(BeNil())
 			Expect(dep.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 2))
@@ -371,7 +371,7 @@ apiVersion: vab.mia-platform.eu/v1alpha1
 name: test-project
 spec:
   modules:
-    module1/flavour1:
+    module1/flavor1:
       version: 0.1.0
   addOns:
     addon1:
@@ -382,7 +382,7 @@ spec:
     - name: cluster1
       context: kind-vab-cluster-1
       modules:
-        module1/flavour1:
+        module1/flavor1:
           version: 0.1.1`
 			err := os.WriteFile(configPath, []byte(config), os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
@@ -394,11 +394,11 @@ spec:
 			sampleFile := `apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: module1-flavour1
+  name: module1-flavor1
 spec:
   selector:
     matchLabels:
-      app: module1-flavour1
+      app: module1-flavor1
   template:
     spec:
       containers:
@@ -416,7 +416,7 @@ spec:
 			err = apply.Apply(log, configPath, false, "group1", "cluster1", projectPath, options, crdDefaultRetries)
 			Expect(err).NotTo(HaveOccurred())
 
-			depMod, err := jplClients_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
+			depMod, err := jplClients_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavor1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depMod).NotTo(BeNil())
 			// module patched
@@ -434,7 +434,7 @@ apiVersion: vab.mia-platform.eu/v1alpha1
 name: test-project
 spec:
   modules:
-    module1/flavour1:
+    module1/flavor1:
       version: 0.1.0
   addOns: {}
   groups:
@@ -443,7 +443,7 @@ spec:
     - name: cluster1
       context: kind-vab-cluster-1
       modules:
-        module1/flavour1:
+        module1/flavor1:
           version: 0.1.1
       addOns:
         addon1:
@@ -458,11 +458,11 @@ spec:
 			sampleFile := `apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: module1-flavour1
+  name: module1-flavor1
 spec:
   selector:
     matchLabels:
-      app: module1-flavour1
+      app: module1-flavor1
   template:
     spec:
       containers:
@@ -480,7 +480,7 @@ spec:
 			err = apply.Apply(log, configPath, false, "group1", "cluster1", projectPath, options, crdDefaultRetries)
 			Expect(err).NotTo(HaveOccurred())
 
-			depMod, err := jplClients_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
+			depMod, err := jplClients_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavor1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depMod).NotTo(BeNil())
 			// module patched
@@ -499,7 +499,7 @@ spec:
 			patch := `apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: module1-flavour1
+  name: module1-flavor1
 spec:
   replicas: 3
   template:
@@ -521,7 +521,7 @@ spec:
 			err := apply.Apply(log, configPath, false, "group1", "cluster1", projectPath, options, crdDefaultRetries)
 			Expect(err).NotTo(HaveOccurred())
 
-			depMod, err := jplClients_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
+			depMod, err := jplClients_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavor1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depMod).NotTo(BeNil())
 			// module patched
@@ -541,9 +541,9 @@ spec:
 	Context("2 clusters, same group", func() {
 		It("syncs the project without errors", func() {
 			// clean up cluster 1
-			err := jplClients_cluster1.Resource(depsGvr).Namespace("default").Delete(context.Background(), "module1-flavour1", v1.DeleteOptions{})
+			err := jplClients_cluster1.Resource(depsGvr).Namespace("default").Delete(context.Background(), "module1-flavor1", v1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
-			_, err = jplClients_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
+			_, err = jplClients_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavor1", v1.GetOptions{})
 			Expect(err).To(HaveOccurred())
 
 			config := `kind: ClustersConfiguration
@@ -551,9 +551,9 @@ apiVersion: vab.mia-platform.eu/v1alpha1
 name: test-project
 spec:
   modules:
-    module1/flavour1:
+    module1/flavor1:
       version: 0.1.0
-    module2/flavour1:
+    module2/flavor1:
       version: 0.1.0
   addOns:
     addon1:
@@ -564,7 +564,7 @@ spec:
     - name: cluster1
       context: kind-vab-cluster-1
       modules:
-        module1/flavour1:
+        module1/flavor1:
           version: 0.1.1
       addOns:
         addon1:
@@ -572,7 +572,7 @@ spec:
     - name: cluster2
       context: kind-vab-cluster-2
       modules:
-        module2/flavour1:
+        module2/flavor1:
           version: 0.1.1
       addOns:
         addon1:
@@ -587,17 +587,17 @@ spec:
 			sampleFile1 := `apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: module2-flavour1
+  name: module2-flavor1
   namespace: default
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: module2-flavour1
+      app: module2-flavor1
   template:
     metadata:
       labels:
-        app: module2-flavour1
+        app: module2-flavor1
         version: 0.1.0
     spec:
       containers:
@@ -615,17 +615,17 @@ spec:
 			sampleFile2 := `apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: module2-flavour1
+  name: module2-flavor1
   namespace: default
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: module2-flavour1
+      app: module2-flavor1
   template:
     metadata:
       labels:
-        app: module2-flavour1
+        app: module2-flavor1
         version: 0.1.1
     spec:
       containers:
@@ -643,8 +643,8 @@ spec:
 			err = apply.Apply(log, configPath, false, "group1", "", projectPath, options, crdDefaultRetries)
 			Expect(err).NotTo(HaveOccurred())
 
-			// cluster 1: module1-flavour1 deployed and patched, addon1 deployed (replicas == 3)
-			depMod, err := jplClients_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
+			// cluster 1: module1-flavor1 deployed and patched, addon1 deployed (replicas == 3)
+			depMod, err := jplClients_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavor1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depMod).NotTo(BeNil())
 			Expect(depMod.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 3))
@@ -652,14 +652,14 @@ spec:
 			newSidecarPort := depMod.Object["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{})[0].(map[string]interface{})["ports"].([]interface{})[0].(map[string]interface{})["containerPort"]
 			Expect(newSidecarPort).Should(BeNumerically("==", 9000))
 
-			// cluster 2: module2-flavour1 deployed and overridden
-			depMod, err = jplClients_cluster2.Resource(depsGvr).Namespace("default").Get(context.Background(), "module2-flavour1", v1.GetOptions{})
+			// cluster 2: module2-flavor1 deployed and overridden
+			depMod, err = jplClients_cluster2.Resource(depsGvr).Namespace("default").Get(context.Background(), "module2-flavor1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depMod).NotTo(BeNil())
 			modVer := depMod.Object["spec"].(map[string]interface{})["template"].(map[string]interface{})["metadata"].(map[string]interface{})["labels"].(map[string]interface{})["version"]
 			Expect(modVer).To(BeIdenticalTo("0.1.1"))
 			// cluster 2: no module patch, addon-1 disabled (1 replica, no sidecar container)
-			depMod, err = jplClients_cluster2.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavour1", v1.GetOptions{})
+			depMod, err = jplClients_cluster2.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavor1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depMod).NotTo(BeNil())
 			Expect(depMod.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 1))

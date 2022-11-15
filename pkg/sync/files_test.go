@@ -31,9 +31,9 @@ func TestReadWrite(t *testing.T) {
 	fakeWorktree := testutils.PrepareFakeWorktree(t)
 
 	input := []*git.File{
-		git.NewFile("./modules/category/test-module1/test-flavour1/file1.yaml", "./modules/category/test-module1", *fakeWorktree),
-		git.NewFile("./modules/category/test-module1/test-flavour1/file2.yaml", "./modules/category/test-module1", *fakeWorktree),
-		git.NewFile("./modules/category/test-module1/test-flavour2/file1.yaml", "./modules/category/test-module1", *fakeWorktree),
+		git.NewFile("./modules/category/test-module1/test-flavor1/file1.yaml", "./modules/category/test-module1", *fakeWorktree),
+		git.NewFile("./modules/category/test-module1/test-flavor1/file2.yaml", "./modules/category/test-module1", *fakeWorktree),
+		git.NewFile("./modules/category/test-module1/test-flavor2/file1.yaml", "./modules/category/test-module1", *fakeWorktree),
 	}
 
 	tempdir := t.TempDir()
@@ -41,15 +41,15 @@ func TestReadWrite(t *testing.T) {
 	err := WritePkgToDir(input, tempdir)
 	assert.NoError(t, err)
 
-	testutils.CompareFile(t, []byte("file1-1-1 content\n"), filepath.Join(tempdir, "test-flavour1/file1.yaml"))
-	testutils.CompareFile(t, []byte("file1-1-2 content\n"), filepath.Join(tempdir, "test-flavour1/file2.yaml"))
-	testutils.CompareFile(t, []byte("file1-2-1 content\n"), filepath.Join(tempdir, "test-flavour2/file1.yaml"))
+	testutils.CompareFile(t, []byte("file1-1-1 content\n"), filepath.Join(tempdir, "test-flavor1/file1.yaml"))
+	testutils.CompareFile(t, []byte("file1-1-2 content\n"), filepath.Join(tempdir, "test-flavor1/file2.yaml"))
+	testutils.CompareFile(t, []byte("file1-2-1 content\n"), filepath.Join(tempdir, "test-flavor2/file1.yaml"))
 
-	dirList, err := os.ReadDir(filepath.Join(tempdir, "test-flavour1/"))
+	dirList, err := os.ReadDir(filepath.Join(tempdir, "test-flavor1/"))
 	assert.NoError(t, err)
 	assert.Equal(t, 2, len(dirList))
 
-	dirList, err = os.ReadDir(filepath.Join(tempdir, "test-flavour2/"))
+	dirList, err = os.ReadDir(filepath.Join(tempdir, "test-flavor2/"))
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(dirList))
 }

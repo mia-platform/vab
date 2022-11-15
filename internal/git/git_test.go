@@ -82,12 +82,12 @@ func TestFilterFilesForPackage(t *testing.T) {
 
 	logger := logger.DisabledLogger{}
 	t.Run("filter module files", func(t *testing.T) {
-		module := v1alpha1.NewModule(t, "category/test-module1/test-flavour1", "1.0.0", false)
+		module := v1alpha1.NewModule(t, "category/test-module1/test-flavor1", "1.0.0", false)
 
 		expectedArray := []*File{
-			NewFile("modules/category/test-module1/test-flavour1/file1.yaml", "modules/category/test-module1", *fakeWorktree),
-			NewFile("modules/category/test-module1/test-flavour1/file2.yaml", "modules/category/test-module1", *fakeWorktree),
-			NewFile("modules/category/test-module1/test-flavour2/file1.yaml", "modules/category/test-module1", *fakeWorktree),
+			NewFile("modules/category/test-module1/test-flavor1/file1.yaml", "modules/category/test-module1", *fakeWorktree),
+			NewFile("modules/category/test-module1/test-flavor1/file2.yaml", "modules/category/test-module1", *fakeWorktree),
+			NewFile("modules/category/test-module1/test-flavor2/file1.yaml", "modules/category/test-module1", *fakeWorktree),
 		}
 		files, err := filterWorktreeForPackage(logger, fakeWorktree, module)
 		assert.NoError(t, err)
@@ -121,7 +121,7 @@ func TestFilterError(t *testing.T) {
 
 func TestGetFilesForPackage(t *testing.T) {
 	logger := logger.DisabledLogger{}
-	module := v1alpha1.NewModule(t, "category/test-module1/test-flavour1", "1.0.0", false)
+	module := v1alpha1.NewModule(t, "category/test-module1/test-flavor1", "1.0.0", false)
 
 	files, err := GetFilesForPackage(logger, testutils.FakeFilesGetter{Testing: t}, module)
 	if !assert.NoError(t, err) {

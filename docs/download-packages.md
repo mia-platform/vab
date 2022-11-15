@@ -30,7 +30,7 @@ various tags will be built using the name and the the version contained in the c
 
 Once the correct tag and url are extracted from the module or add-on we can use them to create a temporary clone
 and then using it for copying all the files contained inside the correct folders (add-ons or module, for the modules
-all the flavours subfolders will be copied for maintaining cross dependencies between them).
+all the flavors subfolders will be copied for maintaining cross dependencies between them).
 
 For the first version only the mia-platform official public repo will be supported via the https connection
 and so we don’t have to support particular connection credentials; but the interaction with git must be

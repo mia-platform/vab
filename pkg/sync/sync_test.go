@@ -35,7 +35,7 @@ import (
 // ClonePackages returns a list of mocked file pointers w/o errors
 func TestClonePackage(t *testing.T) {
 	logger := logger.DisabledLogger{}
-	testModule := v1alpha1.NewModule(t, "category/test-module1/test-flavour1", "1.0.0", false)
+	testModule := v1alpha1.NewModule(t, "category/test-module1/test-flavor1", "1.0.0", false)
 	outputFiles, err := ClonePackages(logger, testModule, testutils.FakeFilesGetter{Testing: t})
 	if !assert.NoError(t, err) {
 		return
@@ -48,18 +48,18 @@ func TestMoveToDisk(t *testing.T) {
 	logger := logger.DisabledLogger{}
 	fakeWorktree := testutils.PrepareFakeWorktree(t)
 	input := []*git.File{
-		git.NewFile("./modules/category/test-module1/test-flavour1/file1.yaml", "./modules/category/test-module1", *fakeWorktree),
-		git.NewFile("./modules/category/test-module1/test-flavour1/file2.yaml", "./modules/category/test-module1", *fakeWorktree),
-		git.NewFile("./modules/category/test-module1/test-flavour1/file1.yaml", "./modules/category/test-module1", *fakeWorktree),
+		git.NewFile("./modules/category/test-module1/test-flavor1/file1.yaml", "./modules/category/test-module1", *fakeWorktree),
+		git.NewFile("./modules/category/test-module1/test-flavor1/file2.yaml", "./modules/category/test-module1", *fakeWorktree),
+		git.NewFile("./modules/category/test-module1/test-flavor1/file1.yaml", "./modules/category/test-module1", *fakeWorktree),
 	}
 	testDirPath := t.TempDir()
-	err := MoveToDisk(logger, input, "test-module1/test-flavour1", testDirPath)
+	err := MoveToDisk(logger, input, "test-module1/test-flavor1", testDirPath)
 	if !assert.NoError(t, err) {
 		return
 	}
-	assert.FileExists(t, filepath.Join(testDirPath, "test-flavour1/file1.yaml"), "Mock file 1 does not exist on disk")
-	assert.FileExists(t, filepath.Join(testDirPath, "test-flavour1/file2.yaml"), "Mock file 2 does not exist on disk")
-	assert.FileExists(t, filepath.Join(testDirPath, "test-flavour1/file1.yaml"), "Mock file 3 does not exist on disk")
+	assert.FileExists(t, filepath.Join(testDirPath, "test-flavor1/file1.yaml"), "Mock file 1 does not exist on disk")
+	assert.FileExists(t, filepath.Join(testDirPath, "test-flavor1/file2.yaml"), "Mock file 2 does not exist on disk")
+	assert.FileExists(t, filepath.Join(testDirPath, "test-flavor1/file1.yaml"), "Mock file 3 does not exist on disk")
 }
 
 // UpdateModules syncs new modules without errors
@@ -68,19 +68,19 @@ func TestUpdateModules(t *testing.T) {
 	modules := make(map[string]v1alpha1.Package)
 	modules["module1"] = v1alpha1.NewModule(
 		t,
-		"category/test-module1/test-flavour1",
+		"category/test-module1/test-flavor1",
 		"1.0.0",
 		false,
 	)
 	modules["module2"] = v1alpha1.NewModule(
 		t,
-		"category/test-module2/test-flavour1",
+		"category/test-module2/test-flavor1",
 		"1.0.0",
 		false,
 	)
 	modules["module3"] = v1alpha1.NewModule(
 		t,
-		"category/test-module3/test-flavour1",
+		"category/test-module3/test-flavor1",
 		"1.0.0",
 		true,
 	)
@@ -125,19 +125,19 @@ func TestUpdateAllGroups(t *testing.T) {
 	modules := make(map[string]v1alpha1.Package)
 	modules["module3"] = v1alpha1.NewModule(
 		t,
-		"category/test-module3/test-flavour1",
+		"category/test-module3/test-flavor1",
 		"1.0.0",
 		false,
 	)
 	modules["module2"] = v1alpha1.NewModule(
 		t,
-		"category/test-module2/test-flavour1",
+		"category/test-module2/test-flavor1",
 		"1.0.0",
 		false,
 	)
 	modules["module1"] = v1alpha1.NewModule(
 		t,
-		"category/test-module1/test-flavour1",
+		"category/test-module1/test-flavor1",
 		"1.0.0",
 		false,
 	)
@@ -320,19 +320,19 @@ func TestUpdateClusterModulesNoOverrides(t *testing.T) {
 	defaultModules := make(map[string]v1alpha1.Package)
 	defaultModules["module3"] = v1alpha1.NewModule(
 		t,
-		"test-module3/test-flavour1",
+		"test-module3/test-flavor1",
 		"1.0.0",
 		false,
 	)
 	defaultModules["module2"] = v1alpha1.NewModule(
 		t,
-		"test-module2/test-flavour1",
+		"test-module2/test-flavor1",
 		"1.0.0",
 		false,
 	)
 	defaultModules["module1"] = v1alpha1.NewModule(
 		t,
-		"test-module1/test-flavour1",
+		"test-module1/test-flavor1",
 		"1.0.0",
 		false,
 	)
@@ -340,19 +340,19 @@ func TestUpdateClusterModulesNoOverrides(t *testing.T) {
 	expectedOutput := make(map[string]v1alpha1.Package)
 	expectedOutput["module3"] = v1alpha1.NewModule(
 		t,
-		"test-module3/test-flavour1",
+		"test-module3/test-flavor1",
 		"1.0.0",
 		false,
 	)
 	expectedOutput["module2"] = v1alpha1.NewModule(
 		t,
-		"test-module2/test-flavour1",
+		"test-module2/test-flavor1",
 		"1.0.0",
 		false,
 	)
 	expectedOutput["module1"] = v1alpha1.NewModule(
 		t,
-		"test-module1/test-flavour1",
+		"test-module1/test-flavor1",
 		"1.0.0",
 		false,
 	)
@@ -366,38 +366,38 @@ func TestUpdateClusterModules(t *testing.T) {
 	defaultModules := make(map[string]v1alpha1.Package)
 	defaultModules["module3"] = v1alpha1.NewModule(
 		t,
-		"category/test-module3/test-flavour1",
+		"category/test-module3/test-flavor1",
 		"1.0.0",
 		false,
 	)
 	defaultModules["module2"] = v1alpha1.NewModule(
 		t,
-		"category/test-module2/test-flavour1",
+		"category/test-module2/test-flavor1",
 		"1.0.0",
 		false,
 	)
 	defaultModules["module1"] = v1alpha1.NewModule(
 		t,
-		"category/test-module1/test-flavour1",
+		"category/test-module1/test-flavor1",
 		"1.0.0",
 		false,
 	)
 	overrides := make(map[string]v1alpha1.Package)
 	overrides["module3"] = v1alpha1.NewModule(
 		t,
-		"category/test-module3/test-flavour1",
+		"category/test-module3/test-flavor1",
 		"1.0.1",
 		false,
 	)
 	overrides["module2"] = v1alpha1.NewModule(
 		t,
-		"category/test-module2/test-flavour1",
+		"category/test-module2/test-flavor1",
 		"",
 		true,
 	)
 	overrides["module1"] = v1alpha1.NewModule(
 		t,
-		"category/test-module1/test-flavour1",
+		"category/test-module1/test-flavor1",
 		"1.0.0",
 		false,
 	)
@@ -405,13 +405,13 @@ func TestUpdateClusterModules(t *testing.T) {
 	expectedOutput := make(map[string]v1alpha1.Package)
 	expectedOutput["module1"] = v1alpha1.NewModule(
 		t,
-		"category/test-module1/test-flavour1",
+		"category/test-module1/test-flavor1",
 		"1.0.0",
 		false,
 	)
 	expectedOutput["module3"] = v1alpha1.NewModule(
 		t,
-		"category/test-module3/test-flavour1",
+		"category/test-module3/test-flavor1",
 		"1.0.1",
 		false,
 	)

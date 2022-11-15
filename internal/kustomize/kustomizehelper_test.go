@@ -271,7 +271,7 @@ func TestGetMissingKustomizationPath(t *testing.T) {
 	assert.Equal(t, expectedKustomization, actualKustomization, "Unexpected file content")
 }
 
-// getModuleCompleteName returns the string in the correct format <module>-<semver>/<flavour>
+// getModuleCompleteName returns the string in the correct format <module>-<semver>/<flavor>
 func TestGetModuleCompleteName(t *testing.T) {
 	modules := make(map[string]v1alpha1.Package)
 	modules["m1/f1"] = v1alpha1.NewModule(

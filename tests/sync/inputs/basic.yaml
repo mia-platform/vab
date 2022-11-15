@@ -3,9 +3,9 @@ apiVersion: vab.mia-platform.eu/v1alpha1
 name: basic-sync
 spec:
   modules:
-    category/test-module1/test-flavour1:
+    category/test-module1/test-flavor1:
       version: 1.0.0
-    category/test-module2/test-flavour1:
+    category/test-module2/test-flavor1:
       version: 1.0.0
   addOns:
     category/test-addon1:

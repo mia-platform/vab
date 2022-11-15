@@ -27,18 +27,18 @@ For example:
     ├── modules
     |   ├── <module-category>
     |   |   └── <module-name-1>-<valid semver>
-    |   |       ├── <flavour-name1>
+    |   |       ├── <flavor-name1>
     |   |       |   ├── [...]
     |   |       |   └── kustomization.yaml
-    |   |       └── <flavour-name2>
+    |   |       └── <flavor-name2>
     |   |           ├── [...]
     |   |           └── kustomization.yaml
     |   └── <module-category>
     |       └── <module-name-2>-<valid semver>
-    |           ├── <flavour-name1>
+    |           ├── <flavor-name1>
     |           |   ├── [...]
     |           |   └── kustomization.yaml
-    |           └── <flavour-name2>
+    |           └── <flavor-name2>
     |               ├── [...]
     |               └── kustomization.yaml
     └── add-ons
