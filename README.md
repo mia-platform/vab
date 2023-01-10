@@ -1,7 +1,7 @@
 # vab
 
-`vab` is a cli for managing the installation of day 2 operation tools on multiple clusters for easier management and
-updates.
+`vab` is a cli for managing the installation of day 2 operation tools on multiple kubernetes clusters for easier
+management and updates.
 
 `vab` is the acronym for Vehicle Assembly Building that is designed to assemble large pre-manufactured
 space vehicle components.
@@ -16,7 +16,7 @@ least these dependencies installed on your machine:
 - docker with buildkit build engine available to use
 - golang, for the exact version see the [.go-version](/.go-version) file in the repository
 
-Once you have all the correct dependencies installed and the code pulled you can simply build the project with:
+Once you have all the correct dependencies installed and the code pulled you can build the project with:
 
 ```bash
 make build
@@ -43,29 +43,28 @@ For linting your files make provide the following command:
 make lint
 ```
 
-This command will run `go mod tidy` for cleaning up the `go.mod` and `go.sum` files and will stop if it senses that
-the files are changed and not already commited or added to the git staging area, this check is done forcing the user
-to not forgetting this steps and for breaking the ci/cd on GitHub if those files are not in the correct shape.  
+This command will run `go mod tidy` for cleaning up the `go.mod` and `go.sum` files.  
 Additionally the command will download and use the [`golangci-lint`][golangci-lint] cli for running various linters
-on the code, the configuration used can be seen [here](/tools/.golangci.yml).
+on the code, the configuration used can be seen [here](.golangci.yml).
 
 ### Building Docker Image
 
 If you need to use a docker image locally you can build it with:
 
 ```bash
-make build-image
+make docker-build
 ```
 
-The command will first build the appropriate binary for your architecture and then build the correct docker image for
+The command will first build the appropriate binary and then build the correct docker image for
 your platform based on Linux Alpine.
 
 ### Building Multiarch Docker Image
 
-If you need to try and build a multiarch docker image locally:
+If you need to try and build a multiarch docker image locally, you have to run these commands:
 
 ```bash
-make build-image-multiarch
+make docker-setup-multiarch
+make docker-build-multiarch
 ```
 
 For building this image you need to have installed `docker` and the `buildx` extension for emulating multiple

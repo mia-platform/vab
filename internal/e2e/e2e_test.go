@@ -1,25 +1,24 @@
-//go:build e2e
-// +build e2e
-
-// Copyright 2022 Mia-Platform
-
+// Copyright Mia srl
+// SPDX-License-Identifier: Apache-2.0
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-
-//    http://www.apache.org/licenses/LICENSE-2.0
-
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//go:build conformance
+
 package e2e_test
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -70,9 +69,8 @@ patches:
 )
 
 var log logger.LogInterface
-var cfg *rest.Config
-var jplClients_cluster1 dynamic.Interface
-var jplClients_cluster2 dynamic.Interface
+var jplClientsCluster1 dynamic.Interface
+var jplClientsCluster2 dynamic.Interface
 var options *jpl.Options
 var testDirPath string
 var configPath string
@@ -95,16 +93,16 @@ var _ = BeforeSuite(func() {
 
 		kubeConfigPath := filepath.Join(homeDir, ".kube/config")
 
-		cluster1_cfg, err := buildConfigFromFlags("kind-vab-cluster-1", kubeConfigPath)
+		cluster1Cfg, err := buildConfigFromFlags("kind-vab-cluster-1", kubeConfigPath)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(cluster1_cfg).ToNot(BeNil())
+		Expect(cluster1Cfg).ToNot(BeNil())
 
-		cluster2_cfg, err := buildConfigFromFlags("kind-vab-cluster-2", kubeConfigPath)
+		cluster2Cfg, err := buildConfigFromFlags("kind-vab-cluster-2", kubeConfigPath)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(cluster2_cfg).ToNot(BeNil())
+		Expect(cluster2Cfg).ToNot(BeNil())
 
-		jplClients_cluster1 = dynamic.NewForConfigOrDie(cluster1_cfg)
-		jplClients_cluster2 = dynamic.NewForConfigOrDie(cluster2_cfg)
+		jplClientsCluster1 = dynamic.NewForConfigOrDie(cluster1Cfg)
+		jplClientsCluster2 = dynamic.NewForConfigOrDie(cluster2Cfg)
 
 		options = jpl.NewOptions()
 		options.Context = "kind-vab-cluster-1"
@@ -292,7 +290,7 @@ spec:
 
 			err = apply.Apply(log, configPath, false, "group1", "cluster1", projectPath, options, crdDefaultRetries)
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(BeIdenticalTo(fmt.Sprintf("crds check failed with error: reached limit of max retries for CRDs status check")))
+			Expect(err.Error()).To(BeIdenticalTo("crds check failed with error: reached limit of max retries for CRDs status check"))
 		})
 		It("applies the configuration to the kind cluster", func() {
 			crd2 := `apiVersion: apiextensions.k8s.io/v1
@@ -334,7 +332,7 @@ spec:
 			err = apply.Apply(log, configPath, false, "group1", "cluster1", projectPath, options, crdDefaultRetries)
 			Expect(err).NotTo(HaveOccurred())
 
-			dep, err := jplClients_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavor1", v1.GetOptions{})
+			dep, err := jplClientsCluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavor1", v1.GetOptions{})
 			Expect(dep).NotTo(BeNil())
 			Expect(err).NotTo(HaveOccurred())
 			modVer := dep.Object["spec"].(map[string]interface{})["template"].(map[string]interface{})["metadata"].(map[string]interface{})["labels"].(map[string]interface{})["version"]
@@ -358,7 +356,7 @@ spec:
 			err = apply.Apply(log, configPath, false, "group1", "cluster1", projectPath, options, crdDefaultRetries)
 			Expect(err).NotTo(HaveOccurred())
 
-			dep, err := jplClients_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavor1", v1.GetOptions{})
+			dep, err := jplClientsCluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavor1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dep).NotTo(BeNil())
 			Expect(dep.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 2))
@@ -416,7 +414,7 @@ spec:
 			err = apply.Apply(log, configPath, false, "group1", "cluster1", projectPath, options, crdDefaultRetries)
 			Expect(err).NotTo(HaveOccurred())
 
-			depMod, err := jplClients_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavor1", v1.GetOptions{})
+			depMod, err := jplClientsCluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavor1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depMod).NotTo(BeNil())
 			// module patched
@@ -480,7 +478,7 @@ spec:
 			err = apply.Apply(log, configPath, false, "group1", "cluster1", projectPath, options, crdDefaultRetries)
 			Expect(err).NotTo(HaveOccurred())
 
-			depMod, err := jplClients_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavor1", v1.GetOptions{})
+			depMod, err := jplClientsCluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavor1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depMod).NotTo(BeNil())
 			// module patched
@@ -521,7 +519,7 @@ spec:
 			err := apply.Apply(log, configPath, false, "group1", "cluster1", projectPath, options, crdDefaultRetries)
 			Expect(err).NotTo(HaveOccurred())
 
-			depMod, err := jplClients_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavor1", v1.GetOptions{})
+			depMod, err := jplClientsCluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavor1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depMod).NotTo(BeNil())
 			// module patched
@@ -541,9 +539,9 @@ spec:
 	Context("2 clusters, same group", func() {
 		It("syncs the project without errors", func() {
 			// clean up cluster 1
-			err := jplClients_cluster1.Resource(depsGvr).Namespace("default").Delete(context.Background(), "module1-flavor1", v1.DeleteOptions{})
+			err := jplClientsCluster1.Resource(depsGvr).Namespace("default").Delete(context.Background(), "module1-flavor1", v1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
-			_, err = jplClients_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavor1", v1.GetOptions{})
+			_, err = jplClientsCluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavor1", v1.GetOptions{})
 			Expect(err).To(HaveOccurred())
 
 			config := `kind: ClustersConfiguration
@@ -644,7 +642,7 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 
 			// cluster 1: module1-flavor1 deployed and patched, addon1 deployed (replicas == 3)
-			depMod, err := jplClients_cluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavor1", v1.GetOptions{})
+			depMod, err := jplClientsCluster1.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavor1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depMod).NotTo(BeNil())
 			Expect(depMod.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 3))
@@ -653,13 +651,13 @@ spec:
 			Expect(newSidecarPort).Should(BeNumerically("==", 9000))
 
 			// cluster 2: module2-flavor1 deployed and overridden
-			depMod, err = jplClients_cluster2.Resource(depsGvr).Namespace("default").Get(context.Background(), "module2-flavor1", v1.GetOptions{})
+			depMod, err = jplClientsCluster2.Resource(depsGvr).Namespace("default").Get(context.Background(), "module2-flavor1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depMod).NotTo(BeNil())
 			modVer := depMod.Object["spec"].(map[string]interface{})["template"].(map[string]interface{})["metadata"].(map[string]interface{})["labels"].(map[string]interface{})["version"]
 			Expect(modVer).To(BeIdenticalTo("0.1.1"))
 			// cluster 2: no module patch, addon-1 disabled (1 replica, no sidecar container)
-			depMod, err = jplClients_cluster2.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavor1", v1.GetOptions{})
+			depMod, err = jplClientsCluster2.Resource(depsGvr).Namespace("default").Get(context.Background(), "module1-flavor1", v1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(depMod).NotTo(BeNil())
 			Expect(depMod.Object["spec"].(map[string]interface{})["replicas"]).Should(BeNumerically("==", 1))

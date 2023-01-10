@@ -1,14 +1,12 @@
-//go:build !e2e
-// +build !e2e
-
-// Copyright 2022 Mia-Platform
-
+// Copyright Mia srl
+// SPDX-License-Identifier: Apache-2.0
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-
-//    http://www.apache.org/licenses/LICENSE-2.0
-
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,6 +32,21 @@ import (
 const (
 	testName = "foo"
 )
+
+// createClusterOverride creates the directory structure for clusterName's overrides in the specified configPath
+func createClusterOverride(t *testing.T, configPath string, clusterName string) error {
+	t.Helper()
+	clusterDir := filepath.Join(configPath, utils.ClustersDirName, clusterName)
+	if err := os.MkdirAll(clusterDir, os.ModePerm); err != nil {
+		return err
+	}
+
+	if err := utils.WriteKustomization(utils.EmptyKustomization(), clusterDir); err != nil {
+		return err
+	}
+
+	return nil
+}
 
 // Return current path if the name arg is the empty string
 func TestCurrentPath(t *testing.T) {
@@ -107,7 +120,7 @@ func TestNewClusterOverride(t *testing.T) {
 	}
 
 	randomName := uniuri.New()
-	if err := createClusterOverride(testDirPath, randomName); !assert.NoError(t, err) {
+	if err := createClusterOverride(t, testDirPath, randomName); !assert.NoError(t, err) {
 		return
 	}
 
@@ -120,7 +133,7 @@ func TestNewClusterOverride(t *testing.T) {
 func TestMissingClustersDirectory(t *testing.T) {
 	testDirPath := t.TempDir()
 	randomName := uniuri.New()
-	err := createClusterOverride(testDirPath, randomName)
+	err := createClusterOverride(t, testDirPath, randomName)
 	assert.NoError(t, err)
 }
 
@@ -132,7 +145,7 @@ func TestNewClusterErrPermission(t *testing.T) {
 	}
 
 	randomName := uniuri.New()
-	err := createClusterOverride(testDirPath, randomName)
+	err := createClusterOverride(t, testDirPath, randomName)
 	if assert.Error(t, err) {
 		assert.ErrorIs(t, err, fs.ErrPermission)
 	}
@@ -146,7 +159,7 @@ func TestMissingClustersDirErrPermission(t *testing.T) {
 	}
 
 	randomName := uniuri.New()
-	err := createClusterOverride(testDirPath, randomName)
+	err := createClusterOverride(t, testDirPath, randomName)
 	if assert.Error(t, err) {
 		assert.ErrorIs(t, err, fs.ErrPermission)
 	}

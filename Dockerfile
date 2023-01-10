@@ -1,7 +1,9 @@
-FROM --platform=${TARGETPLATFORM} alpine:3.16
+FROM --platform=${TARGETPLATFORM} alpine:3.17
 
 ARG TARGETPLATFORM
+ARG CMD_NAME
+ENV COMMAND_NAME=${CMD_NAME}
 
-COPY ${TARGETPLATFORM}/vab /usr/local/bin/
+COPY ${TARGETPLATFORM}/${CMD_NAME} /usr/local/bin/
 
-CMD ["/usr/local/bin/vab"]
+CMD ["/bin/sh", "-c", "${COMMAND_NAME}"]
