@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.9.0] - 2023-02-08
+
 ### Added
 
 - init command: initialize a new folder with base folders and config files
@@ -15,4 +17,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - apply command: apply generated files to targets clusters
 - validate command: validate the configuration file
 
-[Unreleased]: https://github.com/mia-platform/jpl/
+[Unreleased]: https://github.com/mia-platform/jpl/compare/v0.9.0...HEAD
+[v0.9.0]: https://github.com/mia-platform/vab/releases/tag/v0.1.0
