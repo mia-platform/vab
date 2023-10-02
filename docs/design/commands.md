@@ -45,7 +45,7 @@ spec:
     #         example-module: --- DISABLE MODULE
     #           disable: true
     #         other-module: --- ADD NEW MODULE
-    #           version: 1.20.20 
+    #           version: 1.20.20
     #     - name: cluster3-name
     #       context: context3-name
 ```
@@ -76,7 +76,7 @@ spec:
       version: 1.20.1
     cni/cilium/base:
       version: 1.20.1
-  groups: 
+  groups:
     - group: group-name
       clusters:
         - cluster1-name: context1-name
@@ -84,7 +84,7 @@ spec:
             cni/cilium/base:
               disable: true
             cni/calico/base:
-              version: 1.20.20 
+              version: 1.20.20
         - cluster2-name: context2-name
 ```
 
@@ -124,9 +124,9 @@ The command execution will build the following directory structure:
 |       ├── cluster1-name
 |       |   ├── cni
 |       |   |   └── calico
-|       |   └── kustomization.yaml    
+|       |   └── kustomization.yaml  
 |       └── cluster2-name
-|           └── kustomization.yaml 
+|           └── kustomization.yaml
 └── config.yaml
 ```
 
