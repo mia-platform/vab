@@ -45,10 +45,7 @@ func Sync(logger logger.LogInterface, filesGetter git.FilesGetter, configPath st
 		return err
 	}
 
-	if err := downloadPackages(logger, config, basePath, filesGetter, dryRun); err != nil {
-		return err
-	}
-	return nil
+	return downloadPackages(logger, config, basePath, filesGetter, dryRun)
 }
 
 func syncAllGroups(config *v1alpha1.ClustersConfiguration, basePath string) error {

@@ -33,8 +33,23 @@ Every PR, issue, code and documentation must be inclusive to all and must adhere
 	information
 - Your PR title should be descriptive.
 - If your PR is co-authored or based on an earlier PR from another contributor,
-	please attribute them with Co-authored-by: name <name@example.com>.
+	please attribute them with `Co-authored-by: name <name@example.com>`.
 	See [GitHub’s multiple author guidance] for further details.
+
+## Commit Message Styling
+
+Every commit in this repository must follow the guidelines provided by [Conventional commits].
+The following *types* are allowed:
+
+1. `fix:` a commit that fixes a bug.
+1. `feat:` a commit that adds new functionality.
+1. `docs:` a commit that adds or improves the documentation.
+1. `test:` a commit that adds unit tests.
+1. `ci:` a commit that improves the pipelines or the integration mechanisms.
+1. `style:` a commit that changes the code or documentation format and/or style without modifying the implementation.
+1. `chore:` a catch-all type for any other commits. Generally used for commits that do not add or improve
+		functionalities to code or documentation.
 
 [Google Developer Documentation Style Guide]: https://developers.google.com/style/inclusive-documentation
 [GitHub’s multiple author guidance]: https://docs.github.com/en/pull-requests/committing-changes-to-your-project/creating-and-editing-commits/creating-a-commit-with-multiple-authors
+[Conventional commits]: https://www.conventionalcommits.org/en/v1.0.0/

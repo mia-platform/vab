@@ -36,13 +36,13 @@ func TestWrongContextPath(t *testing.T) {
 	log := logger.DisabledLogger{}
 	configPath := testutils.GetTestFile("apply", testBuildFolder, testConfigFileName)
 	options := jpl.NewOptions()
-	err := Apply(log, configPath, true, "", "", testutils.InvalidFolderPath, options, crdDefaultRetries)
+	err := Apply(log, configPath, "", "", testutils.InvalidFolderPath, options, crdDefaultRetries)
 
 	if assert.Error(t, err) {
 		assert.ErrorIs(t, err, fs.ErrNotExist)
 	}
 
-	err = Apply(log, configPath, true, "", "", configPath, options, crdDefaultRetries)
+	err = Apply(log, configPath, "", "", configPath, options, crdDefaultRetries)
 	if assert.Error(t, err) {
 		assert.Equal(t, err.Error(), fmt.Sprintf("the target path %s is not a directory", configPath))
 	}
@@ -52,7 +52,7 @@ func TestBuildInvalidConfigPath(t *testing.T) {
 	log := logger.DisabledLogger{}
 	contextPath := testutils.GetTestFile("apply", testBuildFolder)
 	options := jpl.NewOptions()
-	err := Apply(log, testutils.InvalidFileName, true, "", "", contextPath, options, crdDefaultRetries)
+	err := Apply(log, testutils.InvalidFileName, "", "", contextPath, options, crdDefaultRetries)
 
 	if assert.Error(t, err) {
 		assert.ErrorIs(t, err, fs.ErrNotExist)
@@ -63,7 +63,7 @@ func TestBuildInvalidKustomization(t *testing.T) {
 	log := logger.DisabledLogger{}
 	configPath := testutils.GetTestFile("apply", testBuildFolder, testConfigFileName)
 	options := jpl.NewOptions()
-	err := Apply(log, configPath, true, testutils.TestGroupName1, testutils.TestClusterName1, testutils.GetTestFile("apply", testBuildFolder), options, crdDefaultRetries)
+	err := Apply(log, configPath, testutils.TestGroupName1, testutils.TestClusterName1, testutils.GetTestFile("apply", testBuildFolder), options, crdDefaultRetries)
 	assert.Error(t, err)
 }
 

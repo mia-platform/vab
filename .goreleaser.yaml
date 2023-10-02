@@ -59,13 +59,10 @@ changelog:
 
 brews:
 - name: "{{ .Env.CMDNAME }}"
-  tap:
+  repository:
     owner: mia-platform
     name: homebrew-tap
 
-  url_template: "{{ .Env.SOURCE_URL }}/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
-  download_strategy: CurlDownloadStrategy
-  custom_require: custom_download_strategy
   commit_author:
     name: bot-targa
     email: github@mia-platform.eu

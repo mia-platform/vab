@@ -77,11 +77,7 @@ func writeYamlFile(file interface{}, dstPath string) error {
 		return err
 	}
 
-	if writeErr := os.WriteFile(dstPath, b.Bytes(), defaultFilePermissions); writeErr != nil {
-		return writeErr
-	}
-
-	return nil
+	return os.WriteFile(dstPath, b.Bytes(), defaultFilePermissions)
 }
 
 // WriteConfig creates and writes an empty vab configuration file

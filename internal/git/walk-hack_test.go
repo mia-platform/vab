@@ -178,7 +178,7 @@ type containsChecker struct {
 	*CheckerInfo
 }
 
-func (checker *containsChecker) Check(params []interface{}, names []string) (result bool, err string) {
+func (checker *containsChecker) Check(params []interface{}, _ []string) (result bool, err string) {
 	defer func() {
 		if v := recover(); v != nil {
 			result = false

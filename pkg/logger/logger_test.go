@@ -85,7 +85,7 @@ func TestChangingLogLevel(t *testing.T) {
 	logInterface.SetLogLevel(3)
 }
 
-func TestDisabledLogger(t *testing.T) {
+func TestDisabledLogger(_ *testing.T) {
 	logger := DisabledLogger{}
 	// Disabled logger implement standard methods
 	logger.Warn().Write(testMessage)

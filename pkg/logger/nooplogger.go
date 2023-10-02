@@ -26,18 +26,18 @@ func (logger DisabledLogger) Warn() LogWriterInterface {
 }
 
 // V meets the Logger interface but does nothing
-func (logger DisabledLogger) V(level LogLevel) LogWriterInterface {
+func (logger DisabledLogger) V(_ LogLevel) LogWriterInterface {
 	return DisabledLogWriter{}
 }
 
 // SetLogLevel meets the Logger interface but does nothing
-func (logger DisabledLogger) SetLogLevel(logLevel LogLevel) {}
+func (logger DisabledLogger) SetLogLevel(_ LogLevel) {}
 
 // The DisabledLogWriter implement the LogWriterInterface but all the functions are noop
 type DisabledLogWriter struct{}
 
 // Info meets the LogWriterInterface interface but does nothing
-func (logger DisabledLogWriter) Write(message string) {}
+func (logger DisabledLogWriter) Write(_ string) {}
 
 // Writef meets the LogWriterInterface interface but does nothing
-func (logger DisabledLogWriter) Writef(message string, args ...interface{}) {}
+func (logger DisabledLogWriter) Writef(_ string, _ ...interface{}) {}

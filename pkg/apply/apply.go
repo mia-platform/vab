@@ -50,7 +50,7 @@ var (
 )
 
 // Apply builds the cluster resources and applies them by calling the jpl deploy function
-func Apply(logger logger.LogInterface, configPath string, isDryRun bool, groupName string, clusterName string, contextPath string, options *jpl.Options, crdStatusCheckRetries int) error {
+func Apply(logger logger.LogInterface, configPath string, groupName string, clusterName string, contextPath string, options *jpl.Options, crdStatusCheckRetries int) error {
 	cleanedContextPath := filepath.Clean(contextPath)
 	contextInfo, err := os.Stat(cleanedContextPath)
 	if err != nil {

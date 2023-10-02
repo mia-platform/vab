@@ -41,11 +41,7 @@ func createClusterOverride(t *testing.T, configPath string, clusterName string) 
 		return err
 	}
 
-	if err := utils.WriteKustomization(utils.EmptyKustomization(), clusterDir); err != nil {
-		return err
-	}
-
-	return nil
+	return utils.WriteKustomization(utils.EmptyKustomization(), clusterDir)
 }
 
 // Return current path if the name arg is the empty string
