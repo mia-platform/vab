@@ -29,7 +29,7 @@ import (
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/memfs"
 
-	. "gopkg.in/check.v1"
+	. "gopkg.in/check.v1" //revive:disable-line:dot-imports
 )
 
 type WalkSuite struct{}
@@ -40,19 +40,19 @@ var _ = Suite(&WalkSuite{})
 
 func (s *WalkSuite) TestWalkCanSkipTopDirectory(c *C) {
 	filesystem := memfs.New()
-	c.Assert(Walk(filesystem, "/root/that/does/not/exist", func(path string, info os.FileInfo, err error) error { return filepath.SkipDir }), IsNil)
+	c.Assert(Walk(filesystem, "/root/that/does/not/exist", func(_ string, _ os.FileInfo, _ error) error { return filepath.SkipDir }), IsNil)
 }
 
 func (s *WalkSuite) TestWalkReturnsAnErrorWhenRootDoesNotExist(c *C) {
 	filesystem := memfs.New()
-	c.Assert(Walk(filesystem, "/root/that/does/not/exist", func(path string, info os.FileInfo, err error) error { return err }), NotNil)
+	c.Assert(Walk(filesystem, "/root/that/does/not/exist", func(_ string, _ os.FileInfo, err error) error { return err }), NotNil)
 }
 
 func (s *WalkSuite) TestWalkOnPlainFile(c *C) {
 	filesystem := memfs.New()
 	createFile(c, filesystem, "./README.md")
 	discoveredPaths := []string{}
-	c.Assert(Walk(filesystem, "./README.md", func(path string, info os.FileInfo, err error) error {
+	c.Assert(Walk(filesystem, "./README.md", func(path string, _ os.FileInfo, _ error) error {
 		discoveredPaths = append(discoveredPaths, path)
 		return nil
 	}), IsNil)
@@ -64,7 +64,7 @@ func (s *WalkSuite) TestWalkOnExistingFolder(c *C) {
 	createFile(c, filesystem, "path/to/some/subfolder/that/contain/file")
 	createFile(c, filesystem, "path/to/some/file")
 	discoveredPaths := []string{}
-	c.Assert(Walk(filesystem, "path", func(path string, info os.FileInfo, err error) error {
+	c.Assert(Walk(filesystem, "path", func(path string, _ os.FileInfo, _ error) error {
 		discoveredPaths = append(discoveredPaths, path)
 		return nil
 	}), IsNil)
@@ -83,7 +83,7 @@ func (s *WalkSuite) TestWalkCanSkipFolder(c *C) {
 	createFile(c, filesystem, "path/to/some/subfolder/that/contain/file")
 	createFile(c, filesystem, "path/to/some/file")
 	discoveredPaths := []string{}
-	c.Assert(Walk(filesystem, "path", func(path string, info os.FileInfo, err error) error {
+	c.Assert(Walk(filesystem, "path", func(path string, _ os.FileInfo, _ error) error {
 		discoveredPaths = append(discoveredPaths, path)
 		if path == "path/to/some/subfolder" {
 			return filepath.SkipDir
@@ -105,7 +105,7 @@ func (s *WalkSuite) TestWalkStopsOnError(c *C) {
 	createFile(c, filesystem, "path/to/some/subfolder/that/contain/file")
 	createFile(c, filesystem, "path/to/some/file")
 	discoveredPaths := []string{}
-	c.Assert(Walk(filesystem, "path", func(path string, info os.FileInfo, err error) error {
+	c.Assert(Walk(filesystem, "path", func(path string, _ os.FileInfo, _ error) error {
 		discoveredPaths = append(discoveredPaths, path)
 		if path == "path/to/some/subfolder" {
 			return errors.New("uncaught error")
@@ -137,7 +137,7 @@ func (s *WalkSuite) TestWalkForwardsStatErrors(c *C) {
 	createFile(c, filesystem, "path/to/some/subfolder/that/contain/file")
 	createFile(c, filesystem, "path/to/some/file")
 	discoveredPaths := []string{}
-	c.Assert(Walk(filesystem, "path", func(path string, info os.FileInfo, err error) error {
+	c.Assert(Walk(filesystem, "path", func(path string, _ os.FileInfo, err error) error {
 		discoveredPaths = append(discoveredPaths, path)
 		if path == "path/to/some/subfolder" {
 			c.Assert(err, NotNil)

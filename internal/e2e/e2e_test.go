@@ -28,8 +28,8 @@ import (
 	initProj "github.com/mia-platform/vab/pkg/init"
 	"github.com/mia-platform/vab/pkg/logger"
 	"github.com/mia-platform/vab/pkg/sync"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	. "github.com/onsi/ginkgo" //revive:disable-line:dot-imports
+	. "github.com/onsi/gomega" //revive:disable-line:dot-imports
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
