@@ -14,26 +14,10 @@
 # limitations under the License.
 
 ##@ Deepcopy Goals
-
-.PHONY: generate
-generate:
-
 .PHONY: generate-deps
 generate-deps:
 
-.PHONY: generate/deepcopy
-generate/deepcopy:
-	$(info Running deepcopy-gen...)
-	$(TOOLS_BIN)/deepcopy-gen -i $(PACKAGES_TO_GENERATE) \
-		-o "$(PROJECT_DIR)" -O zz_generated.deepcopy --go-header-file $(TOOLS_DIR)/boilerplate.go.txt
-
-$(TOOLS_BIN)/deepcopy-gen: $(TOOLS_DIR)/DEEPCOPY_GEN_VERSION
-	$(eval DEEPCOPY_GEN_VERSION:= $(shell cat $<))
-	mkdir -p $(TOOLS_BIN)
-	$(info Installing deepcopy-gen $(DEEPCOPY_GEN_VERSION) bin in $(TOOLS_BIN))
-	GOBIN=$(TOOLS_BIN) go install k8s.io/code-generator/cmd/deepcopy-gen@$(DEEPCOPY_GEN_VERSION)
-generate-deps: $(TOOLS_BIN)/deepcopy-gen
-
-.PHONY: generate-deepcopy
-generate-deepcopy: $(TOOLS_BIN)/deepcopy-gen generate/deepcopy
-generate: generate-deepcopy
+.PHONY: generate
+generate: generate-deps
+	go generate ./...
+	${TOOLS_BIN}/deepcopy-gen -i ./pkg/apis/vab.mia-platform.eu/v1alpha1 -o ${PROJECT_DIR} -O zz_generated.deepcopy --go-header-file ${TOOLS_DIR}/boilerplate.go.txt
