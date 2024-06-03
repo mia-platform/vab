@@ -189,7 +189,7 @@ func checkClusterPath(clusterName string, basePath string) (string, error) {
 	}
 	if !slices.Contains(clusterKustomization.Resources, utils.BasesDir) {
 		clusterKustomization.Resources = append([]string{utils.BasesDir}, clusterKustomization.Resources...)
-		if err := utils.WriteKustomization(*clusterKustomization, clusterPath); err != nil {
+		if err := utils.WriteKustomization(*clusterKustomization, clusterPath, true); err != nil {
 			return "", fmt.Errorf("error writing kustomization file for cluster %s: %w", clusterName, err)
 		}
 	}

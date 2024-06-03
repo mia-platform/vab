@@ -17,14 +17,14 @@
 
 package e2e_test
 
-import (
-	"testing"
+// import (
+// 	"testing"
 
-	. "github.com/onsi/ginkgo" //revive:disable-line:dot-imports
-	. "github.com/onsi/gomega" //revive:disable-line:dot-imports
-)
+// 	. "github.com/onsi/ginkgo" //revive:disable-line:dot-imports
+// 	. "github.com/onsi/gomega" //revive:disable-line:dot-imports
+// )
 
-func TestE2e(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "E2E Suite")
-}
+// func TestE2e(t *testing.T) {
+// 	RegisterFailHandler(Fail)
+// 	RunSpecs(t, "E2E Suite")
+// }

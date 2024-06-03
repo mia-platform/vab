@@ -13,5 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package init provides functions for creating a basic template for a vab project
-package init
+package main
+
+import (
+	"os"
+
+	"github.com/mia-platform/vab/pkg/cmd"
+)
+
+func main() {
+	rootCmd := cmd.NewVabCommand()
+	if err := rootCmd.Execute(); err != nil {
+		os.Exit(1)
+	}
+}

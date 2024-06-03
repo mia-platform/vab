@@ -102,7 +102,7 @@ func TestEmptyExistingConfig(t *testing.T) {
 func TestWriteEmptyKustomization(t *testing.T) {
 	testDirPath := t.TempDir()
 
-	if err := WriteKustomization(EmptyKustomization(), testDirPath); assert.NoError(t, err, err) {
+	if err := WriteKustomization(EmptyKustomization(), testDirPath, true); assert.NoError(t, err, err) {
 		testFileContent, _ := os.ReadFile(filepath.Join(testDirPath, konfig.DefaultKustomizationFileName()))
 		expectedFileContent, _ := os.ReadFile(testutils.GetTestFile("utils", "empty_kustomization.yaml"))
 		assert.Equal(t, testFileContent, expectedFileContent, "Unexpected file content.")
@@ -118,7 +118,7 @@ func TestWrongKustomizationFileName(t *testing.T) {
 	}
 
 	expectedError := NewWrongFileNameError(konfig.DefaultKustomizationFileName(), filepath.Base(file.Name()))
-	err := WriteKustomization(EmptyKustomization(), file.Name())
+	err := WriteKustomization(EmptyKustomization(), file.Name(), true)
 
 	if assert.Error(t, err, "Expected: %s", expectedError) {
 		assert.ErrorAs(t, err, &WrongFileNameError{})
@@ -129,7 +129,7 @@ func TestWrongKustomizationFileName(t *testing.T) {
 func TestKustomizationPathNotExists(t *testing.T) {
 	testWrongPath := "/wrong/path/to/kustomization.yaml"
 
-	err := WriteKustomization(EmptyKustomization(), testWrongPath)
+	err := WriteKustomization(EmptyKustomization(), testWrongPath, true)
 
 	if assert.Error(t, err, "Expected: %s", fs.ErrNotExist) {
 		assert.ErrorIs(t, err, fs.ErrNotExist)
@@ -143,7 +143,7 @@ func TestKustomizationPathPermError(t *testing.T) {
 		return
 	}
 
-	err := WriteKustomization(EmptyKustomization(), testDirPath)
+	err := WriteKustomization(EmptyKustomization(), testDirPath, true)
 	if assert.Error(t, err, "Expected: %s", fs.ErrPermission) {
 		assert.ErrorIs(t, err, fs.ErrPermission)
 	}
@@ -157,7 +157,7 @@ func TestEmptyExistingKustomization(t *testing.T) {
 		return
 	}
 
-	err := WriteKustomization(EmptyKustomization(), testDirPath)
+	err := WriteKustomization(EmptyKustomization(), testDirPath, true)
 	assert.NoError(t, err)
 }
 

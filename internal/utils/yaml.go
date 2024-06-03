@@ -99,7 +99,7 @@ func WriteConfig(config v1alpha1.ClustersConfiguration, dirOrFilePath string) er
 }
 
 // WriteKustomization creates and writes an empty kustomization file
-func WriteKustomization(kustomization kustomize.Kustomization, dirOrFilePath string) error {
+func WriteKustomization(kustomization kustomize.Kustomization, dirOrFilePath string, override bool) error {
 	dirOrFile, err := os.Stat(dirOrFilePath)
 
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
@@ -107,14 +107,19 @@ func WriteKustomization(kustomization kustomize.Kustomization, dirOrFilePath str
 	}
 
 	var dstPath string
-	var dstPathCond bool
-	switch dstPathCond {
-	case dstPathCond == (err == nil && dirOrFile.IsDir()):
+	switch {
+	case err == nil && dirOrFile.IsDir():
 		dstPath = filepath.Join(dirOrFilePath, konfig.DefaultKustomizationFileName())
-	case dstPathCond == (!slices.Contains(konfig.RecognizedKustomizationFileNames(), filepath.Base(dirOrFilePath))):
+	case !slices.Contains(konfig.RecognizedKustomizationFileNames(), filepath.Base(dirOrFilePath)):
 		return NewWrongFileNameError(konfig.DefaultKustomizationFileName(), filepath.Base(dirOrFilePath))
 	default:
 		dstPath = dirOrFilePath
+	}
+
+	if !override {
+		if _, err := os.Stat(dstPath); !errors.Is(err, fs.ErrNotExist) {
+			return err
+		}
 	}
 
 	return writeYamlFile(kustomization, dstPath)

@@ -51,7 +51,7 @@ func SyncAllClusterKustomization(basePath string, modules, addOns map[string]v1a
 	kustomization.Resources = resources
 	kustomization.Components = components
 
-	if err := utils.WriteKustomization(*kustomization, allGroupsPath); err != nil {
+	if err := utils.WriteKustomization(*kustomization, allGroupsPath, true); err != nil {
 		return fmt.Errorf("failed to write kustomization at path %s: %w", allGroupsPath, err)
 	}
 	return nil
@@ -95,7 +95,7 @@ func SyncClusterKustomization(basePath, clusterPath string, modules, addOns map[
 	kustomization.Resources = resources
 	kustomization.Components = components
 
-	if err := utils.WriteKustomization(*kustomization, clusterPath); err != nil {
+	if err := utils.WriteKustomization(*kustomization, clusterPath, true); err != nil {
 		return fmt.Errorf("failed to write kustomization at path %s: %w", clusterPath, err)
 	}
 	return nil
@@ -177,7 +177,7 @@ func getKustomizationFilePath(targetPath string) (string, error) {
 		Kind:       kustomize.KustomizationKind,
 		APIVersion: kustomize.KustomizationVersion,
 	}
-	if err := utils.WriteKustomization(newKustomization, kustomizationPath); err != nil {
+	if err := utils.WriteKustomization(newKustomization, kustomizationPath, true); err != nil {
 		return "", fmt.Errorf("error writing kustomization file %s: %w", targetPath, err)
 	}
 	return kustomizationPath, nil
