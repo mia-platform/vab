@@ -1,6 +1,6 @@
 module github.com/mia-platform/vab
 
-go 1.22.2
+go 1.22.3
 
 require (
 	github.com/dchest/uniuri v1.2.0

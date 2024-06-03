@@ -14,10 +14,11 @@
 # limitations under the License.
 
 ##@ Deepcopy Goals
+
 .PHONY: generate-deps
 generate-deps:
 
 .PHONY: generate
 generate: generate-deps
-	go generate ./...
+	go generate -x -ldflags "$(GO_LDFLAGS)" ./...
 	${TOOLS_BIN}/deepcopy-gen -i ./pkg/apis/vab.mia-platform.eu/v1alpha1 -o ${PROJECT_DIR} -O zz_generated.deepcopy --go-header-file ${TOOLS_DIR}/boilerplate.go.txt
