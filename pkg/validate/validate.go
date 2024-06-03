@@ -155,7 +155,6 @@ func checkClusters(logger logger.LogInterface, group *v1alpha1.Group, groupName 
 	}
 
 	for _, cluster := range group.Clusters {
-		cluster := cluster
 		clusterName := cluster.Name
 		if clusterName == "" {
 			outString += fmt.Sprintf("[error][%s] missing cluster name in group: please specify a valid name for each cluster\n", groupName)
