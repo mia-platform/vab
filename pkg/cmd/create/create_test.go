@@ -18,6 +18,7 @@ package create
 import (
 	"testing"
 
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -72,6 +73,39 @@ func TestToOptions(t *testing.T) {
 			}
 			assert.NoError(t, err)
 			assert.Equal(t, testCase.expectedPath, options.path)
+		})
+	}
+}
+
+func TestCreateValidArgs(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]struct {
+		args                []string
+		expectedCompletions []string
+		expectedDirective   cobra.ShellCompDirective
+	}{
+		"no argument provided, return project path completion": {
+			expectedCompletions: cobra.AppendActiveHelp([]string{}, pathArgHelpText),
+			expectedDirective:   cobra.ShellCompDirectiveDefault,
+		},
+		"single argument provided, return no more argument error": {
+			args:                []string{"argument"},
+			expectedCompletions: cobra.AppendActiveHelp([]string{}, tooManyArgsHelpText),
+			expectedDirective:   cobra.ShellCompDirectiveNoFileComp,
+		},
+		"more than one argument provided, return no more argument error": {
+			args:                []string{"argument1", "argument2"},
+			expectedCompletions: cobra.AppendActiveHelp([]string{}, tooManyArgsHelpText),
+			expectedDirective:   cobra.ShellCompDirectiveNoFileComp,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			completions, directive := createValidArgs(nil, test.args, "")
+			assert.Equal(t, test.expectedCompletions, completions)
+			assert.Equal(t, test.expectedDirective, directive)
 		})
 	}
 }

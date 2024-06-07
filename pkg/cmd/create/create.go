@@ -33,6 +33,9 @@ const (
 	folder with a minimal kustomize configuration), and the configuration file.`
 
 	missingPathError = "you have to specify a path where to create the project"
+
+	pathArgHelpText     = "Specify the path where to create the project"
+	tooManyArgsHelpText = "Too many arguments"
 )
 
 // Flags contains all the flags for the `create` command. They will be converted to Options
@@ -54,20 +57,8 @@ func NewCommand() *cobra.Command {
 		Long:                  heredoc.Doc(longCmd),
 		DisableFlagsInUseLine: true,
 
-		Args: cobra.ExactArgs(1),
-		ValidArgsFunction: func(_ *cobra.Command, args []string, _ string) ([]string, cobra.ShellCompDirective) {
-			var comps []string
-			var directive cobra.ShellCompDirective
-			switch len(args) {
-			case 0:
-				comps = cobra.AppendActiveHelp(comps, "Specify the path where to create the project")
-				directive = cobra.ShellCompDirectiveDefault
-			default:
-				comps = cobra.AppendActiveHelp(comps, "Too many arguments")
-				directive = cobra.ShellCompDirectiveNoFileComp
-			}
-			return comps, directive
-		},
+		Args:              cobra.ExactArgs(1),
+		ValidArgsFunction: createValidArgs,
 
 		Run: func(_ *cobra.Command, args []string) {
 			options, err := flags.ToOptions(args)
@@ -100,4 +91,18 @@ func (o *Options) Run() error {
 
 	name := filepath.Base(path)
 	return cmdutil.InitializeConfiguration(name, path)
+}
+
+func createValidArgs(_ *cobra.Command, args []string, _ string) ([]string, cobra.ShellCompDirective) {
+	var comps []string
+	var directive cobra.ShellCompDirective
+	switch len(args) {
+	case 0:
+		comps = cobra.AppendActiveHelp(comps, pathArgHelpText)
+		directive = cobra.ShellCompDirectiveDefault
+	default:
+		comps = cobra.AppendActiveHelp(comps, tooManyArgsHelpText)
+		directive = cobra.ShellCompDirectiveNoFileComp
+	}
+	return comps, directive
 }
