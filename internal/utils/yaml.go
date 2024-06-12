@@ -21,9 +21,9 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
-	"golang.org/x/exp/slices"
 	"gopkg.in/yaml.v3"
 	"sigs.k8s.io/kustomize/api/konfig"
 	kustomize "sigs.k8s.io/kustomize/api/types"

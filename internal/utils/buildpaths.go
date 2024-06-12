@@ -20,9 +20,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
-	"golang.org/x/exp/slices"
 )
 
 // BuildPaths returns a list of clusters paths based on configPath configuration

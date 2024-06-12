@@ -17,16 +17,16 @@ package sync
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 
 	"github.com/mia-platform/vab/internal/git"
 	kustomizehelper "github.com/mia-platform/vab/internal/kustomize"
 	"github.com/mia-platform/vab/internal/utils"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"github.com/mia-platform/vab/pkg/logger"
-	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
 )
 
 // Sync synchronizes modules and add-ons to the latest configuration
