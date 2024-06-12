@@ -103,7 +103,7 @@ func TestCreateValidArgs(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			completions, directive := createValidArgs(nil, test.args, "")
+			completions, directive := validArgs(nil, test.args, "")
 			assert.Equal(t, test.expectedCompletions, completions)
 			assert.Equal(t, test.expectedDirective, directive)
 		})

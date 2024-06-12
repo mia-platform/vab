@@ -58,7 +58,7 @@ func NewCommand() *cobra.Command {
 		DisableFlagsInUseLine: true,
 
 		Args:              cobra.ExactArgs(1),
-		ValidArgsFunction: createValidArgs,
+		ValidArgsFunction: validArgs,
 
 		Run: func(_ *cobra.Command, args []string) {
 			options, err := flags.ToOptions(args)
@@ -93,7 +93,7 @@ func (o *Options) Run() error {
 	return cmdutil.InitializeConfiguration(name, path)
 }
 
-func createValidArgs(_ *cobra.Command, args []string, _ string) ([]string, cobra.ShellCompDirective) {
+func validArgs(_ *cobra.Command, args []string, _ string) ([]string, cobra.ShellCompDirective) {
 	var comps []string
 	var directive cobra.ShellCompDirective
 	switch len(args) {
