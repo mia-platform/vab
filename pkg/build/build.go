@@ -23,7 +23,7 @@ import (
 
 	"github.com/mia-platform/vab/internal/utils"
 	"github.com/mia-platform/vab/pkg/logger"
-	"sigs.k8s.io/kustomize/kustomize/v4/commands/build"
+	"sigs.k8s.io/kustomize/api/krusty"
 	"sigs.k8s.io/kustomize/kyaml/filesys"
 )
 
@@ -62,14 +62,19 @@ func Build(logger logger.LogInterface, configPath string, groupName string, clus
 
 // runKustomizeBuild runs the kustomize build command in targetPath
 func RunKustomizeBuild(targetPath string, writer io.Writer) error {
-	kustomizeCmd := build.NewCmdBuild(
-		filesys.MakeFsOnDisk(),
-		&build.Help{},
-		writer,
-	)
+	kOpts := krusty.MakeDefaultOptions()
+	kOpts.DoLegacyResourceSort = true
+	k := krusty.MakeKustomizer(kOpts)
+	m, err := k.Run(filesys.MakeFsOnDisk(), targetPath)
+	if err != nil {
+		return err
+	}
 
-	args := []string{targetPath}
-	kustomizeCmd.SetArgs(args)
+	data, err := m.AsYaml()
+	if err != nil {
+		return err
+	}
 
-	return kustomizeCmd.Execute()
+	_, err = writer.Write(data)
+	return err
 }
