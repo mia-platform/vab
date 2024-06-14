@@ -70,7 +70,7 @@ func TestFlagsToOptions(t *testing.T) {
 		"invalid context path return error": {
 			flags:         &Flags{timeout: "invalid"},
 			configFlags:   util.NewConfigFlags(),
-			args:          []string{"first", "/invalid/path"},
+			args:          []string{"first", filepath.Join("invalid", "path")},
 			expectedError: "error locating files",
 		},
 		"invalid timeout return error": {
@@ -145,14 +145,6 @@ func TestApplyRun(t *testing.T) {
 			},
 			expectedError: `cannot find "missing" group in config at path "testdata/testconfig.yaml"`,
 		},
-		"missing config file return error": {
-			options: &Options{
-				group:       "missing",
-				contextPath: testdata,
-				configPath:  "missing.yaml",
-			},
-			expectedError: "cannot read config file",
-		},
 		"no cluster inside a group return error": {
 			options: &Options{
 				group:       "no-clusters",
@@ -193,7 +185,7 @@ func TestApplyRun(t *testing.T) {
 			options: &Options{
 				group:       "test-group2",
 				cluster:     "test-cluster",
-				contextPath: "/invalid/path",
+				contextPath: filepath.Join("invalid", "path"),
 				configPath:  configPath,
 			},
 			expectedError: "must build at directory: not a valid directory",

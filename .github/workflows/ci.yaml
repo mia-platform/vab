@@ -15,6 +15,7 @@ on:
 
 env:
   GORELEASER_VERSION: v2.0.0
+  GOEXPERIMENT: nocoverageredesign
 jobs:
   lint:
     name: Lint Code

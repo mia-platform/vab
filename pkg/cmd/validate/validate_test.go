@@ -42,6 +42,7 @@ func TestCommand(t *testing.T) {
 }
 
 func TestValidationTextGeneration(t *testing.T) {
+	t.Parallel()
 	testdata := "testdata"
 
 	tests := map[string]struct {

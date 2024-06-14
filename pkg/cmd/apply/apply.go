@@ -171,7 +171,7 @@ func (f *Flags) ToOptions(cf *util.ConfigFlags, args []string) (*Options, error)
 
 // Run execute the apply command
 func (o *Options) Run(ctx context.Context) error {
-	group, err := groupFromConfig(o.group, o.configPath)
+	group, err := util.GroupFromConfig(o.group, o.configPath)
 	if err != nil {
 		return err
 	}
@@ -281,41 +281,16 @@ func (o *Options) applyManifests(ctx context.Context, factory jplutil.ClientFact
 	}), nil
 }
 
-// groupFromConfig return a Group struct if a group with groupName is found inside the configuration at path.
-// Will return an error if the file cannot be read or groupName is not found
-func groupFromConfig(groupName string, path string) (v1alpha1.Group, error) {
-	var group v1alpha1.Group
-	config, err := utils.ReadConfig(path)
-	if err != nil {
-		return group, fmt.Errorf("cannot read config file: %w", err)
-	}
-
-	found := false
-	for _, configGroup := range config.Spec.Groups {
-		if configGroup.Name == groupName {
-			found = true
-			group = configGroup
-			break
-		}
-	}
-
-	if !found {
-		return group, fmt.Errorf("cannot find %q group in config at path %q", groupName, path)
-	}
-
-	return group, nil
-}
-
 // readManifests return the manifests array that are read at path
 func readManifests(factory jplutil.ClientFactory, path string) ([]*unstructured.Unstructured, error) {
-	data, err := util.KustomizeData(path)
-	if err != nil {
+	buffer := new(bytes.Buffer)
+	if err := util.WriteKustomizationData(path, buffer); err != nil {
 		return nil, err
 	}
 
 	reader, err := resourcereader.
 		NewResourceReaderBuilder(factory).
-		ResourceReader(bytes.NewBuffer(data), resourcereader.StdinPath)
+		ResourceReader(buffer, resourcereader.StdinPath)
 	if err != nil {
 		return nil, err
 	}

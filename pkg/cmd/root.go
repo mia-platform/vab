@@ -22,6 +22,7 @@ import (
 
 	"github.com/MakeNowJust/heredoc/v2"
 	"github.com/mia-platform/vab/pkg/cmd/apply"
+	"github.com/mia-platform/vab/pkg/cmd/build"
 	"github.com/mia-platform/vab/pkg/cmd/create"
 	"github.com/mia-platform/vab/pkg/cmd/util"
 	"github.com/mia-platform/vab/pkg/cmd/validate"
@@ -79,6 +80,7 @@ func NewVabCommand() *cobra.Command {
 	cmd.AddCommand(
 		create.NewCommand(),
 		apply.NewCommand(configFlags),
+		build.NewCommand(configFlags),
 		validate.NewCommand(configFlags),
 	)
 	return cmd
