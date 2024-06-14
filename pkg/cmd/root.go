@@ -24,6 +24,7 @@ import (
 	"github.com/mia-platform/vab/pkg/cmd/apply"
 	"github.com/mia-platform/vab/pkg/cmd/create"
 	"github.com/mia-platform/vab/pkg/cmd/util"
+	"github.com/mia-platform/vab/pkg/cmd/validate"
 	"github.com/spf13/cobra"
 )
 
@@ -78,6 +79,7 @@ func NewVabCommand() *cobra.Command {
 	cmd.AddCommand(
 		create.NewCommand(),
 		apply.NewCommand(configFlags),
+		validate.NewCommand(configFlags),
 	)
 	return cmd
 }

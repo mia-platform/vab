@@ -152,9 +152,9 @@ func (f *Flags) ToOptions(cf *util.ConfigFlags, args []string) (*Options, error)
 		return nil, fmt.Errorf("failed to parse request timeout: %w", err)
 	}
 
-	configPath := *cf.ConfigPath
-	if len(configPath) == 0 {
-		configPath = util.DefaultConfigPath
+	configPath := util.DefaultConfigPath
+	if cf.ConfigPath != nil && len(*cf.ConfigPath) > 0 {
+		configPath = filepath.Clean(*cf.ConfigPath)
 	}
 
 	return &Options{

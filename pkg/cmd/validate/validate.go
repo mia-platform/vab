@@ -18,39 +18,89 @@ package validate
 import (
 	"fmt"
 	"io"
+	"path/filepath"
 
+	"github.com/MakeNowJust/heredoc/v2"
 	"github.com/mia-platform/vab/internal/utils"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
-	"github.com/mia-platform/vab/pkg/logger"
+	"github.com/mia-platform/vab/pkg/cmd/util"
+	"github.com/spf13/cobra"
 )
 
 const (
+	shortCmd = "Validate configuration file"
+	longCmd  = `Validate the configuration contained in the specified path.
+
+	It returns an error if the config file is malformed or includes resources
+	that do not exist in our catalogue.
+`
+
 	defaultScope = "default"
 )
 
-func ConfigurationFile(logger logger.LogInterface, configurationPath string, writer io.Writer) error {
+// Flags contains all the flags for the `validate` command. They will be converted to Options
+// that contains all runtime options for the command.
+type Flags struct{}
+
+// Options have the data required to perform the validate operation
+type Options struct {
+	configPath string
+	writer     io.Writer
+}
+
+// NewCommand return the command for validating the information inserted in the configuration file
+func NewCommand(cf *util.ConfigFlags) *cobra.Command {
+	flags := &Flags{}
+	cmd := &cobra.Command{
+		Use:   "validate",
+		Short: heredoc.Doc(shortCmd),
+		Long:  heredoc.Doc(longCmd),
+
+		Args: cobra.NoArgs,
+
+		Run: func(cmd *cobra.Command, _ []string) {
+			options, err := flags.ToOptions(cf, cmd.ErrOrStderr())
+			cobra.CheckErr(err)
+			cobra.CheckErr(options.Run())
+		},
+	}
+
+	return cmd
+}
+
+// ToOptions transform the command flags in command runtime arguments
+func (f *Flags) ToOptions(cf *util.ConfigFlags, writer io.Writer) (*Options, error) {
+	configPath := util.DefaultConfigPath
+	if cf.ConfigPath != nil && len(*cf.ConfigPath) > 0 {
+		configPath = filepath.Clean(*cf.ConfigPath)
+	}
+
+	return &Options{
+		configPath: configPath,
+		writer:     writer,
+	}, nil
+}
+
+// Run execute the create command
+func (o *Options) Run() error {
 	code := 0
 
-	config, readErr := utils.ReadConfig(configurationPath)
+	config, readErr := utils.ReadConfig(o.configPath)
 	if readErr != nil {
 		return fmt.Errorf("error while parsing the configuration file: %v", readErr)
 	}
 
 	feedbackString := checkTypeMeta(&config.TypeMeta, &code)
-	logger.V(5).Writef("Checking TypeMeta for config ended with %d", code)
 	feedbackString += checkModules(&config.Spec.Modules, "", &code)
-	logger.V(5).Writef("Checking configuration modules ended with %d", code)
 	feedbackString += checkAddOns(&config.Spec.AddOns, "", &code)
-	logger.V(5).Writef("Checking configuration addons ended with %d", code)
-	feedbackString += checkGroups(logger, &config.Spec.Groups, &code)
-	logger.V(5).Writef("Checking configuration groups addons ended with %d", code)
+	feedbackString += checkGroups(&config.Spec.Groups, &code)
 
-	fmt.Fprint(writer, feedbackString)
+	fmt.Fprint(o.writer, feedbackString)
 	if code > 0 {
 		return fmt.Errorf("the configuration is invalid")
 	}
 
-	fmt.Fprint(writer, "The configuration is valid!\n")
+	fmt.Fprint(o.writer, "The configuration is valid!\n")
 	return nil
 }
 
@@ -122,7 +172,7 @@ func checkAddOns(packages *map[string]v1alpha1.Package, scope string, code *int)
 }
 
 // checkGroups checks the cluster groups listed in the config file
-func checkGroups(logger logger.LogInterface, groups *[]v1alpha1.Group, code *int) string {
+func checkGroups(groups *[]v1alpha1.Group, code *int) string {
 	outString := ""
 
 	if len(*groups) == 0 {
@@ -139,15 +189,14 @@ func checkGroups(logger logger.LogInterface, groups *[]v1alpha1.Group, code *int
 		}
 
 		group := g
-		outString += checkClusters(logger, &group, groupName, code)
-		logger.V(5).Writef("Checking group %s clusters ended with %d\n", groupName, *code)
+		outString += checkClusters(&group, groupName, code)
 	}
 
 	return outString
 }
 
 // checkClusters checks the clusters of a group
-func checkClusters(logger logger.LogInterface, group *v1alpha1.Group, groupName string, code *int) string {
+func checkClusters(group *v1alpha1.Group, groupName string, code *int) string {
 	outString := ""
 	if len(group.Clusters) == 0 {
 		outString += fmt.Sprintf("[warn][%s] no cluster found in group: check the config file if this behavior is unexpected\n", groupName)
@@ -169,9 +218,7 @@ func checkClusters(logger logger.LogInterface, group *v1alpha1.Group, groupName 
 
 		scope := groupName + "/" + clusterName
 		outString += checkModules(&cluster.Modules, scope, code)
-		logger.V(5).Writef("Checking cluster %s modules ended with %d", scope, *code)
 		outString += checkAddOns(&cluster.AddOns, scope, code)
-		logger.V(5).Writef("Checking cluster %s addon ended with %d", scope, *code)
 	}
 
 	return outString
