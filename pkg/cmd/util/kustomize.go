@@ -13,5 +13,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package logger provides a lightweight logger for the vab command
-package apply
+package util
+
+import (
+	"sigs.k8s.io/kustomize/api/krusty"
+	"sigs.k8s.io/kustomize/kyaml/filesys"
+)
+
+func KustomizeData(path string) ([]byte, error) {
+	kOpts := krusty.MakeDefaultOptions()
+	kOpts.Reorder = krusty.ReorderOptionLegacy
+	k := krusty.MakeKustomizer(kOpts)
+	m, err := k.Run(filesys.MakeFsOnDisk(), path)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := m.AsYaml()
+	if err != nil {
+		return nil, err
+	}
+
+	return data, err
+}

@@ -129,7 +129,7 @@ func WriteKustomization(kustomization kustomize.Kustomization, dirOrFilePath str
 func EmptyKustomization() kustomize.Kustomization {
 	// mini hack for generating a valid kustomization structure as kustomize intend
 	empty := kustomize.Kustomization{}
-	empty.FixKustomizationPostUnmarshalling()
+	empty.FixKustomization()
 	return empty
 }
 
@@ -138,6 +138,6 @@ func EmptyComponent() kustomize.Kustomization {
 	// mini hack for generating a valid kustomization structure as kustomize intend
 	empty := kustomize.Kustomization{}
 	empty.Kind = kustomize.ComponentKind
-	empty.FixKustomizationPostUnmarshalling()
+	empty.FixKustomization()
 	return empty
 }

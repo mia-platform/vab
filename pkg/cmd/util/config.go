@@ -66,8 +66,10 @@ func InitGroup(path string) error {
 		switch path {
 		case basesDir:
 			kustomization = utils.EmptyKustomization()
+			kustomization.Resources = []string{}
 		case customResourcesDir:
 			kustomization = utils.EmptyComponent()
+			kustomization.Resources = []string{}
 		default:
 			kustomization = utils.EmptyKustomization()
 			kustomization.Resources = append(kustomization.Resources, utils.BasesDir)

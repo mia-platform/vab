@@ -21,8 +21,9 @@ import (
 	"runtime"
 
 	"github.com/MakeNowJust/heredoc/v2"
-	"github.com/mia-platform/vab/internal/utils"
+	"github.com/mia-platform/vab/pkg/cmd/apply"
 	"github.com/mia-platform/vab/pkg/cmd/create"
+	"github.com/mia-platform/vab/pkg/cmd/util"
 	"github.com/spf13/cobra"
 )
 
@@ -58,8 +59,7 @@ var flags = &FlagPole{}
 
 // NewVabCommand creates the `vab` command and its nested children.
 func NewVabCommand() *cobra.Command {
-	// logger := logger.NewLogger(logger.DefaultStreams())
-	rootCmd := &cobra.Command{
+	cmd := &cobra.Command{
 		Use: "vab",
 
 		Short: heredoc.Doc(vabCmdShort),
@@ -72,12 +72,14 @@ func NewVabCommand() *cobra.Command {
 		ValidArgsFunction: cobra.NoFileCompletions,
 	}
 
-	flags := rootCmd.PersistentFlags()
-	config := utils.DefaultConfigFilename
-	flags.StringVarP(&config, "config", "c", config, configFlagDescription)
+	configFlags := util.NewConfigFlags()
+	configFlags.AddFlags(cmd.PersistentFlags())
 
-	rootCmd.AddCommand(create.NewCommand())
-	return rootCmd
+	cmd.AddCommand(
+		create.NewCommand(),
+		apply.NewCommand(configFlags),
+	)
+	return cmd
 }
 
 // versionString format a complete version string to output to the user

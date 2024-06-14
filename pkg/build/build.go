@@ -22,9 +22,8 @@ import (
 	"path/filepath"
 
 	"github.com/mia-platform/vab/internal/utils"
+	"github.com/mia-platform/vab/pkg/cmd/util"
 	"github.com/mia-platform/vab/pkg/logger"
-	"sigs.k8s.io/kustomize/api/krusty"
-	"sigs.k8s.io/kustomize/kyaml/filesys"
 )
 
 // Build kustomization configurations for a given groupName clusters or a single clusterName in groupName
@@ -62,15 +61,7 @@ func Build(logger logger.LogInterface, configPath string, groupName string, clus
 
 // runKustomizeBuild runs the kustomize build command in targetPath
 func RunKustomizeBuild(targetPath string, writer io.Writer) error {
-	kOpts := krusty.MakeDefaultOptions()
-	kOpts.DoLegacyResourceSort = true
-	k := krusty.MakeKustomizer(kOpts)
-	m, err := k.Run(filesys.MakeFsOnDisk(), targetPath)
-	if err != nil {
-		return err
-	}
-
-	data, err := m.AsYaml()
+	data, err := util.KustomizeData(targetPath)
 	if err != nil {
 		return err
 	}

@@ -23,6 +23,7 @@ import (
 
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/memfs"
+	billyutil "github.com/go-git/go-billy/v5/util"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport"
@@ -83,7 +84,7 @@ func filterWorktreeForPackage(log logger.LogInterface, worktree *billy.Filesyste
 
 	log.V(10).Writef("Extracting file paths from package in %s", packageFolder)
 	files := []*File{}
-	err := Walk(*worktree, packageFolder, func(filePath string, info fs.FileInfo, err error) error {
+	err := billyutil.Walk(*worktree, packageFolder, func(filePath string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return fmt.Errorf("error finding file %s, %w", filePath, err)
 		}

@@ -14,3 +14,4 @@ spec:
       context: context-1
     - name: test-cluster2
       context: context-2
+  - name: no-clusters
