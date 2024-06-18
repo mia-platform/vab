@@ -88,16 +88,20 @@ Here an example of the folders structures:
     |   ├── cluster-1
     |   |   ├── bases
     |   |   |   └── kustomization.yaml
-    |   |   ├── traefik
-    |   |   |   └── patch.yaml
-    |   |   ├── calico
-    |   |   |   └── patch.yaml
+    |   |   ├── custom-resources
+    |   |   |   ├── traefik
+    |   |   |   |   └── patch.yaml
+    |   |   |   ├── calico
+    |   |   |   |   └── patch.yaml
+    |   |   |   └── kustomization.yaml
     |   |   └── kustomization.yaml
     |   └── cluster-2
     |       ├── bases
     |       |   └── kustomization.yaml
-    |       ├── cilium
-    |       |   └── patch-3.yaml
+    |       ├── custom-resources
+    |       |   ├── cilium
+    |       |   |   └── patch-3.yaml
+    |       |   └── kustomization.yaml
     |       └── kustomization.yaml
     └── group-2
         └── [...]
