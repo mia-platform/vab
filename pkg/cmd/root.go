@@ -24,6 +24,7 @@ import (
 	"github.com/mia-platform/vab/pkg/cmd/apply"
 	"github.com/mia-platform/vab/pkg/cmd/build"
 	"github.com/mia-platform/vab/pkg/cmd/create"
+	"github.com/mia-platform/vab/pkg/cmd/sync"
 	"github.com/mia-platform/vab/pkg/cmd/util"
 	"github.com/mia-platform/vab/pkg/cmd/validate"
 	"github.com/spf13/cobra"
@@ -48,17 +49,6 @@ const (
 	configFlagDescription = "path to the vab config file to use"
 )
 
-type FlagPole struct {
-	Name                  string
-	Config                string
-	Verbosity             uint8
-	DryRun                bool
-	Output                string
-	CRDStatusCheckRetries int
-}
-
-var flags = &FlagPole{}
-
 // NewVabCommand creates the `vab` command and its nested children.
 func NewVabCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -82,6 +72,7 @@ func NewVabCommand() *cobra.Command {
 		apply.NewCommand(configFlags),
 		build.NewCommand(configFlags),
 		validate.NewCommand(configFlags),
+		sync.NewCommand(configFlags),
 	)
 	return cmd
 }

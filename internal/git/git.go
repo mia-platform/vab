@@ -29,7 +29,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
-	"github.com/mia-platform/vab/pkg/logger"
 )
 
 const (
@@ -79,10 +78,9 @@ func worktreeForPackage(pkg v1alpha1.Package) (*billy.Filesystem, error) {
 	return &fs, nil
 }
 
-func filterWorktreeForPackage(log logger.LogInterface, worktree *billy.Filesystem, pkg v1alpha1.Package) ([]*File, error) {
+func filterWorktreeForPackage(worktree *billy.Filesystem, pkg v1alpha1.Package) ([]*File, error) {
 	packageFolder := filepath.Join(pkg.PackageType()+"s", pkg.GetName())
 
-	log.V(10).Writef("Extracting file paths from package in %s", packageFolder)
 	files := []*File{}
 	err := billyutil.Walk(*worktree, packageFolder, func(filePath string, info fs.FileInfo, err error) error {
 		if err != nil {
@@ -91,27 +89,22 @@ func filterWorktreeForPackage(log logger.LogInterface, worktree *billy.Filesyste
 		if info.IsDir() {
 			return nil
 		}
-		log.V(10).Writef("Found file %s", filePath)
 		files = append(files, NewFile(filePath, packageFolder, *worktree))
 		return nil
 	})
 
 	if err != nil {
-		log.V(5).Writef("Error extracting files for %s", pkg.GetName())
 		return nil, err
 	}
 	return files, nil
 }
 
 // GetFilesForPackage clones the package in memory
-func GetFilesForPackage(log logger.LogInterface, filesGetter FilesGetter, pkg v1alpha1.Package) ([]*File, error) {
-	log.V(0).Writef("Download package %s from git...", pkg.GetName())
+func GetFilesForPackage(filesGetter FilesGetter, pkg v1alpha1.Package) ([]*File, error) {
 	memFs, err := filesGetter.WorkTreeForPackage(pkg)
 	if err != nil {
-		log.V(5).Writef("Error during cloning repostitory for %s", pkg.GetName())
 		return nil, err
 	}
 
-	log.V(0).Writef("Getting file paths for %s", pkg.GetName())
-	return filterWorktreeForPackage(log, memFs, pkg)
+	return filterWorktreeForPackage(memFs, pkg)
 }

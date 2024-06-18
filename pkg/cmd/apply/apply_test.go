@@ -87,7 +87,7 @@ func TestFlagsToOptions(t *testing.T) {
 				fieldManager: "vab",
 				group:        "first",
 				contextPath:  tmpDir,
-				configPath:   util.DefaultConfigPath,
+				configPath:   "",
 			},
 		},
 		"three arguments": {

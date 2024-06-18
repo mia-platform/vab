@@ -21,7 +21,6 @@ import (
 	"path/filepath"
 
 	"github.com/MakeNowJust/heredoc/v2"
-	"github.com/mia-platform/vab/internal/utils"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"github.com/mia-platform/vab/pkg/cmd/util"
 	"github.com/spf13/cobra"
@@ -70,7 +69,7 @@ func NewCommand(cf *util.ConfigFlags) *cobra.Command {
 
 // ToOptions transform the command flags in command runtime arguments
 func (f *Flags) ToOptions(cf *util.ConfigFlags, writer io.Writer) (*Options, error) {
-	configPath := util.DefaultConfigPath
+	configPath := ""
 	if cf.ConfigPath != nil && len(*cf.ConfigPath) > 0 {
 		configPath = filepath.Clean(*cf.ConfigPath)
 	}
@@ -85,7 +84,7 @@ func (f *Flags) ToOptions(cf *util.ConfigFlags, writer io.Writer) (*Options, err
 func (o *Options) Run() error {
 	code := 0
 
-	config, readErr := utils.ReadConfig(o.configPath)
+	config, readErr := util.ReadConfig(o.configPath)
 	if readErr != nil {
 		return fmt.Errorf("error while parsing the configuration file: %v", readErr)
 	}

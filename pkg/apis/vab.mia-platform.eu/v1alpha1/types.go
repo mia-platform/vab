@@ -17,21 +17,21 @@ package v1alpha1
 
 // TypeMeta partially copies apimachinery/pkg/apis/meta/v1.TypeMeta
 type TypeMeta struct {
-	Kind       string `yaml:"kind,omitempty"`
-	APIVersion string `yaml:"apiVersion,omitempty"`
+	Kind       string `json:"kind,omitempty" yaml:"kind,omitempty"`
+	APIVersion string `json:"apiVersion,omitempty" yaml:"apiVersion,omitempty"`
 }
 
 // ClustersConfiguration contains the schema for vab's configuration
 type ClustersConfiguration struct {
-	TypeMeta `yaml:",inline"`
+	TypeMeta `json:",inline" yaml:",inline"`
 
 	// The configuration name
-	Name string `yaml:"name,omitempty"`
+	Name string `json:"name,omitempty" yaml:"name,omitempty"`
 
 	// ConfigSpec contains the configuration of the clusters
 	// It includes the modules and add-ons installed by default
 	// as well as the list of cluster groups
-	Spec ConfigSpec `yaml:"spec"`
+	Spec ConfigSpec `json:"spec" yaml:"spec"`
 }
 
 // ConfigSpec contains the configuration of the clusters
@@ -42,28 +42,28 @@ type ConfigSpec struct {
 	// unless otherwise specified
 	// Modules in the dictionary are referenced by module-name/flavor-name
 	// For example: ingress/traefik, cni/cilium, etc.
-	Modules map[string]Package `yaml:"modules"`
+	Modules map[string]Package `json:"modules" yaml:"modules"`
 
 	// Dictionary of AddOns
 	// These add-ons will be installed on every cluster
 	// unless otherwise specified
 	// AddOns in the dictionary are referenced by their name
-	AddOns map[string]Package `yaml:"addOns"`
+	AddOns map[string]Package `json:"addOns" yaml:"addOns"`
 
 	// Groups contains the list of cluster groups
-	Groups []Group `yaml:"groups"`
+	Groups []Group `json:"groups" yaml:"groups"`
 }
 
 // Group contains the configuration of a cluster group
 type Group struct {
 
 	// The group name
-	Name string `yaml:"name,omitempty"`
+	Name string `json:"name,omitempty" yaml:"name,omitempty"`
 
 	// Clusters contains the list of the clusters in the group
 	// This field is required to reference the clusters correctly
 	// in the directory structure
-	Clusters []Cluster `yaml:"clusters,omitempty"`
+	Clusters []Cluster `json:"clusters,omitempty" yaml:"clusters,omitempty"`
 }
 
 // Cluster contains the configuration of a cluster
@@ -72,23 +72,23 @@ type Cluster struct {
 
 	// The cluster name
 	// It is required to reference the cluster directory
-	Name string `yaml:"name,omitempty"`
+	Name string `json:"name,omitempty" yaml:"name,omitempty"`
 
 	// Name of the context used by the cluster
-	Context string `yaml:"context,omitempty"`
+	Context string `json:"context,omitempty" yaml:"context,omitempty"`
 
 	// Dictionary of Modules
 	// This field can be used to add a new module
 	// or patch/disable a default module
 	// Modules in the dictionary are referenced by "module-name/flavor-name"
 	// For example: ingress/traefik, cni/cilium, etc.
-	Modules map[string]Package `yaml:"modules,omitempty"`
+	Modules map[string]Package `json:"modules,omitempty" yaml:"modules,omitempty"`
 
 	// Dictionary of AddOns
 	// This field can be used to add a new add-on
 	// or patch/disable a default add-on
 	// AddOns in the dictionary are referenced by their name
-	AddOns map[string]Package `yaml:"addOns,omitempty"`
+	AddOns map[string]Package `json:"addOns,omitempty" yaml:"addOns,omitempty"`
 }
 
 // Module contains the module's version and priority
@@ -98,10 +98,10 @@ type Package struct {
 	name string
 
 	// Version of the module to be installed
-	Version string `yaml:"version"`
+	Version string `json:"version" yaml:"version"`
 
 	// Flag that disables the add-on if set to true
-	Disable bool `yaml:"disable"`
+	Disable bool `json:"disable" yaml:"disable"`
 
 	// isModule is a private property for setting if a package is a module or an addon
 	isModule bool

@@ -18,8 +18,8 @@ package util
 import (
 	"fmt"
 	"io"
+	"path/filepath"
 
-	"github.com/mia-platform/vab/internal/utils"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"sigs.k8s.io/kustomize/api/krusty"
 	"sigs.k8s.io/kustomize/kyaml/filesys"
@@ -47,7 +47,7 @@ func WriteKustomizationData(path string, writer io.Writer) error {
 // Will return an error if the file cannot be read or groupName is not found
 func GroupFromConfig(groupName string, path string) (v1alpha1.Group, error) {
 	var group v1alpha1.Group
-	config, err := utils.ReadConfig(path)
+	config, err := ReadConfig(path)
 	if err != nil {
 		return group, fmt.Errorf("cannot read config file: %w", err)
 	}
@@ -66,4 +66,17 @@ func GroupFromConfig(groupName string, path string) (v1alpha1.Group, error) {
 	}
 
 	return group, nil
+}
+
+// ClusterPath return the canonical path for a cluster given the group and name for the cluster
+func ClusterPath(group, cluster string) string {
+	return filepath.Join(clustersDirName, group, cluster)
+}
+
+func VendoredModulePath(packageName string) string {
+	return filepath.Join(modulesDirPath, packageName)
+}
+
+func VendoredAddOnPath(packageName string) string {
+	return filepath.Join(addOnsDirPath, packageName)
 }

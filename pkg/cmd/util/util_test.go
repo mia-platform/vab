@@ -78,7 +78,7 @@ func TestGroupFromConfig(t *testing.T) {
 		expectedError string
 	}{
 		"invalid config path": {
-			path:          filepath.Join("invalid", "path"),
+			path:          filepath.Join(t.TempDir(), "missing"),
 			expectedError: "cannot read config file",
 		},
 		"missing group in file": {

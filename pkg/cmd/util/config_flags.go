@@ -21,8 +21,6 @@ import (
 )
 
 const (
-	DefaultConfigPath = "config.yaml"
-
 	configPathFlagName      = "config"
 	configPathFlagShortName = "c"
 	configPathUsage         = "Path to the configuration file to use."

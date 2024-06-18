@@ -20,9 +20,7 @@ import (
 	"testing"
 
 	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/mia-platform/vab/internal/testutils"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
-	"github.com/mia-platform/vab/pkg/logger"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -76,9 +74,8 @@ func TestCloneOptions(t *testing.T) {
 }
 
 func TestFilterFilesForPackage(t *testing.T) {
-	fakeWorktree := testutils.PrepareFakeWorktree(t)
+	fakeWorktree := prepareFakeWorktree(t)
 
-	logger := logger.DisabledLogger{}
 	t.Run("filter module files", func(t *testing.T) {
 		module := v1alpha1.NewModule(t, "category/test-module1/test-flavor1", "1.0.0", false)
 
@@ -87,7 +84,7 @@ func TestFilterFilesForPackage(t *testing.T) {
 			NewFile("modules/category/test-module1/test-flavor1/file2.yaml", "modules/category/test-module1", *fakeWorktree),
 			NewFile("modules/category/test-module1/test-flavor2/file1.yaml", "modules/category/test-module1", *fakeWorktree),
 		}
-		files, err := filterWorktreeForPackage(logger, fakeWorktree, module)
+		files, err := filterWorktreeForPackage(fakeWorktree, module)
 		assert.NoError(t, err)
 		assert.Equal(t, expectedArray, files)
 	})
@@ -99,29 +96,27 @@ func TestFilterFilesForPackage(t *testing.T) {
 			NewFile("addons/category/test-addon1/file1.yaml", "addons/category/test-addon1", *fakeWorktree),
 			NewFile("addons/category/test-addon1/subdir/file1.yaml", "addons/category/test-addon1", *fakeWorktree),
 		}
-		files, err := filterWorktreeForPackage(logger, fakeWorktree, addon)
+		files, err := filterWorktreeForPackage(fakeWorktree, addon)
 		assert.NoError(t, err)
 		assert.Equal(t, expectedArray, files)
 	})
 }
 
 func TestFilterError(t *testing.T) {
-	fakeWorktree := testutils.PrepareFakeWorktree(t)
+	fakeWorktree := prepareFakeWorktree(t)
 
-	logger := logger.DisabledLogger{}
 	addon := v1alpha1.NewAddon(t, "category/test-addon4", "1.0.0", false)
 
-	files, err := filterWorktreeForPackage(logger, fakeWorktree, addon)
+	files, err := filterWorktreeForPackage(fakeWorktree, addon)
 	assert.Error(t, err)
 	assert.ErrorIs(t, err, os.ErrNotExist)
 	assert.Nil(t, files)
 }
 
 func TestGetFilesForPackage(t *testing.T) {
-	logger := logger.DisabledLogger{}
 	module := v1alpha1.NewModule(t, "category/test-module1/test-flavor1", "1.0.0", false)
 
-	files, err := GetFilesForPackage(logger, testutils.FakeFilesGetter{Testing: t}, module)
+	files, err := GetFilesForPackage(fakeFilesGetter{Testing: t}, module)
 	if !assert.NoError(t, err) {
 		return
 	}

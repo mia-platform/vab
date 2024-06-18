@@ -24,7 +24,6 @@ import (
 	"strings"
 
 	"github.com/MakeNowJust/heredoc/v2"
-	"github.com/mia-platform/vab/internal/utils"
 	"github.com/mia-platform/vab/pkg/cmd/util"
 	"github.com/spf13/cobra"
 )
@@ -106,7 +105,7 @@ func (f *Flags) ToOptions(cf *util.ConfigFlags, args []string, writer io.Writer)
 		return nil, fmt.Errorf("the target path %q is not a directory", cleanedContextPath)
 	}
 
-	configPath := util.DefaultConfigPath
+	configPath := ""
 	if cf.ConfigPath != nil && len(*cf.ConfigPath) > 0 {
 		configPath = filepath.Clean(*cf.ConfigPath)
 	}
@@ -136,7 +135,7 @@ func (o *Options) Run() error {
 		}
 
 		found = true
-		path := filepath.Join(o.contextPath, utils.ClustersDirName, o.group, clusterName)
+		path := filepath.Join(o.contextPath, util.ClusterPath(o.group, clusterName))
 
 		clusterID := fmt.Sprintf("%s/%s", o.group, clusterName)
 		str.WriteString("---\n")

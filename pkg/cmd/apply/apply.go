@@ -31,7 +31,6 @@ import (
 	"github.com/mia-platform/jpl/pkg/inventory"
 	"github.com/mia-platform/jpl/pkg/resourcereader"
 	jplutil "github.com/mia-platform/jpl/pkg/util"
-	"github.com/mia-platform/vab/internal/utils"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"github.com/mia-platform/vab/pkg/cmd/util"
 	"github.com/spf13/cobra"
@@ -152,7 +151,7 @@ func (f *Flags) ToOptions(cf *util.ConfigFlags, args []string) (*Options, error)
 		return nil, fmt.Errorf("failed to parse request timeout: %w", err)
 	}
 
-	configPath := util.DefaultConfigPath
+	configPath := ""
 	if cf.ConfigPath != nil && len(*cf.ConfigPath) > 0 {
 		configPath = filepath.Clean(*cf.ConfigPath)
 	}
@@ -255,7 +254,7 @@ func (o *Options) factoryFor(kubeContext string) (jplutil.ClientFactory, error) 
 }
 
 func (o *Options) applyManifests(ctx context.Context, factory jplutil.ClientFactory, clusterName string) (<-chan event.Event, error) {
-	path := filepath.Join(o.contextPath, utils.ClustersDirName, o.group, clusterName)
+	path := filepath.Join(o.contextPath, util.ClusterPath(o.group, clusterName))
 	manifests, err := readManifests(factory, path)
 	if err != nil {
 		return nil, err

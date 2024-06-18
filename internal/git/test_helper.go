@@ -13,12 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package testutils
+package git
 
 import (
 	"io/fs"
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/go-git/go-billy/v5"
@@ -28,31 +26,22 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const (
-	// Invalid resources names
-	InvalidFolderPath  = "/invalid/path"
-	InvalidFileName    = "invalid.yaml"
-	InvalidGroupName   = "invalid-group"
-	InvalidClusterName = "invalid-cluster"
-
-	// Valid resources names
-	TestGroupName1       = "test-group"
-	TestGroupName2       = "test-group2"
-	TestClusterName1     = "test-cluster"
-	TestClusterName2     = "test-cluster2"
-	KustomizeTestDirName = "kustomize-test"
-)
-
-func GetTestFile(module string, args ...string) string {
-	combinedElements := append([]string{
-		"..",
-		"..",
-		"tests",
-		module,
-	},
-		args...,
-	)
-	return filepath.Join(combinedElements...)
+func prepareWorktree(t *testing.T, fsType string) *billy.Filesystem {
+	t.Helper()
+	var worktree billy.Filesystem
+	switch fsType {
+	case "osfs":
+		worktree = osfs.New(t.TempDir())
+	case "memfs":
+		worktree = memfs.New()
+	default:
+		assert.FailNow(t, "fstype not recognized")
+	}
+	populateWorktree(t, worktree)
+	if !assert.NotNil(t, worktree) {
+		t.FailNow()
+	}
+	return &worktree
 }
 
 func populateWorktree(t *testing.T, fsys billy.Filesystem) {
@@ -101,40 +90,15 @@ func populateWorktree(t *testing.T, fsys billy.Filesystem) {
 	assert.NoError(t, err)
 }
 
-func PrepareWorktree(t *testing.T, fsType string) *billy.Filesystem {
-	t.Helper()
-	var worktree billy.Filesystem
-	switch fsType {
-	case "osfs":
-		worktree = osfs.New(t.TempDir())
-	case "memfs":
-		worktree = memfs.New()
-	default:
-		assert.FailNow(t, "fstype not recognized")
-	}
-	populateWorktree(t, worktree)
-	if !assert.NotNil(t, worktree) {
-		t.FailNow()
-	}
-	return &worktree
-}
-
-func PrepareFakeWorktree(t *testing.T) *billy.Filesystem {
-	t.Helper()
-	return PrepareWorktree(t, "memfs")
-}
-
-type FakeFilesGetter struct {
+type fakeFilesGetter struct {
 	Testing *testing.T
 }
 
-func (filesGetter FakeFilesGetter) WorkTreeForPackage(_ v1alpha1.Package) (*billy.Filesystem, error) {
-	return PrepareFakeWorktree(filesGetter.Testing), nil
+func (filesGetter fakeFilesGetter) WorkTreeForPackage(_ v1alpha1.Package) (*billy.Filesystem, error) {
+	return prepareFakeWorktree(filesGetter.Testing), nil
 }
 
-func CompareFile(t *testing.T, fileContent []byte, filePath string) {
+func prepareFakeWorktree(t *testing.T) *billy.Filesystem {
 	t.Helper()
-	f, err := os.ReadFile(filePath)
-	assert.NoError(t, err)
-	assert.Equal(t, fileContent, f)
+	return prepareWorktree(t, "memfs")
 }

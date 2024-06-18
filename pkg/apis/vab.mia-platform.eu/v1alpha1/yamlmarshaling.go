@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"strings"
 
-	"gopkg.in/yaml.v3"
+	yaml "sigs.k8s.io/yaml/goyaml.v3"
 )
 
 // moduleName return the actual name of a module from the key used in the configuration file
