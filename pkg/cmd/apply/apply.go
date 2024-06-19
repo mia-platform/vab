@@ -220,7 +220,7 @@ func (o *Options) Run(ctx context.Context) error {
 }
 
 func (o *Options) apply(ctx context.Context, cluster v1alpha1.Cluster) (<-chan event.Event, error) {
-	clusterID := fmt.Sprintf("%s/%s", o.group, cluster.Name)
+	clusterID := util.ClusterID(o.group, cluster.Name)
 	if len(cluster.Context) == 0 {
 		return nil, fmt.Errorf(applyErrorFormat, clusterID, fmt.Errorf("no context found"))
 	}

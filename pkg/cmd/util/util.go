@@ -68,6 +68,11 @@ func GroupFromConfig(groupName string, path string) (v1alpha1.Group, error) {
 	return group, nil
 }
 
+// ClusterID return a cluster identifier for group and cluster name
+func ClusterID(group, cluster string) string {
+	return fmt.Sprintf("%s/%s", group, cluster)
+}
+
 // ClusterPath return the canonical path for a cluster given the group and name for the cluster
 func ClusterPath(group, cluster string) string {
 	return filepath.Join(clustersDirName, group, cluster)

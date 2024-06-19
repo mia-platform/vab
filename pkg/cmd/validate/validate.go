@@ -219,16 +219,16 @@ func (o *Options) checkClusters(group *v1alpha1.Group, groupName string, code *i
 			clusterName = "undefined"
 		}
 
+		clusterID := util.ClusterID(groupName, clusterName)
 		if cluster.Context == "" {
-			outString += fmt.Sprintf("[error][%s/%s] missing cluster context: please specify a valid context for each cluster\n", groupName, clusterName)
+			outString += fmt.Sprintf("[error][%s] missing cluster context: please specify a valid context for each cluster\n", clusterID)
 			*code = 1
 		}
 
-		scope := groupName + "/" + clusterName
-		outString += o.checkModules(&cluster.Modules, scope, code)
-		o.logger.V(5).Info(fmt.Sprintf("checking cluster %s modules", scope), "code", *code)
-		outString += o.checkAddOns(&cluster.AddOns, scope, code)
-		o.logger.V(5).Info(fmt.Sprintf("checking cluster %s addon", scope), "code", *code)
+		outString += o.checkModules(&cluster.Modules, clusterID, code)
+		o.logger.V(5).Info(fmt.Sprintf("checking cluster %s modules", clusterID), "code", *code)
+		outString += o.checkAddOns(&cluster.AddOns, clusterID, code)
+		o.logger.V(5).Info(fmt.Sprintf("checking cluster %s addon", clusterID), "code", *code)
 	}
 
 	return outString

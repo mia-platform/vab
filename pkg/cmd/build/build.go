@@ -142,12 +142,14 @@ func (o *Options) Run(ctx context.Context) error {
 		found = true
 		path := filepath.Join(o.contextPath, util.ClusterPath(o.group, clusterName))
 
-		clusterID := fmt.Sprintf("%s/%s", o.group, clusterName)
+		clusterID := util.ClusterID(o.group, clusterName)
 		str.WriteString("---\n")
 		str.WriteString(fmt.Sprintf("### BUILD RESULTS FOR: %q ###\n", clusterID))
+		o.logger.V(5).Info("loading resources", "cluster", clusterID)
 		if err := util.WriteKustomizationData(path, str); err != nil {
 			return fmt.Errorf("building resources for %q: %w", clusterID, err)
 		}
+		o.logger.V(9).Info("end loading resources", "cluster", clusterID)
 	}
 
 	switch {
