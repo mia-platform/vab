@@ -17,6 +17,7 @@ package build
 
 import (
 	"bytes"
+	"context"
 	"path/filepath"
 	"testing"
 
@@ -137,7 +138,7 @@ spec:
 			buffer := new(bytes.Buffer)
 			test.options.writer = buffer
 
-			err := test.options.Run()
+			err := test.options.Run(context.TODO())
 			if len(test.expectedError) > 0 {
 				assert.ErrorContains(t, err, test.expectedError)
 			} else {

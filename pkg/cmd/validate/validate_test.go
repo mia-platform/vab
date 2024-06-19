@@ -17,11 +17,11 @@ package validate
 
 import (
 	"bytes"
+	"context"
 	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/go-logr/logr"
 	"github.com/mia-platform/vab/pkg/cmd/util"
 	"github.com/stretchr/testify/assert"
 )
@@ -105,9 +105,8 @@ The configuration is valid!
 		t.Run(name, func(t *testing.T) {
 			buffer := new(bytes.Buffer)
 			test.options.writer = buffer
-			test.options.logger = logr.Discard()
 
-			err := test.options.Run()
+			err := test.options.Run(context.TODO())
 			if len(test.expectedError) > 0 {
 				assert.ErrorContains(t, err, test.expectedError)
 			} else {

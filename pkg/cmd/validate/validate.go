@@ -61,9 +61,9 @@ func NewCommand(cf *util.ConfigFlags) *cobra.Command {
 		Args: cobra.NoArgs,
 
 		Run: func(cmd *cobra.Command, _ []string) {
-			options, err := flags.ToOptions(cmd.Context(), cf, cmd.OutOrStdout())
+			options, err := flags.ToOptions(cf, cmd.OutOrStdout())
 			cobra.CheckErr(err)
-			cobra.CheckErr(options.Run())
+			cobra.CheckErr(options.Run(cmd.Context()))
 		},
 	}
 
@@ -71,7 +71,7 @@ func NewCommand(cf *util.ConfigFlags) *cobra.Command {
 }
 
 // ToOptions transform the command flags in command runtime arguments
-func (f *Flags) ToOptions(ctx context.Context, cf *util.ConfigFlags, writer io.Writer) (*Options, error) {
+func (f *Flags) ToOptions(cf *util.ConfigFlags, writer io.Writer) (*Options, error) {
 	configPath := ""
 	if cf.ConfigPath != nil && len(*cf.ConfigPath) > 0 {
 		configPath = filepath.Clean(*cf.ConfigPath)
@@ -80,12 +80,12 @@ func (f *Flags) ToOptions(ctx context.Context, cf *util.ConfigFlags, writer io.W
 	return &Options{
 		configPath: configPath,
 		writer:     writer,
-		logger:     logr.FromContextOrDiscard(ctx),
 	}, nil
 }
 
 // Run execute the create command
-func (o *Options) Run() error {
+func (o *Options) Run(ctx context.Context) error {
+	o.logger = logr.FromContextOrDiscard(ctx)
 	code := 0
 
 	config, err := util.ReadConfig(o.configPath)

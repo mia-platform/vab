@@ -17,12 +17,14 @@ package sync
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
 
 	"github.com/MakeNowJust/heredoc/v2"
+	"github.com/go-logr/logr"
 	"github.com/mia-platform/vab/internal/git"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"github.com/mia-platform/vab/pkg/cmd/util"
@@ -40,9 +42,9 @@ const (
 	inside the clusters folder will be updated according to the current configuration.`
 	cmdUsage = "sync CONTEXT"
 
-	dryRunDefaultValue = false
-	dryRunFlagName     = "dry-run"
-	dryRunUsage        = "if true no files will be downloaded"
+	dryRunDefaultValue = true
+	dryRunFlagName     = "download-packages"
+	dryRunUsage        = "if false packages files will not be downloaded"
 )
 
 // Flags contains all the flags for the `sync` command. They will be converted to Options
@@ -61,6 +63,8 @@ type Options struct {
 	contextPath string
 	configPath  string
 	dryRun      bool
+	filesGetter git.FilesGetter
+	logger      logr.Logger
 }
 
 // NewCommand return the command for creating a new configuration file and basic folder structures
@@ -74,10 +78,10 @@ func NewCommand(cf *util.ConfigFlags) *cobra.Command {
 
 		Args: cobra.ExactArgs(1),
 
-		Run: func(_ *cobra.Command, args []string) {
+		Run: func(cmd *cobra.Command, args []string) {
 			options, err := flags.ToOptions(cf, args)
 			cobra.CheckErr(err)
-			cobra.CheckErr(options.Run())
+			cobra.CheckErr(options.Run(cmd.Context()))
 		},
 	}
 
@@ -110,28 +114,27 @@ func (f *Flags) ToOptions(cf *util.ConfigFlags, args []string) (*Options, error)
 		contextPath: cleanedContextPath,
 		configPath:  configPath,
 		dryRun:      f.dryRun,
+		filesGetter: git.RealFilesGetter{},
 	}, nil
 }
 
 // Run execute the create command
-func (o *Options) Run() error {
+func (o *Options) Run(ctx context.Context) error {
+	o.logger = logr.FromContextOrDiscard(ctx)
+
 	config, err := util.ReadConfig(o.configPath)
 	if err != nil {
-		return fmt.Errorf("cannot read config file: %w", err)
+		return fmt.Errorf("reding config file: %w", err)
 	}
 
 	if err := util.SyncDirectories(config.Spec, o.contextPath); err != nil {
 		return err
 	}
 
-	return o.downloadPackages(config, git.RealFilesGetter{})
+	return o.downloadPackages(config)
 }
 
-func (o *Options) downloadPackages(config *v1alpha1.ClustersConfiguration, filesGetter git.FilesGetter) error {
-	if o.dryRun {
-		return nil
-	}
-
+func (o *Options) downloadPackages(config *v1alpha1.ClustersConfiguration) error {
 	if err := os.RemoveAll(filepath.Join(o.contextPath, util.VendoredModulePath(""))); err != nil {
 		return fmt.Errorf("failed to remove vendors folder for modules: %w", err)
 	}
@@ -139,34 +142,38 @@ func (o *Options) downloadPackages(config *v1alpha1.ClustersConfiguration, files
 		return fmt.Errorf("failed to remove vendors folder for add-ons: %w", err)
 	}
 
+	if o.dryRun {
+		return nil
+	}
+
 	mergedPackages := make(map[string]v1alpha1.Package)
-	for _, pkg := range config.Spec.Modules {
+	for name, pkg := range config.Spec.Modules {
 		if !pkg.Disable {
-			mergedPackages[pkg.GetName()+pkg.GetFlavorName()+"_"+pkg.Version] = pkg
+			mergedPackages[name+"_"+pkg.Version] = pkg
 		}
 	}
-	for _, pkg := range config.Spec.AddOns {
+	for name, pkg := range config.Spec.AddOns {
 		if !pkg.Disable {
-			mergedPackages[pkg.GetName()+"_"+pkg.Version] = pkg
+			mergedPackages[name+"_"+pkg.Version] = pkg
 		}
 	}
 
 	for _, group := range config.Spec.Groups {
 		for _, cluster := range group.Clusters {
-			for _, pkg := range cluster.Modules {
+			for name, pkg := range cluster.Modules {
 				if !pkg.Disable {
-					mergedPackages[pkg.GetName()+pkg.GetFlavorName()+"_"+pkg.Version] = pkg
+					mergedPackages[name+"_"+pkg.Version] = pkg
 				}
 			}
-			for _, pkg := range cluster.AddOns {
+			for name, pkg := range cluster.AddOns {
 				if !pkg.Disable {
-					mergedPackages[pkg.GetName()+"_"+pkg.Version] = pkg
+					mergedPackages[name+"_"+pkg.Version] = pkg
 				}
 			}
 		}
 	}
 
-	return clonePackagesLocally(mergedPackages, o.contextPath, filesGetter)
+	return clonePackagesLocally(mergedPackages, o.contextPath, o.filesGetter)
 }
 
 // clonePackagesLocally download packages using filesGetter

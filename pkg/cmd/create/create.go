@@ -16,10 +16,12 @@
 package create
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 
 	"github.com/MakeNowJust/heredoc/v2"
+	"github.com/go-logr/logr"
 	cmdutil "github.com/mia-platform/vab/pkg/cmd/util"
 	"github.com/spf13/cobra"
 )
@@ -44,7 +46,8 @@ type Flags struct{}
 
 // Options have the data required to perform the create operation
 type Options struct {
-	path string
+	path   string
+	logger logr.Logger
 }
 
 // NewCommand return the command for creating a new configuration file and basic folder structures
@@ -60,10 +63,10 @@ func NewCommand() *cobra.Command {
 		Args:              cobra.ExactArgs(1),
 		ValidArgsFunction: validArgs,
 
-		Run: func(_ *cobra.Command, args []string) {
+		Run: func(cmd *cobra.Command, args []string) {
 			options, err := flags.ToOptions(args)
 			cobra.CheckErr(err)
-			cobra.CheckErr(options.Run())
+			cobra.CheckErr(options.Run(cmd.Context()))
 		},
 	}
 
@@ -82,7 +85,9 @@ func (f *Flags) ToOptions(args []string) (*Options, error) {
 }
 
 // Run execute the create command
-func (o *Options) Run() error {
+func (o *Options) Run(ctx context.Context) error {
+	o.logger = logr.FromContextOrDiscard(ctx)
+
 	path, err := filepath.Abs(o.path)
 	if err != nil {
 		return err

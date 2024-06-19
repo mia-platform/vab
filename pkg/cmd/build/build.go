@@ -16,6 +16,7 @@
 package build
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/fs"
@@ -24,6 +25,7 @@ import (
 	"strings"
 
 	"github.com/MakeNowJust/heredoc/v2"
+	"github.com/go-logr/logr"
 	"github.com/mia-platform/vab/pkg/cmd/util"
 	"github.com/spf13/cobra"
 )
@@ -54,6 +56,7 @@ type Options struct {
 	contextPath string
 	configPath  string
 	writer      io.Writer
+	logger      logr.Logger
 }
 
 // NewCommand return the command for showing the manifests for every group and cluster requested
@@ -70,7 +73,7 @@ func NewCommand(cf *util.ConfigFlags) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			options, err := flags.ToOptions(cf, args, cmd.OutOrStdout())
 			cobra.CheckErr(err)
-			cobra.CheckErr(options.Run())
+			cobra.CheckErr(options.Run(cmd.Context()))
 		},
 	}
 
@@ -120,7 +123,9 @@ func (f *Flags) ToOptions(cf *util.ConfigFlags, args []string, writer io.Writer)
 }
 
 // Run execute the build command
-func (o *Options) Run() error {
+func (o *Options) Run(ctx context.Context) error {
+	o.logger = logr.FromContextOrDiscard(ctx)
+
 	group, err := util.GroupFromConfig(o.group, o.configPath)
 	if err != nil {
 		return err

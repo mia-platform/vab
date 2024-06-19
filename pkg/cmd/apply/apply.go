@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/MakeNowJust/heredoc/v2"
+	"github.com/go-logr/logr"
 	jplclient "github.com/mia-platform/jpl/pkg/client"
 	"github.com/mia-platform/jpl/pkg/event"
 	"github.com/mia-platform/jpl/pkg/flowcontrol"
@@ -96,6 +97,7 @@ type Options struct {
 	contextPath          string
 	configPath           string
 	factoryAndConfigFunc factoryAndConfigFunc
+	logger               logr.Logger
 }
 
 func NewCommand(cf *util.ConfigFlags) *cobra.Command {
@@ -170,6 +172,8 @@ func (f *Flags) ToOptions(cf *util.ConfigFlags, args []string) (*Options, error)
 
 // Run execute the apply command
 func (o *Options) Run(ctx context.Context) error {
+	o.logger = logr.FromContextOrDiscard(ctx)
+
 	group, err := util.GroupFromConfig(o.group, o.configPath)
 	if err != nil {
 		return err
