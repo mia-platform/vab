@@ -101,8 +101,12 @@ func SyncDirectories(config v1alpha1.ConfigSpec, path string) error {
 	modules := config.Modules
 	for _, group := range config.Groups {
 		for _, cluster := range group.Clusters {
-			clusterModules := mergePackages(modules, cluster.Modules)
-			clusterAddOns := mergePackages(addons, cluster.AddOns)
+			var clusterModules, clusterAddOns map[string]v1alpha1.Package
+			if len(cluster.Modules) != 0 || len(cluster.AddOns) != 0 {
+				clusterModules = mergePackages(modules, cluster.Modules)
+				clusterAddOns = mergePackages(addons, cluster.AddOns)
+			}
+
 			err := ensureFolderContent(path, ClusterPath(group.Name, cluster.Name), clusterModules, clusterAddOns)
 			if err != nil {
 				return err
@@ -140,11 +144,16 @@ func ensureFolderContent(basePath string, clusterPath string, modules, addOns ma
 		return err
 	}
 
+	sortedModules := sortedPackagesPath(basesDir, filepath.Join(basePath, modulesDirPath), modules)
+	if len(sortedModules) == 0 && clusterPath != allGroupsDirPath {
+		sortedModules = append(sortedModules, relativeModulePath(basesDir, filepath.Join(basePath, allGroupsDirPath)))
+	}
+
 	// write bases file
 	err = writeKustomizationFile(fmt.Sprintf("%s - %s", name, basesDirName),
 		basesDir,
 		kustomization,
-		sortedPackagesPath(basesDir, filepath.Join(basePath, modulesDirPath), modules),
+		sortedModules,
 		sortedPackagesPath(basesDir, filepath.Join(basePath, addOnsDirPath), addOns),
 		true,
 	)
@@ -200,13 +209,7 @@ func sortedPackagesPath(basePath, packagesPath string, packages map[string]v1alp
 			pkgPath = filepath.Join(pkgPath, pkg.GetFlavorName())
 		}
 
-		modulePath, err := filepath.Rel(basePath, filepath.Join(packagesPath, pkgPath))
-		if err != nil {
-			// we don't expect to come here because the paths are always related
-			panic(err)
-		}
-
-		paths = append(paths, modulePath)
+		paths = append(paths, relativeModulePath(basePath, filepath.Join(packagesPath, pkgPath)))
 	}
 
 	slices.SortStableFunc(paths, cmp.Compare)
@@ -245,4 +248,13 @@ func writeYamlFile(path string, data interface{}) error {
 	}
 
 	return os.WriteFile(path, buffer.Bytes(), filePermission)
+}
+
+func relativeModulePath(basePath, targetPath string) string {
+	modulePath, err := filepath.Rel(basePath, targetPath)
+	if err != nil {
+		panic(err) // we don't expect an error because the paths are computed by us
+	}
+
+	return modulePath
 }

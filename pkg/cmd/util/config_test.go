@@ -38,38 +38,74 @@ func TestInitializeConfiguration(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
-	testStructure(t, testDirPath, filepath.Join("testdata", "newsync"))
+
+	testStructure(t, testDirPath, filepath.Join("testdata", "sync", "init"))
 }
 
-// func TestSyncDirectories(t *testing.T) {
-// 	t.Parallel()
+func TestSyncDirectories(t *testing.T) {
+	t.Parallel()
 
-// 	testdata := "testdata"
-// 	tests := map[string]struct {
-// 		config             v1alpha1.ConfigSpec
-// 		path               string
-// 		expectedResultPath string
-// 	}{
-// 		"sync empty project": {
-// 			config:             v1alpha1.ConfigSpec{},
-// 			path:               t.TempDir(),
-// 			expectedResultPath: filepath.Join(testdata, ""),
-// 		},
-// 		"sync project with old config": {
-// 			config:             v1alpha1.ConfigSpec{},
-// 			path:               t.TempDir(),
-// 			expectedResultPath: filepath.Join(testdata, ""),
-// 		},
-// 	}
+	testdata := filepath.Join("testdata", "sync")
+	tests := map[string]struct {
+		config             v1alpha1.ConfigSpec
+		path               string
+		expectedResultPath string
+	}{
+		"sync empty project": {
+			config: v1alpha1.ConfigSpec{
+				Modules: map[string]v1alpha1.Package{
+					"test/module/base":    v1alpha1.NewModule(t, "test/module/base", "v1.28.0", false),
+					"test/module2/flavor": v1alpha1.NewModule(t, "test/module2/flavor", "v1.28.0", false),
+				},
+				AddOns: map[string]v1alpha1.Package{
+					"test/addon":  v1alpha1.NewAddon(t, "test/addon", "v1.0.0", false),
+					"test/addon2": v1alpha1.NewAddon(t, "test/addon2", "v1.5.0", false),
+					"test/addon3": v1alpha1.NewAddon(t, "test/addon2", "v1.5.0", true),
+				},
+				Groups: []v1alpha1.Group{
+					{
+						Name: "group1",
+						Clusters: []v1alpha1.Cluster{
+							{
+								Name: "cluster",
+							},
+						},
+					},
+					{
+						Name: "group2",
+						Clusters: []v1alpha1.Cluster{
+							{
+								Name: "cluster",
+								Modules: map[string]v1alpha1.Package{
+									"test/module2/flavor":  v1alpha1.NewModule(t, "test/module2/flavor", "", true),
+									"test/module2/flavor2": v1alpha1.NewModule(t, "test/module2/flavor2", "v1.28.0", false),
+								},
+								AddOns: map[string]v1alpha1.Package{
+									"test/addon": v1alpha1.NewAddon(t, "test/addon", "", true),
+								},
+							},
+						},
+					},
+				},
+			},
+			path:               t.TempDir(),
+			expectedResultPath: filepath.Join(testdata, "empty"),
+		},
+		// "sync project with old config": {
+		// 	config:             v1alpha1.ConfigSpec{},
+		// 	path:               t.TempDir(),
+		// 	expectedResultPath: filepath.Join(testdata, "old"),
+		// },
+	}
 
-// 	for name, test := range tests {
-// 		t.Run(name, func(t *testing.T) {
-// 			err := SyncDirectories(test.config, test.path)
-// 			require.NoError(t, err)
-// 			testStructure(t, test.path, test.expectedResultPath)
-// 		})
-// 	}
-// }
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			err := SyncDirectories(test.config, test.path)
+			require.NoError(t, err)
+			testStructure(t, test.path, test.expectedResultPath)
+		})
+	}
+}
 
 func testStructure(t *testing.T, pathToTest, expectationPath string) {
 	t.Helper()
