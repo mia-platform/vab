@@ -145,11 +145,12 @@ func ensureFolderContent(basePath string, clusterPath string, modules, addOns ma
 	}
 
 	sortedModules := sortedPackagesPath(basesDir, filepath.Join(basePath, modulesDirPath), modules)
+	sortedAddons := sortedPackagesPath(basesDir, filepath.Join(basePath, addOnsDirPath), addOns)
 	switch {
 	case len(sortedModules) == 0 && clusterPath != allGroupsDirPath:
 		sortedModules = append(sortedModules, relativeModulePath(basesDir, filepath.Join(basePath, allGroupsDirPath)))
-	case len(sortedModules) > 0 && clusterPath != allGroupsDirPath:
-		sortedModules = append(sortedModules, relativeModulePath(basesDir, filepath.Join(basePath, allGroupsDirPath, customResourcesDirName)))
+	case len(sortedAddons) > 0 && clusterPath != allGroupsDirPath:
+		sortedAddons = append(sortedAddons, relativeModulePath(basesDir, filepath.Join(basePath, allGroupsDirPath, customResourcesDirName)))
 	}
 
 	// write bases file
@@ -157,7 +158,7 @@ func ensureFolderContent(basePath string, clusterPath string, modules, addOns ma
 		basesDir,
 		kustomization,
 		sortedModules,
-		sortedPackagesPath(basesDir, filepath.Join(basePath, addOnsDirPath), addOns),
+		sortedAddons,
 		true,
 	)
 	if err != nil {
