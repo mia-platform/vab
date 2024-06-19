@@ -18,6 +18,8 @@ package util
 import (
 	"fmt"
 	"io"
+	"io/fs"
+	"os"
 	"path/filepath"
 
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
@@ -50,7 +52,7 @@ func GroupFromConfig(groupName string, path string) (v1alpha1.Group, error) {
 	var group v1alpha1.Group
 	config, err := ReadConfig(path)
 	if err != nil {
-		return group, fmt.Errorf("reding config file: %w", err)
+		return group, err
 	}
 
 	found := false
@@ -67,6 +69,26 @@ func GroupFromConfig(groupName string, path string) (v1alpha1.Group, error) {
 	}
 
 	return group, nil
+}
+
+// ValidateContextPath will validate contextPath that is a valid existing path, and that is a directory
+// it will also return the path in absolute form
+func ValidateContextPath(contextPath string) (string, error) {
+	var cleanedContextPath string
+	var err error
+	if cleanedContextPath, err = filepath.Abs(contextPath); err != nil {
+		return "", err
+	}
+
+	var contextInfo fs.FileInfo
+	if contextInfo, err = os.Stat(cleanedContextPath); err != nil {
+		return "", err
+	}
+
+	if !contextInfo.IsDir() {
+		return "", fmt.Errorf(" %q is not a directory", cleanedContextPath)
+	}
+	return cleanedContextPath, nil
 }
 
 // ClusterID return a cluster identifier for group and cluster name

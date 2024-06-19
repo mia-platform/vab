@@ -70,7 +70,7 @@ func TestBuildRun(t *testing.T) {
 				configPath:  filepath.Join(t.TempDir(), "missing.yaml"),
 				contextPath: testdata,
 			},
-			expectedError: "reding config file:",
+			expectedError: "reading config file:",
 		},
 		"build single cluster": {
 			options: &Options{

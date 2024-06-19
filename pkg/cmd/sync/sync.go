@@ -19,7 +19,6 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -95,23 +94,13 @@ func (f *Flags) ToOptions(cf *util.ConfigFlags, args []string) (*Options, error)
 		configPath = filepath.Clean(*cf.ConfigPath)
 	}
 
-	var err error
-	var cleanedContextPath string
-	if cleanedContextPath, err = filepath.Abs(args[0]); err != nil {
+	contextPath, err := util.ValidateContextPath(args[0])
+	if err != nil {
 		return nil, err
 	}
 
-	var contextInfo fs.FileInfo
-	if contextInfo, err = os.Stat(cleanedContextPath); err != nil {
-		return nil, fmt.Errorf("error locating files: %w", err)
-	}
-
-	if !contextInfo.IsDir() {
-		return nil, fmt.Errorf("the target path %q is not a directory", cleanedContextPath)
-	}
-
 	return &Options{
-		contextPath: cleanedContextPath,
+		contextPath: contextPath,
 		configPath:  configPath,
 		dryRun:      f.dryRun,
 		filesGetter: git.RealFilesGetter{},
@@ -124,7 +113,7 @@ func (o *Options) Run(ctx context.Context) error {
 
 	config, err := util.ReadConfig(o.configPath)
 	if err != nil {
-		return fmt.Errorf("reding config file: %w", err)
+		return fmt.Errorf("reading config file: %w", err)
 	}
 
 	if err := util.SyncDirectories(config.Spec, o.contextPath); err != nil {
@@ -173,13 +162,13 @@ func (o *Options) downloadPackages(config *v1alpha1.ClustersConfiguration) error
 		}
 	}
 
-	return clonePackagesLocally(mergedPackages, o.contextPath, o.filesGetter)
+	return o.clonePackagesLocally(mergedPackages, o.contextPath, o.filesGetter)
 }
 
 // clonePackagesLocally download packages using filesGetter
-func clonePackagesLocally(packages map[string]v1alpha1.Package, path string, filesGetter git.FilesGetter) error {
+func (o *Options) clonePackagesLocally(packages map[string]v1alpha1.Package, path string, filesGetter git.FilesGetter) error {
 	for _, pkg := range packages {
-		files, err := ClonePackages(pkg, filesGetter)
+		files, err := o.clonePackages(pkg, filesGetter)
 		if err != nil {
 			return fmt.Errorf("error cloning packages for %s %s: %w", pkg.PackageType(), pkg.GetName(), err)
 		}
@@ -192,15 +181,15 @@ func clonePackagesLocally(packages map[string]v1alpha1.Package, path string, fil
 			pkgPath = util.VendoredAddOnPath(pkgName)
 		}
 
-		if err := MoveToDisk(files, pkg.GetName(), filepath.Join(path, pkgPath)); err != nil {
+		if err := o.moveToDisk(files, pkg.GetName(), filepath.Join(path, pkgPath)); err != nil {
 			return fmt.Errorf("error moving packages to disk for %s %s: %w", pkg.PackageType(), pkg.GetName(), err)
 		}
 	}
 	return nil
 }
 
-// ClonePackages clones and writes package repos to disk
-func ClonePackages(pkg v1alpha1.Package, filesGetter git.FilesGetter) ([]*git.File, error) {
+// clonePackages clones and writes package repos to disk
+func (o *Options) clonePackages(pkg v1alpha1.Package, filesGetter git.FilesGetter) ([]*git.File, error) {
 	files, err := git.GetFilesForPackage(filesGetter, pkg)
 
 	if err != nil {
@@ -210,17 +199,17 @@ func ClonePackages(pkg v1alpha1.Package, filesGetter git.FilesGetter) ([]*git.Fi
 	return files, nil
 }
 
-// MoveToDisk moves the cloned packages from memory to disk
-func MoveToDisk(files []*git.File, packageName string, targetPath string) error {
-	if err := WritePkgToDir(files, targetPath); err != nil {
+// moveToDisk moves the cloned packages from memory to disk
+func (o *Options) moveToDisk(files []*git.File, packageName string, targetPath string) error {
+	if err := o.writePkgToDir(files, targetPath); err != nil {
 		return fmt.Errorf("error while writing package %s on disk: %w", packageName, err)
 	}
 
 	return nil
 }
 
-// WritePkgToDir writes the files in memory to the target path on disk
-func WritePkgToDir(files []*git.File, targetPath string) error {
+// writePkgToDir writes the files in memory to the target path on disk
+func (o *Options) writePkgToDir(files []*git.File, targetPath string) error {
 	for _, gitFile := range files {
 		err := os.MkdirAll(filepath.Dir(filepath.Join(targetPath, gitFile.FilePath())), os.ModePerm)
 		if err != nil {

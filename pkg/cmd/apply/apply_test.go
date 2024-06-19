@@ -70,8 +70,8 @@ func TestFlagsToOptions(t *testing.T) {
 		"invalid context path return error": {
 			flags:         &Flags{timeout: "invalid"},
 			configFlags:   util.NewConfigFlags(),
-			args:          []string{"first", filepath.Join("invalid", "path")},
-			expectedError: "error locating files",
+			args:          []string{"first", filepath.Join("/", "invalid", "path")},
+			expectedError: filepath.Join("/", "invalid", "path"),
 		},
 		"invalid timeout return error": {
 			flags:         &Flags{timeout: "invalid"},

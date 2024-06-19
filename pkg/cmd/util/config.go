@@ -63,12 +63,12 @@ func ReadConfig(configPath string) (*v1alpha1.ClustersConfiguration, error) {
 
 	configFile, err := os.ReadFile(configPath)
 	if err != nil {
-		return nil, fmt.Errorf("reading config: %w", err)
+		return nil, fmt.Errorf("reading config file: %w", err)
 	}
 
 	output := &v1alpha1.ClustersConfiguration{}
 	if err := yaml.Unmarshal(configFile, output); err != nil {
-		return nil, fmt.Errorf("reading config: %w", err)
+		return nil, fmt.Errorf("reading config file: %w", err)
 	}
 
 	return output, nil

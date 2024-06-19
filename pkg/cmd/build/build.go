@@ -19,8 +19,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/fs"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -93,19 +91,9 @@ func (f *Flags) ToOptions(cf *util.ConfigFlags, args []string, writer io.Writer)
 		cluster = args[1]
 	}
 
-	var err error
-	var cleanedContextPath string
-	if cleanedContextPath, err = filepath.Abs(contextPath); err != nil {
+	cleanedContextPath, err := util.ValidateContextPath(contextPath)
+	if err != nil {
 		return nil, err
-	}
-
-	var contextInfo fs.FileInfo
-	if contextInfo, err = os.Stat(cleanedContextPath); err != nil {
-		return nil, fmt.Errorf("error locating files: %w", err)
-	}
-
-	if !contextInfo.IsDir() {
-		return nil, fmt.Errorf("target path %q is not a directory", cleanedContextPath)
 	}
 
 	configPath := ""

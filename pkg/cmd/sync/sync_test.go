@@ -15,6 +15,22 @@
 
 package sync
 
+import (
+	"testing"
+
+	"github.com/mia-platform/vab/pkg/cmd/util"
+	"github.com/stretchr/testify/assert"
+)
+
+func TestCommand(t *testing.T) {
+	t.Parallel()
+
+	configFlags := util.NewConfigFlags()
+
+	cmd := NewCommand(configFlags)
+	assert.NotNil(t, cmd)
+}
+
 // func TestReadWrite(t *testing.T) {
 // 	fakeWorktree := testutils.PrepareFakeWorktree(t)
 
