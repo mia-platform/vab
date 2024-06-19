@@ -83,9 +83,8 @@ func (f *Flags) ToOptions(args []string) (*Options, error) {
 
 // Run execute the create command
 func (o *Options) Run() error {
-	var err error
-	var path string
-	if path, err = filepath.Abs(o.path); err != nil {
+	path, err := filepath.Abs(o.path)
+	if err != nil {
 		return err
 	}
 
