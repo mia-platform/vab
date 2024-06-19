@@ -17,6 +17,7 @@ package util
 
 import (
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -91,11 +92,36 @@ func TestSyncDirectories(t *testing.T) {
 			path:               t.TempDir(),
 			expectedResultPath: filepath.Join(testdata, "empty"),
 		},
-		// "sync project with old config": {
-		// 	config:             v1alpha1.ConfigSpec{},
-		// 	path:               t.TempDir(),
-		// 	expectedResultPath: filepath.Join(testdata, "old"),
-		// },
+		"sync project with old config": {
+			config: v1alpha1.ConfigSpec{
+				Modules: map[string]v1alpha1.Package{
+					"test/module/base":    v1alpha1.NewModule(t, "test/module/base", "v1.28.0", false),
+					"test/module2/flavor": v1alpha1.NewModule(t, "test/module2/flavor", "v1.28.0", false),
+				},
+				AddOns: map[string]v1alpha1.Package{
+					"test/addon":  v1alpha1.NewAddon(t, "test/addon", "v2.0.0", false),
+					"test/addon2": v1alpha1.NewAddon(t, "test/addon2", "v2.0.0", false),
+				},
+				Groups: []v1alpha1.Group{
+					{
+						Name: "group1",
+						Clusters: []v1alpha1.Cluster{
+							{
+								Name: "cluster",
+							},
+						},
+					},
+				},
+			},
+			path: func() string {
+				tmpDir := t.TempDir()
+				sourceFiles := filepath.Join(testdata, "old", "source")
+				err := copyFS(tmpDir, os.DirFS(sourceFiles))
+				require.NoError(t, err)
+				return tmpDir
+			}(),
+			expectedResultPath: filepath.Join(testdata, "old", "target"),
+		},
 	}
 
 	for name, test := range tests {
@@ -237,4 +263,41 @@ func TestWriteFile(t *testing.T) {
 			assert.FileExists(t, test.path)
 		})
 	}
+}
+
+// TODO: copied implementation from new CopyFS function that will land in go 1.23, remove it and use the official one
+// when available
+func copyFS(dir string, fsys fs.FS) error {
+	return fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		newPath := filepath.Join(dir, path)
+		if d.IsDir() {
+			return os.MkdirAll(newPath, 0777)
+		}
+
+		if !d.Type().IsRegular() {
+			return &os.PathError{Op: "CopyFS", Path: path, Err: os.ErrInvalid}
+		}
+		r, err := fsys.Open(path)
+		if err != nil {
+			return err
+		}
+		defer r.Close()
+		info, err := r.Stat()
+		if err != nil {
+			return err
+		}
+		w, err := os.OpenFile(newPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0666|info.Mode()&0777)
+		if err != nil {
+			return err
+		}
+		if _, err := io.Copy(w, r); err != nil {
+			w.Close()
+			return &os.PathError{Op: "Copy", Path: newPath, Err: err}
+		}
+		return w.Close()
+	})
 }

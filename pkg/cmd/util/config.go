@@ -107,8 +107,8 @@ func SyncDirectories(config v1alpha1.ConfigSpec, path string) error {
 				clusterAddOns = mergePackages(addons, cluster.AddOns)
 			}
 
-			err := ensureFolderContent(path, ClusterPath(group.Name, cluster.Name), clusterModules, clusterAddOns)
-			if err != nil {
+			clusterPath := ClusterPath(group.Name, cluster.Name)
+			if err := ensureFolderContent(path, clusterPath, clusterModules, clusterAddOns); err != nil {
 				return err
 			}
 		}
