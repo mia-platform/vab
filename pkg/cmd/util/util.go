@@ -25,6 +25,7 @@ import (
 	"sigs.k8s.io/kustomize/kyaml/filesys"
 )
 
+// WriteKustomizationData read kustomize configuration file at path and output the kustomize build result to writer
 func WriteKustomizationData(path string, writer io.Writer) error {
 	kOpts := krusty.MakeDefaultOptions()
 	kOpts.Reorder = krusty.ReorderOptionLegacy
@@ -78,10 +79,12 @@ func ClusterPath(group, cluster string) string {
 	return filepath.Join(clustersDirName, group, cluster)
 }
 
+// VendoredModulePath return a vendored path for module with packageName
 func VendoredModulePath(packageName string) string {
 	return filepath.Join(modulesDirPath, packageName)
 }
 
+// VendoredAddOnPath return a vendored path for addon with packageName
 func VendoredAddOnPath(packageName string) string {
 	return filepath.Join(addOnsDirPath, packageName)
 }
