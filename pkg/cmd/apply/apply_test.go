@@ -143,7 +143,7 @@ func TestApplyRun(t *testing.T) {
 				contextPath: testdata,
 				configPath:  configPath,
 			},
-			expectedError: `cannot find "missing" group in config at path "testdata/testconfig.yaml"`,
+			expectedError: `no "missing" group in config at path "testdata/testconfig.yaml"`,
 		},
 		"no cluster inside a group return error": {
 			options: &Options{
@@ -169,7 +169,7 @@ func TestApplyRun(t *testing.T) {
 				contextPath: testdata,
 				configPath:  configPath,
 			},
-			expectedError: `error executing apply for "test-group/test-cluster": no context found`,
+			expectedError: `applying resources for "test-group/test-cluster": no context found`,
 		},
 		"error checking flowcontrol API return error": {
 			options: &Options{
@@ -179,7 +179,7 @@ func TestApplyRun(t *testing.T) {
 				configPath:  configPath,
 			},
 			returnErrorInLocalServer: true,
-			expectedError:            `error executing apply for "test-group2/test-cluster": checking flowcontrol api`,
+			expectedError:            `applying resources for "test-group2/test-cluster": flowcontrol api`,
 		},
 		"invalid context path return error": {
 			options: &Options{

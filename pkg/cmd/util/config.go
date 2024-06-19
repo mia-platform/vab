@@ -61,15 +61,14 @@ func ReadConfig(configPath string) (*v1alpha1.ClustersConfiguration, error) {
 		configPath = defaultConfigFileName
 	}
 
-	configFile, readErr := os.ReadFile(configPath)
-	if readErr != nil {
-		return nil, readErr
+	configFile, err := os.ReadFile(configPath)
+	if err != nil {
+		return nil, fmt.Errorf("reading config: %w", err)
 	}
 
 	output := &v1alpha1.ClustersConfiguration{}
-	yamlErr := yaml.Unmarshal(configFile, output)
-	if yamlErr != nil {
-		return nil, yamlErr
+	if err := yaml.Unmarshal(configFile, output); err != nil {
+		return nil, fmt.Errorf("reading config: %w", err)
 	}
 
 	return output, nil
@@ -79,12 +78,12 @@ func ReadConfig(configPath string) (*v1alpha1.ClustersConfiguration, error) {
 // structure
 func InitializeConfiguration(name, path string) error {
 	if err := os.MkdirAll(path, os.ModePerm); err != nil {
-		return err
+		return fmt.Errorf("writing config: %w", err)
 	}
 
 	config := v1alpha1.EmptyConfig(name)
 	if err := writeYamlFile(filepath.Join(path, defaultConfigFileName), config); err != nil {
-		return fmt.Errorf("failed to write new config: %w", err)
+		return fmt.Errorf("writing config: %w", err)
 	}
 
 	return SyncDirectories(config.Spec, path)
@@ -128,7 +127,7 @@ func ensureFolderContent(basePath string, clusterPath string, modules, addOns ma
 
 	for _, dir := range []string{basesDir, customResourcesDir} {
 		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
-			return err
+			return fmt.Errorf("creating folders: %w", err)
 		}
 	}
 
@@ -191,14 +190,19 @@ func writeKustomizationFile(name, path, kind string, resources, components []str
 
 	node := new(yaml.Node)
 	if err := node.Encode(kustomization); err != nil {
-		return err
+		return fmt.Errorf("writing kustomize file: %w", err)
 	}
 
 	if generated {
 		node.HeadComment = doNotEditComment
 	}
 
-	return writeYamlFile(filepath.Join(path, konfig.DefaultKustomizationFileName()), node)
+	err := writeYamlFile(filepath.Join(path, konfig.DefaultKustomizationFileName()), node)
+	if err != nil {
+		return fmt.Errorf("writing kustomize file: %w", err)
+	}
+
+	return nil
 }
 
 // sortedPackagesPath return an array of packages path relative to basePath orderd alphabetically

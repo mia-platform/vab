@@ -37,7 +37,7 @@ func TestCommand(t *testing.T) {
 	assert.NotNil(t, cmd)
 
 	buffer := new(bytes.Buffer)
-	cmd.SetErr(buffer)
+	cmd.SetOut(buffer)
 	assert.NoError(t, cmd.Execute())
 	t.Log(buffer.String())
 }

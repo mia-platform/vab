@@ -102,7 +102,7 @@ func (f *Flags) ToOptions(cf *util.ConfigFlags, args []string, writer io.Writer)
 	}
 
 	if !contextInfo.IsDir() {
-		return nil, fmt.Errorf("the target path %q is not a directory", cleanedContextPath)
+		return nil, fmt.Errorf("target path %q is not a directory", cleanedContextPath)
 	}
 
 	configPath := ""
@@ -141,7 +141,7 @@ func (o *Options) Run() error {
 		str.WriteString("---\n")
 		str.WriteString(fmt.Sprintf("### BUILD RESULTS FOR: %q ###\n", clusterID))
 		if err := util.WriteKustomizationData(path, str); err != nil {
-			return fmt.Errorf("error in running kustomize for %q: %w", clusterID, err)
+			return fmt.Errorf("building resources for %q: %w", clusterID, err)
 		}
 	}
 

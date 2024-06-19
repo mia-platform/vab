@@ -49,7 +49,7 @@ func GroupFromConfig(groupName string, path string) (v1alpha1.Group, error) {
 	var group v1alpha1.Group
 	config, err := ReadConfig(path)
 	if err != nil {
-		return group, fmt.Errorf("cannot read config file: %w", err)
+		return group, fmt.Errorf("reding config file: %w", err)
 	}
 
 	found := false
@@ -62,7 +62,7 @@ func GroupFromConfig(groupName string, path string) (v1alpha1.Group, error) {
 	}
 
 	if !found {
-		return group, fmt.Errorf("cannot find %q group in config at path %q", groupName, path)
+		return group, fmt.Errorf("no %q group in config at path %q", groupName, path)
 	}
 
 	return group, nil

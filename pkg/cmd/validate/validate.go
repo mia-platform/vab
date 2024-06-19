@@ -61,7 +61,7 @@ func NewCommand(cf *util.ConfigFlags) *cobra.Command {
 		Args: cobra.NoArgs,
 
 		Run: func(cmd *cobra.Command, _ []string) {
-			options, err := flags.ToOptions(cmd.Context(), cf, cmd.ErrOrStderr())
+			options, err := flags.ToOptions(cmd.Context(), cf, cmd.OutOrStdout())
 			cobra.CheckErr(err)
 			cobra.CheckErr(options.Run())
 		},

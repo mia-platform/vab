@@ -61,7 +61,7 @@ func TestBuildRun(t *testing.T) {
 				contextPath: testdata,
 				configPath:  configFile,
 			},
-			expectedError: `error in running kustomize for "test-group/test-cluster":`,
+			expectedError: `building resources for "test-group/test-cluster":`,
 		},
 		"missing configuration file": {
 			options: &Options{
@@ -69,7 +69,7 @@ func TestBuildRun(t *testing.T) {
 				configPath:  filepath.Join(t.TempDir(), "missing.yaml"),
 				contextPath: testdata,
 			},
-			expectedError: "cannot read config file:",
+			expectedError: "reding config file:",
 		},
 		"build single cluster": {
 			options: &Options{

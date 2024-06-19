@@ -58,7 +58,7 @@ const (
 	time unit (e.g. 1s, 2m, 3h). A value of zero means
 	don't timeout requests.`
 
-	applyErrorFormat = "error executing apply for %q: %w"
+	applyErrorFormat = "applying resources for %q: %w"
 
 	minArgs = 2
 	maxArgs = 3
@@ -143,7 +143,7 @@ func (f *Flags) ToOptions(cf *util.ConfigFlags, args []string) (*Options, error)
 	}
 
 	if !contextInfo.IsDir() {
-		return nil, fmt.Errorf("the target path %q is not a directory", cleanedContextPath)
+		return nil, fmt.Errorf("target path %q is not a directory", cleanedContextPath)
 	}
 
 	var timeout time.Duration
@@ -239,7 +239,7 @@ func (o *Options) factoryFor(kubeContext string) (jplutil.ClientFactory, error) 
 
 	var enabled bool
 	if enabled, err = flowcontrol.IsEnabled(context.Background(), restConfig); err != nil {
-		return nil, fmt.Errorf("checking flowcontrol api: %w", err)
+		return nil, fmt.Errorf("flowcontrol api: %w", err)
 	}
 
 	if enabled {
