@@ -21,6 +21,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/go-logr/logr"
 	"github.com/mia-platform/vab/pkg/cmd/util"
 	"github.com/stretchr/testify/assert"
 )
@@ -55,7 +56,7 @@ func TestValidationTextGeneration(t *testing.T) {
 				configPath: filepath.Join(testdata, "invalid_yaml.yaml"),
 			},
 			expectedString: "",
-			expectedError:  "error while parsing the configuration file",
+			expectedError:  "parsing configuration file",
 		},
 		"empty config file": {
 			options: &Options{
@@ -77,7 +78,7 @@ The configuration is valid!
 [warn][default] no addon found: check the config file if this behavior is unexpected
 [warn] no group found: check the config file if this behavior is unexpected
 `,
-			expectedError: "the configuration is invalid",
+			expectedError: "configuration is invalid",
 		},
 		"all checks": {
 			options: &Options{
@@ -96,7 +97,7 @@ The configuration is valid!
 [warn][undefined/cluster-1] no addon found: check the config file if this behavior is unexpected
 [warn][group-1] no cluster found in group: check the config file if this behavior is unexpected
 `,
-			expectedError: "the configuration is invalid",
+			expectedError: "configuration is invalid",
 		},
 	}
 
@@ -104,6 +105,7 @@ The configuration is valid!
 		t.Run(name, func(t *testing.T) {
 			buffer := new(bytes.Buffer)
 			test.options.writer = buffer
+			test.options.logger = logr.Discard()
 
 			err := test.options.Run()
 			if len(test.expectedError) > 0 {

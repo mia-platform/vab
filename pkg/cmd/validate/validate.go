@@ -16,11 +16,13 @@
 package validate
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"path/filepath"
 
 	"github.com/MakeNowJust/heredoc/v2"
+	"github.com/go-logr/logr"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"github.com/mia-platform/vab/pkg/cmd/util"
 	"github.com/spf13/cobra"
@@ -45,6 +47,7 @@ type Flags struct{}
 type Options struct {
 	configPath string
 	writer     io.Writer
+	logger     logr.Logger
 }
 
 // NewCommand return the command for validating the information inserted in the configuration file
@@ -58,7 +61,7 @@ func NewCommand(cf *util.ConfigFlags) *cobra.Command {
 		Args: cobra.NoArgs,
 
 		Run: func(cmd *cobra.Command, _ []string) {
-			options, err := flags.ToOptions(cf, cmd.ErrOrStderr())
+			options, err := flags.ToOptions(cmd.Context(), cf, cmd.ErrOrStderr())
 			cobra.CheckErr(err)
 			cobra.CheckErr(options.Run())
 		},
@@ -68,7 +71,7 @@ func NewCommand(cf *util.ConfigFlags) *cobra.Command {
 }
 
 // ToOptions transform the command flags in command runtime arguments
-func (f *Flags) ToOptions(cf *util.ConfigFlags, writer io.Writer) (*Options, error) {
+func (f *Flags) ToOptions(ctx context.Context, cf *util.ConfigFlags, writer io.Writer) (*Options, error) {
 	configPath := ""
 	if cf.ConfigPath != nil && len(*cf.ConfigPath) > 0 {
 		configPath = filepath.Clean(*cf.ConfigPath)
@@ -77,6 +80,7 @@ func (f *Flags) ToOptions(cf *util.ConfigFlags, writer io.Writer) (*Options, err
 	return &Options{
 		configPath: configPath,
 		writer:     writer,
+		logger:     logr.FromContextOrDiscard(ctx),
 	}, nil
 }
 
@@ -84,27 +88,31 @@ func (f *Flags) ToOptions(cf *util.ConfigFlags, writer io.Writer) (*Options, err
 func (o *Options) Run() error {
 	code := 0
 
-	config, readErr := util.ReadConfig(o.configPath)
-	if readErr != nil {
-		return fmt.Errorf("error while parsing the configuration file: %v", readErr)
+	config, err := util.ReadConfig(o.configPath)
+	if err != nil {
+		return fmt.Errorf("parsing configuration file: %v", err)
 	}
 
-	feedbackString := checkTypeMeta(&config.TypeMeta, &code)
-	feedbackString += checkModules(&config.Spec.Modules, "", &code)
-	feedbackString += checkAddOns(&config.Spec.AddOns, "", &code)
-	feedbackString += checkGroups(&config.Spec.Groups, &code)
+	feedbackString := o.checkTypeMeta(&config.TypeMeta, &code)
+	o.logger.V(5).Info("checking TypeMeta for config", "code", code)
+	feedbackString += o.checkModules(&config.Spec.Modules, "", &code)
+	o.logger.V(5).Info("checking configuration modules", "code", code)
+	feedbackString += o.checkAddOns(&config.Spec.AddOns, "", &code)
+	o.logger.V(5).Info("checking configuration addons", "code", code)
+	feedbackString += o.checkGroups(&config.Spec.Groups, &code)
+	o.logger.V(5).Info("checking configuration groups", "code", code)
 
 	fmt.Fprint(o.writer, feedbackString)
 	if code > 0 {
-		return fmt.Errorf("the configuration is invalid")
+		return fmt.Errorf("configuration is invalid")
 	}
 
-	fmt.Fprint(o.writer, "The configuration is valid!\n")
+	fmt.Fprintln(o.writer, "The configuration is valid!")
 	return nil
 }
 
 // checkTypeMeta checks the file's Kind and APIVersion
-func checkTypeMeta(config *v1alpha1.TypeMeta, code *int) string {
+func (o *Options) checkTypeMeta(config *v1alpha1.TypeMeta, code *int) string {
 	outString := ""
 	if config.Kind != v1alpha1.Kind {
 		outString += fmt.Sprintf("[error] wrong kind: %s - expected: %s\n", config.Kind, v1alpha1.Kind)
@@ -120,7 +128,7 @@ func checkTypeMeta(config *v1alpha1.TypeMeta, code *int) string {
 }
 
 // checkModules checks the modules listed in the config file
-func checkModules(packages *map[string]v1alpha1.Package, scope string, code *int) string {
+func (o *Options) checkModules(packages *map[string]v1alpha1.Package, scope string, code *int) string {
 	if scope == "" {
 		scope = defaultScope
 	}
@@ -148,7 +156,7 @@ func checkModules(packages *map[string]v1alpha1.Package, scope string, code *int
 }
 
 // checkAddOns checks the addons listed in the config file
-func checkAddOns(packages *map[string]v1alpha1.Package, scope string, code *int) string {
+func (o *Options) checkAddOns(packages *map[string]v1alpha1.Package, scope string, code *int) string {
 	if scope == "" {
 		scope = defaultScope
 	}
@@ -171,7 +179,7 @@ func checkAddOns(packages *map[string]v1alpha1.Package, scope string, code *int)
 }
 
 // checkGroups checks the cluster groups listed in the config file
-func checkGroups(groups *[]v1alpha1.Group, code *int) string {
+func (o *Options) checkGroups(groups *[]v1alpha1.Group, code *int) string {
 	outString := ""
 
 	if len(*groups) == 0 {
@@ -188,14 +196,15 @@ func checkGroups(groups *[]v1alpha1.Group, code *int) string {
 		}
 
 		group := g
-		outString += checkClusters(&group, groupName, code)
+		outString += o.checkClusters(&group, groupName, code)
+		o.logger.V(5).Info(fmt.Sprintf("checking group %s clusters", groupName), "", *code)
 	}
 
 	return outString
 }
 
 // checkClusters checks the clusters of a group
-func checkClusters(group *v1alpha1.Group, groupName string, code *int) string {
+func (o *Options) checkClusters(group *v1alpha1.Group, groupName string, code *int) string {
 	outString := ""
 	if len(group.Clusters) == 0 {
 		outString += fmt.Sprintf("[warn][%s] no cluster found in group: check the config file if this behavior is unexpected\n", groupName)
@@ -216,8 +225,10 @@ func checkClusters(group *v1alpha1.Group, groupName string, code *int) string {
 		}
 
 		scope := groupName + "/" + clusterName
-		outString += checkModules(&cluster.Modules, scope, code)
-		outString += checkAddOns(&cluster.AddOns, scope, code)
+		outString += o.checkModules(&cluster.Modules, scope, code)
+		o.logger.V(5).Info(fmt.Sprintf("checking cluster %s modules", scope), "code", *code)
+		outString += o.checkAddOns(&cluster.AddOns, scope, code)
+		o.logger.V(5).Info(fmt.Sprintf("checking cluster %s addon", scope), "code", *code)
 	}
 
 	return outString
