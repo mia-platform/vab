@@ -179,6 +179,8 @@ func ensureFolderContent(basePath string, clusterPath string, modules, addOns ma
 	return nil
 }
 
+// writeKustomizationFile create a new kustomization file of kind.
+// It will also set the resources and components property and add a top head comment if generated is true
 func writeKustomizationFile(name, path, kind string, resources, components []string, generated bool) error {
 	kustomization := &kustomize.Kustomization{}
 	kustomization.Kind = kind
@@ -254,6 +256,7 @@ func writeYamlFile(path string, data interface{}) error {
 	return os.WriteFile(path, buffer.Bytes(), filePermission)
 }
 
+// relativeModulePath return the relative path of a module to basePath from targetPath
 func relativeModulePath(basePath, targetPath string) string {
 	modulePath, err := filepath.Rel(basePath, targetPath)
 	if err != nil {
