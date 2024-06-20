@@ -16,18 +16,15 @@
 package git
 
 import (
-	"fmt"
 	"io/fs"
 	"path/filepath"
 	"strings"
 
 	"github.com/go-git/go-billy/v5"
-	"github.com/go-git/go-billy/v5/memfs"
 	billyutil "github.com/go-git/go-billy/v5/util"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport"
-	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 )
 
@@ -66,45 +63,20 @@ func cloneOptionsForPackage(pkg v1alpha1.Package) *git.CloneOptions {
 	}
 }
 
-// worktreeForPackage return a worktree from the cloned repository for the package with pkgName
-func worktreeForPackage(pkg v1alpha1.Package) (*billy.Filesystem, error) {
-	cloneOptions := cloneOptionsForPackage(pkg)
-	fs := memfs.New()
-	storage := memory.NewStorage()
-	if _, err := git.Clone(storage, fs, cloneOptions); err != nil {
-		return nil, fmt.Errorf("error cloning repository %w", err)
-	}
-
-	return &fs, nil
-}
-
-func filterWorktreeForPackage(worktree *billy.Filesystem, pkg v1alpha1.Package) ([]*File, error) {
+func filterWorktreeForPackage(worktree billy.Filesystem, pkg v1alpha1.Package) ([]*File, error) {
 	packageFolder := filepath.Join(pkg.PackageType()+"s", pkg.GetName())
 
-	files := []*File{}
-	err := billyutil.Walk(*worktree, packageFolder, func(filePath string, info fs.FileInfo, err error) error {
-		if err != nil {
-			return fmt.Errorf("error finding file %s, %w", filePath, err)
+	var files []*File
+	err := billyutil.Walk(worktree, packageFolder, func(filePath string, info fs.FileInfo, err error) error {
+		if err != nil || info.IsDir() {
+			return err
 		}
-		if info.IsDir() {
-			return nil
-		}
-		files = append(files, NewFile(filePath, packageFolder, *worktree))
+
+		// we can safely ignore error because the path are always related between them
+		relativePath, _ := filepath.Rel(packageFolder, filePath)
+		files = append(files, &File{path: relativePath, internalPath: filePath, fs: worktree})
 		return nil
 	})
 
-	if err != nil {
-		return nil, err
-	}
-	return files, nil
-}
-
-// GetFilesForPackage clones the package in memory
-func GetFilesForPackage(filesGetter FilesGetter, pkg v1alpha1.Package) ([]*File, error) {
-	memFs, err := filesGetter.WorkTreeForPackage(pkg)
-	if err != nil {
-		return nil, err
-	}
-
-	return filterWorktreeForPackage(memFs, pkg)
+	return files, err
 }

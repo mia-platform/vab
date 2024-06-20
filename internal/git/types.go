@@ -16,65 +16,84 @@
 package git
 
 import (
-	"errors"
-	"io"
+	"bufio"
+	"fmt"
+	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-billy/v5/memfs"
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/storage"
+	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 )
 
+// File rappresent a file downloaded in the in memory store
 type File struct {
-	path       string
-	baseFolder string
-	fs         billy.Filesystem
-	file       billy.File
-	io.ReadCloser
+	path         string
+	internalPath string
+	fs           billy.Filesystem
 }
 
-func NewFile(path string, baseFolder string, fs billy.Filesystem) *File {
-	return &File{
-		path:       path,
-		fs:         fs,
-		baseFolder: baseFolder,
+// WriteContent copy the file content to targetPath mantaining the folder structure
+func (f *File) WriteContent(targetPath string) error {
+	onDiskPath := filepath.Join(targetPath, f.path)
+
+	if err := os.MkdirAll(filepath.Dir(onDiskPath), os.ModePerm); err != nil {
+		return err
 	}
-}
 
-func (f *File) Open() error {
-	file, err := f.fs.Open(f.path)
-	f.file = file
+	file, err := f.fs.Open(f.internalPath)
+	if err != nil {
+		_ = os.Remove(onDiskPath)
+		return err
+	}
+	defer file.Close()
+
+	outFile, err := os.Create(onDiskPath)
+	if err != nil {
+		return err
+	}
+	defer outFile.Close()
+
+	r := bufio.NewReader(file)
+	w := bufio.NewWriter(outFile)
+
+	_, err = r.WriteTo(w)
 	return err
 }
 
-func (f *File) Read(p []byte) (n int, err error) {
-	if f.file == nil {
-		return 0, errors.New("error reading file: file is nil")
+type FilesGetter struct {
+	fs           billy.Filesystem
+	storage      *memory.Storage
+	clonePackage func(billy.Filesystem, storage.Storer, v1alpha1.Package) (billy.Filesystem, error)
+}
+
+// NewFilesGetter create a new FilesGetter instance configured for downloading from remote repository using
+// an in memory storage
+func NewFilesGetter() *FilesGetter {
+	return &FilesGetter{
+		fs:      memfs.New(),
+		storage: memory.NewStorage(),
+		clonePackage: func(fs billy.Filesystem, storage storage.Storer, pkg v1alpha1.Package) (billy.Filesystem, error) {
+			cloneOptions := cloneOptionsForPackage(pkg)
+			if _, err := git.Clone(storage, fs, cloneOptions); err != nil {
+				return nil, fmt.Errorf("error cloning repository %w", err)
+			}
+
+			return fs, nil
+		},
 	}
-	return f.file.Read(p)
 }
 
-func (f *File) Close() error {
-	if f.file == nil {
-		return nil
+// GetFilesForPackage clones the pkg from the remote repository and return all the files relative for the package
+// or an error otherwise
+func (r *FilesGetter) GetFilesForPackage(pkg v1alpha1.Package) ([]*File, error) {
+	memFs, err := r.clonePackage(r.fs, r.storage, pkg)
+	if err != nil {
+		return nil, err
 	}
-	return f.file.Close()
-}
 
-func (f *File) FilePath() string {
-	return filepath.Join(".", strings.TrimPrefix(f.path, f.baseFolder))
-}
-
-func (f *File) String() string {
-	return f.path
-}
-
-type FilesGetter interface {
-	WorkTreeForPackage(pkg v1alpha1.Package) (*billy.Filesystem, error)
-}
-
-type RealFilesGetter struct{}
-
-func (filesGetter RealFilesGetter) WorkTreeForPackage(pkg v1alpha1.Package) (*billy.Filesystem, error) {
-	return worktreeForPackage(pkg)
+	return filterWorktreeForPackage(memFs, pkg)
 }
