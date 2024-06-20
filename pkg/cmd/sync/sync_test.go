@@ -17,6 +17,8 @@ package sync
 
 import (
 	"context"
+	"io/fs"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -98,6 +100,7 @@ func TestRun(t *testing.T) {
 	tests := map[string]struct {
 		options       *Options
 		expectedError string
+		expectedPaths []string
 	}{
 		"clone packages": {
 			options: &Options{
@@ -105,6 +108,7 @@ func TestRun(t *testing.T) {
 				contextPath: t.TempDir(),
 				filesGetter: git.NewTestFilesGetter(t),
 			},
+			expectedPaths: append(folderStruct, vendorStruct...),
 		},
 		"don't clone packages": {
 			options: &Options{
@@ -112,6 +116,7 @@ func TestRun(t *testing.T) {
 				contextPath: t.TempDir(),
 				dryRun:      true,
 			},
+			expectedPaths: folderStruct,
 		},
 	}
 
@@ -124,6 +129,47 @@ func TestRun(t *testing.T) {
 			}
 
 			assert.NoError(t, err)
+
+			fs.WalkDir(os.DirFS(test.options.contextPath), ".", func(path string, _ fs.DirEntry, err error) error {
+				assert.Contains(t, test.expectedPaths, path)
+				return err
+			})
 		})
 	}
 }
+
+var (
+	folderStruct = []string{
+		".",
+		"clusters",
+		"clusters/all-groups",
+		"clusters/all-groups/bases",
+		"clusters/all-groups/bases/kustomization.yaml",
+		"clusters/all-groups/custom-resources",
+		"clusters/all-groups/custom-resources/kustomization.yaml",
+		"clusters/all-groups/kustomization.yaml",
+		"clusters/group",
+		"clusters/group/cluster",
+		"clusters/group/cluster/bases",
+		"clusters/group/cluster/bases/kustomization.yaml",
+		"clusters/group/cluster/custom-resources",
+		"clusters/group/cluster/custom-resources/kustomization.yaml",
+		"clusters/group/cluster/kustomization.yaml",
+	}
+
+	vendorStruct = []string{
+		"vendors",
+		"vendors/addons",
+		"vendors/addons/category",
+		"vendors/addons/category/test-addon2-v1.0.0",
+		"vendors/addons/category/test-addon2-v1.0.0/file1.yaml",
+		"vendors/modules",
+		"vendors/modules/category",
+		"vendors/modules/category/test-module1-v1.0.0",
+		"vendors/modules/category/test-module1-v1.0.0/test-flavor1",
+		"vendors/modules/category/test-module1-v1.0.0/test-flavor1/file1.yaml",
+		"vendors/modules/category/test-module1-v1.0.0/test-flavor1/file2.yaml",
+		"vendors/modules/category/test-module1-v1.0.0/test-flavor2",
+		"vendors/modules/category/test-module1-v1.0.0/test-flavor2/file1.yaml",
+	}
+)
