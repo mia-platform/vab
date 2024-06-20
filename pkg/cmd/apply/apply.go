@@ -120,10 +120,6 @@ func NewCommand(cf *util.ConfigFlags) *cobra.Command {
 
 // ToOptions transform the command flags in command runtime arguments
 func (f *Flags) ToOptions(cf *util.ConfigFlags, args []string) (*Options, error) {
-	if len(args) < minArgs {
-		return nil, fmt.Errorf("at least %d arguments are needed", minArgs)
-	}
-
 	group := args[0]
 	cluster := ""
 	contextPath := args[len(args)-1]

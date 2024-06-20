@@ -17,11 +17,11 @@ package create
 
 import (
 	"context"
-	"fmt"
 	"path/filepath"
 
 	"github.com/MakeNowJust/heredoc/v2"
 	"github.com/go-logr/logr"
+	"github.com/mia-platform/vab/pkg/cmd/util"
 	cmdutil "github.com/mia-platform/vab/pkg/cmd/util"
 	"github.com/spf13/cobra"
 )
@@ -33,8 +33,6 @@ const (
 
 	The project directory will contain the clusters directory (including the all-groups
 	folder with a minimal kustomize configuration), and the configuration file.`
-
-	missingPathError = "you have to specify a path where to create the project"
 
 	pathArgHelpText     = "Specify the path where to create the project"
 	tooManyArgsHelpText = "Too many arguments"
@@ -75,12 +73,13 @@ func NewCommand() *cobra.Command {
 
 // ToOptions transform the command flags in command runtime arguments
 func (f *Flags) ToOptions(args []string) (*Options, error) {
-	if len(args) < 1 {
-		return nil, fmt.Errorf(missingPathError)
+	contextPat, err := util.ValidateContextPath(args[0])
+	if err != nil {
+		return nil, err
 	}
 
 	return &Options{
-		path: args[0],
+		path: contextPat,
 	}, nil
 }
 
@@ -88,13 +87,8 @@ func (f *Flags) ToOptions(args []string) (*Options, error) {
 func (o *Options) Run(ctx context.Context) error {
 	o.logger = logr.FromContextOrDiscard(ctx)
 
-	path, err := filepath.Abs(o.path)
-	if err != nil {
-		return err
-	}
-
-	name := filepath.Base(path)
-	return cmdutil.InitializeConfiguration(name, path)
+	name := filepath.Base(o.path)
+	return cmdutil.InitializeConfiguration(name, o.path)
 }
 
 func validArgs(_ *cobra.Command, args []string, _ string) ([]string, cobra.ShellCompDirective) {

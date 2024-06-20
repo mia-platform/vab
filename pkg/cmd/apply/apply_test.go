@@ -17,7 +17,6 @@ package apply
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -55,18 +54,6 @@ func TestFlagsToOptions(t *testing.T) {
 		expectedOptions *Options
 		expectedError   string
 	}{
-		"empty arg return error": {
-			flags:         &Flags{},
-			configFlags:   util.NewConfigFlags(),
-			args:          []string{},
-			expectedError: fmt.Sprintf("at least %d arguments are needed", minArgs),
-		},
-		"only one arg return error": {
-			flags:         &Flags{},
-			configFlags:   util.NewConfigFlags(),
-			args:          []string{"first"},
-			expectedError: fmt.Sprintf("at least %d arguments are needed", minArgs),
-		},
 		"invalid context path return error": {
 			flags:         &Flags{timeout: "invalid"},
 			configFlags:   util.NewConfigFlags(),

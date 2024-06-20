@@ -16,10 +16,13 @@
 package create
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCommand(t *testing.T) {
@@ -36,30 +39,31 @@ func TestCommand(t *testing.T) {
 func TestToOptions(t *testing.T) {
 	t.Parallel()
 
+	tempDir := t.TempDir()
 	testCases := map[string]struct {
 		args          []string
 		expectedError string
 		expectedPath  string
 	}{
 		"flags with one args": {
-			args:         []string{"/a/path"},
-			expectedPath: "/a/path",
+			args:         []string{tempDir},
+			expectedPath: tempDir,
 		},
 		"flags with more than one args": {
-			args:         []string{"/a/path", "/another/path"},
-			expectedPath: "/a/path",
+			args:         []string{tempDir, "/another/path"},
+			expectedPath: tempDir,
 		},
 		"flags with . path": {
-			args:         []string{"."},
-			expectedPath: ".",
+			args: []string{"."},
+			expectedPath: func() string {
+				dir, err := os.Getwd()
+				require.NoError(t, err)
+				return dir
+			}(),
 		},
-		"flags with relative path": {
-			args:         []string{"path/relative"},
-			expectedPath: "path/relative",
-		},
-		"flags without paths": {
-			args:          []string{},
-			expectedError: missingPathError,
+		"missing path": {
+			args:          []string{filepath.Join("invalid", "path")},
+			expectedError: "no such file or directory",
 		},
 	}
 
