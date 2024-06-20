@@ -14,7 +14,7 @@ on:
     - examples/**
 
 env:
-  GORELEASER_VERSION: v2.0.0
+  GORELEASER_VERSION: v2.0.1
   GOEXPERIMENT: nocoverageredesign
 jobs:
   lint:
