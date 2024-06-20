@@ -175,6 +175,9 @@ func (o *Options) Run(ctx context.Context) error {
 		applyCtx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
+		clusterLogger := o.logger.WithName(util.ClusterID(o.group, clusterName))
+		clusterLogger.V(0).Info("applying files")
+
 		eventCh, err := o.apply(applyCtx, cluster)
 		if err != nil {
 			return err
@@ -184,10 +187,11 @@ func (o *Options) Run(ctx context.Context) error {
 			select {
 			case event, open := <-eventCh:
 				if !open {
+					clusterLogger.V(0).Info("finish applying files")
 					return nil
 				}
 
-				fmt.Println(event.String())
+				clusterLogger.V(0).Info(event.String())
 			case <-applyCtx.Done():
 				return applyCtx.Err()
 			}
@@ -209,7 +213,7 @@ func (o *Options) apply(ctx context.Context, cluster v1alpha1.Cluster) (<-chan e
 		return nil, fmt.Errorf(applyErrorFormat, clusterID, fmt.Errorf("no context found"))
 	}
 
-	factory, err := o.factoryFor(cluster.Context)
+	factory, err := o.factoryFor(clusterID, cluster.Context)
 	if err != nil {
 		return nil, fmt.Errorf(applyErrorFormat, clusterID, err)
 	}
@@ -218,18 +222,21 @@ func (o *Options) apply(ctx context.Context, cluster v1alpha1.Cluster) (<-chan e
 }
 
 // factoryFor return a rest.Config for connecting to the clusterID with context name
-func (o *Options) factoryFor(kubeContext string) (jplutil.ClientFactory, error) {
+func (o *Options) factoryFor(clusterID, kubeContext string) (jplutil.ClientFactory, error) {
 	factory, config := o.factoryAndConfigFunc(kubeContext)
 	restConfig, err := factory.ToRESTConfig()
 	if err != nil {
 		return nil, err
 	}
 
+	clusterLogger := o.logger.WithName(clusterID)
 	var enabled bool
+	clusterLogger.V(5).Info("checking flowcontrol APIs availability")
 	if enabled, err = flowcontrol.IsEnabled(context.Background(), restConfig); err != nil {
 		return nil, fmt.Errorf("flowcontrol api: %w", err)
 	}
 
+	clusterLogger.V(5).Info("flowcontrol APIs status", "enabled", enabled)
 	if enabled {
 		config.WrapConfigFn = func(c *rest.Config) *rest.Config {
 			c.QPS = -1
@@ -243,11 +250,15 @@ func (o *Options) factoryFor(kubeContext string) (jplutil.ClientFactory, error) 
 
 func (o *Options) applyManifests(ctx context.Context, factory jplutil.ClientFactory, clusterName string) (<-chan event.Event, error) {
 	path := filepath.Join(o.contextPath, util.ClusterPath(o.group, clusterName))
+	clusterLogger := o.logger.WithName(util.ClusterID(o.group, clusterName))
+
+	clusterLogger.V(0).Info("reading manifests", "path", path)
 	manifests, err := readManifests(factory, path)
 	if err != nil {
 		return nil, err
 	}
 
+	clusterLogger.V(0).Info("finish reading manifests", "path", path)
 	inventory, err := inventory.NewConfigMapStore(factory, "vab", metav1.NamespaceSystem, o.fieldManager)
 	if err != nil {
 		return nil, err
