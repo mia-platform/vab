@@ -23,7 +23,11 @@ import (
 const (
 	configPathFlagName      = "config"
 	configPathFlagShortName = "c"
-	configPathUsage         = "Path to the configuration file to use."
+	configPathUsage         = "path to the configuration file to use"
+
+	verboseFlagName      = "verbose"
+	verboseFlagShortName = "v"
+	verboseUsage         = "setting logging verbosity; use number between 0 and 10"
 )
 
 var (
@@ -32,14 +36,19 @@ var (
 
 type ConfigFlags struct {
 	ConfigPath *string
+	Verbose    *int
 }
 
 func NewConfigFlags() *ConfigFlags {
 	stringPointer := func(str string) *string {
 		return &str
 	}
+	intPointer := func(number int) *int {
+		return &number
+	}
 	return &ConfigFlags{
 		ConfigPath: stringPointer(""),
+		Verbose:    intPointer(0),
 	}
 }
 
@@ -49,5 +58,9 @@ func (f *ConfigFlags) AddFlags(flags *pflag.FlagSet) {
 		if err := cobra.MarkFlagFilename(flags, configPathFlagName, configValidExtensions...); err != nil {
 			panic(err)
 		}
+	}
+
+	if f.Verbose != nil {
+		flags.IntVarP(f.Verbose, verboseFlagName, verboseFlagShortName, *f.Verbose, verboseUsage)
 	}
 }
