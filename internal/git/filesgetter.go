@@ -16,15 +16,19 @@
 package git
 
 import (
+	"fmt"
 	"io/fs"
 	"path/filepath"
 	"strings"
 
 	"github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-billy/v5/memfs"
 	billyutil "github.com/go-git/go-billy/v5/util"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport"
+	"github.com/go-git/go-git/v5/storage"
+	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 )
 
@@ -63,18 +67,48 @@ func cloneOptionsForPackage(pkg v1alpha1.Package) *git.CloneOptions {
 	}
 }
 
-func filterWorktreeForPackage(worktree billy.Filesystem, pkg v1alpha1.Package) ([]*File, error) {
-	packageFolder := filepath.Join(pkg.PackageType()+"s", pkg.GetName())
+// FilesGetter is responsible to download and manage remote git repository in a in memory storage
+type FilesGetter struct {
+	fs           billy.Filesystem
+	storage      *memory.Storage
+	clonePackage func(billy.Filesystem, storage.Storer, v1alpha1.Package) (billy.Filesystem, error)
+}
+
+// NewFilesGetter create a new FilesGetter instance configured for downloading from remote repository using
+// an in memory storage
+func NewFilesGetter() *FilesGetter {
+	return &FilesGetter{
+		fs:      memfs.New(),
+		storage: memory.NewStorage(),
+		clonePackage: func(fs billy.Filesystem, storage storage.Storer, pkg v1alpha1.Package) (billy.Filesystem, error) {
+			cloneOptions := cloneOptionsForPackage(pkg)
+			if _, err := git.Clone(storage, fs, cloneOptions); err != nil {
+				return nil, fmt.Errorf("error cloning repository %w", err)
+			}
+
+			return fs, nil
+		},
+	}
+}
+
+// GetFilesForPackage clones the pkg from the remote repository and return all the files relative for the package
+// or an error otherwise
+func (r *FilesGetter) GetFilesForPackage(pkg v1alpha1.Package) ([]*File, error) {
+	memFs, err := r.clonePackage(r.fs, r.storage, pkg)
+	if err != nil {
+		return nil, err
+	}
 
 	var files []*File
-	err := billyutil.Walk(worktree, packageFolder, func(filePath string, info fs.FileInfo, err error) error {
+	packageFolder := filepath.Join(pkg.PackageType()+"s", pkg.GetName())
+	err = billyutil.Walk(memFs, packageFolder, func(filePath string, info fs.FileInfo, err error) error {
 		if err != nil || info.IsDir() {
 			return err
 		}
 
 		// we can safely ignore error because the path are always related between them
 		relativePath, _ := filepath.Rel(packageFolder, filePath)
-		files = append(files, &File{path: relativePath, internalPath: filePath, fs: worktree})
+		files = append(files, &File{path: relativePath, internalPath: filePath, fs: memFs})
 		return nil
 	})
 
