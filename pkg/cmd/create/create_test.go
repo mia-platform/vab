@@ -62,8 +62,21 @@ func TestToOptions(t *testing.T) {
 			}(),
 		},
 		"missing path": {
-			args:          []string{filepath.Join("invalid", "path")},
-			expectedError: "no such file or directory",
+			args: []string{filepath.Join("invalid", "path")},
+			expectedPath: func() string {
+				dir, err := os.Getwd()
+				require.NoError(t, err)
+				return filepath.Join(dir, "invalid", "path")
+			}(),
+		},
+		"path is not a directory": {
+			args: func() []string {
+				filePath := filepath.Join(tempDir, "filename")
+				_, err := os.Create(filePath)
+				require.NoError(t, err)
+				return []string{filePath}
+			}(),
+			expectedError: "is not a directory",
 		},
 	}
 

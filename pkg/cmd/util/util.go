@@ -77,16 +77,16 @@ func ValidateContextPath(contextPath string) (string, error) {
 	var cleanedContextPath string
 	var err error
 	if cleanedContextPath, err = filepath.Abs(contextPath); err != nil {
-		return "", err
+		return contextPath, err
 	}
 
 	var contextInfo fs.FileInfo
 	if contextInfo, err = os.Stat(cleanedContextPath); err != nil {
-		return "", err
+		return cleanedContextPath, err
 	}
 
 	if !contextInfo.IsDir() {
-		return "", fmt.Errorf(" %q is not a directory", cleanedContextPath)
+		return cleanedContextPath, fmt.Errorf("%q is not a directory", cleanedContextPath)
 	}
 	return cleanedContextPath, nil
 }

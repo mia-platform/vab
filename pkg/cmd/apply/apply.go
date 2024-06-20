@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -175,8 +176,9 @@ func (o *Options) Run(ctx context.Context) error {
 		applyCtx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
-		clusterLogger := o.logger.WithName(util.ClusterID(o.group, clusterName))
-		clusterLogger.V(0).Info("applying files")
+		clusterID := util.ClusterID(o.group, clusterName)
+		clusterLogger := o.logger.WithName(clusterID)
+		clusterLogger.V(2).Info("applying files")
 
 		eventCh, err := o.apply(applyCtx, cluster)
 		if err != nil {
@@ -187,11 +189,11 @@ func (o *Options) Run(ctx context.Context) error {
 			select {
 			case event, open := <-eventCh:
 				if !open {
-					clusterLogger.V(0).Info("finish applying files")
+					clusterLogger.V(2).Info("finish applying files")
 					return nil
 				}
 
-				clusterLogger.V(0).Info(event.String())
+				fmt.Fprintf(os.Stderr, "%s: %s\n", clusterID, event.String())
 			case <-applyCtx.Done():
 				return applyCtx.Err()
 			}
@@ -252,13 +254,13 @@ func (o *Options) applyManifests(ctx context.Context, factory jplutil.ClientFact
 	path := filepath.Join(o.contextPath, util.ClusterPath(o.group, clusterName))
 	clusterLogger := o.logger.WithName(util.ClusterID(o.group, clusterName))
 
-	clusterLogger.V(0).Info("reading manifests", "path", path)
+	clusterLogger.V(2).Info("reading manifests", "path", path)
 	manifests, err := readManifests(factory, path)
 	if err != nil {
 		return nil, err
 	}
 
-	clusterLogger.V(0).Info("finish reading manifests", "path", path)
+	clusterLogger.V(2).Info("finish reading manifests", "path", path)
 	inventory, err := inventory.NewConfigMapStore(factory, "vab", metav1.NamespaceSystem, o.fieldManager)
 	if err != nil {
 		return nil, err

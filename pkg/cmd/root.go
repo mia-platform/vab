@@ -16,11 +16,15 @@
 package cmd
 
 import (
+	"context"
 	"flag"
 	"fmt"
+	"log"
 	"runtime"
 
 	"github.com/MakeNowJust/heredoc/v2"
+	"github.com/go-logr/logr"
+	"github.com/go-logr/stdr"
 	"github.com/mia-platform/vab/pkg/cmd/apply"
 	"github.com/mia-platform/vab/pkg/cmd/build"
 	"github.com/mia-platform/vab/pkg/cmd/create"
@@ -51,6 +55,7 @@ const (
 
 // NewVabCommand creates the `vab` command and its nested children.
 func NewVabCommand() *cobra.Command {
+	configFlags := util.NewConfigFlags()
 	cmd := &cobra.Command{
 		Use: "vab",
 
@@ -62,9 +67,12 @@ func NewVabCommand() *cobra.Command {
 
 		Args:              cobra.NoArgs,
 		ValidArgsFunction: cobra.NoFileCompletions,
+		PersistentPreRun: func(*cobra.Command, []string) {
+			stdr.SetVerbosity(*configFlags.Verbose)
+		},
 	}
 
-	configFlags := util.NewConfigFlags()
+	cmd.SetContext(logr.NewContext(context.Background(), stdr.New(log.Default())))
 	configFlags.AddFlags(cmd.PersistentFlags())
 
 	cmd.AddCommand(

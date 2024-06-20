@@ -48,21 +48,21 @@ const (
 // Flags contains all the flags for the `sync` command. They will be converted to Options
 // that contains all runtime options for the command.
 type Flags struct {
-	dryRun bool
+	downloadPackages bool
 }
 
 // AddFlags set the connection between Flags property to command line flags
 func (f *Flags) AddFlags(flags *pflag.FlagSet) {
-	flags.BoolVar(&f.dryRun, dryRunFlagName, dryRunDefaultValue, heredoc.Doc(dryRunUsage))
+	flags.BoolVar(&f.downloadPackages, dryRunFlagName, dryRunDefaultValue, heredoc.Doc(dryRunUsage))
 }
 
 // Options have the data required to perform the sync operation
 type Options struct {
-	contextPath string
-	configPath  string
-	dryRun      bool
-	filesGetter *git.FilesGetter
-	logger      logr.Logger
+	contextPath      string
+	configPath       string
+	downloadPackages bool
+	filesGetter      *git.FilesGetter
+	logger           logr.Logger
 }
 
 // NewCommand return the command for creating a new configuration file and basic folder structures
@@ -100,10 +100,10 @@ func (f *Flags) ToOptions(cf *util.ConfigFlags, args []string) (*Options, error)
 	}
 
 	return &Options{
-		contextPath: contextPath,
-		configPath:  configPath,
-		dryRun:      f.dryRun,
-		filesGetter: git.NewFilesGetter(),
+		contextPath:      contextPath,
+		configPath:       configPath,
+		downloadPackages: f.downloadPackages,
+		filesGetter:      git.NewFilesGetter(),
 	}, nil
 }
 
@@ -121,10 +121,10 @@ func (o *Options) Run(ctx context.Context) error {
 		return err
 	}
 
-	return o.downloadPackages(config)
+	return o.vendorPackages(config)
 }
 
-func (o *Options) downloadPackages(config *v1alpha1.ClustersConfiguration) error {
+func (o *Options) vendorPackages(config *v1alpha1.ClustersConfiguration) error {
 	vendorsPath := []string{
 		filepath.Join(o.contextPath, util.VendoredModulePath("")),
 		filepath.Join(o.contextPath, util.VendoredAddOnPath("")),
@@ -136,7 +136,7 @@ func (o *Options) downloadPackages(config *v1alpha1.ClustersConfiguration) error
 		}
 	}
 
-	if o.dryRun {
+	if !o.downloadPackages {
 		o.logger.V(10).Info("download-packages set to false, ending process...")
 		return nil
 	}
@@ -168,7 +168,7 @@ func (o *Options) downloadPackages(config *v1alpha1.ClustersConfiguration) error
 // clonePackagesLocally download packages using filesGetter
 func (o *Options) clonePackagesLocally(packages map[string]v1alpha1.Package, path string, filesGetter *git.FilesGetter) error {
 	for _, pkg := range packages {
-		o.logger.V(0).Info("cloning package", "type", pkg.PackageType(), "name", pkg.GetName())
+		o.logger.V(2).Info("cloning package", "type", pkg.PackageType(), "name", pkg.GetName())
 		files, err := filesGetter.GetFilesForPackage(pkg)
 		if err != nil {
 			return fmt.Errorf("cloning packages for %s %s: %w", pkg.PackageType(), pkg.GetName(), err)

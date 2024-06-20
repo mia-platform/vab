@@ -41,32 +41,32 @@ func TestToOptions(t *testing.T) {
 
 	tempDir := t.TempDir()
 	testCases := map[string]struct {
-		args            []string
-		dryRun          bool
-		configPath      string
-		expectedOptions *Options
-		expectedError   string
+		args             []string
+		downloadPackages bool
+		configPath       string
+		expectedOptions  *Options
+		expectedError    string
 	}{
 		"invalid context path": {
 			args:          []string{filepath.Join("invalid", "path")},
 			expectedError: "no such file or directory",
 		},
 		"return options": {
-			args:       []string{tempDir},
-			configPath: "custom.yaml",
-			dryRun:     true,
+			args:             []string{tempDir},
+			configPath:       "custom.yaml",
+			downloadPackages: true,
 			expectedOptions: &Options{
-				contextPath: tempDir,
-				dryRun:      true,
-				configPath:  "custom.yaml",
+				contextPath:      tempDir,
+				downloadPackages: true,
+				configPath:       "custom.yaml",
 			},
 		},
 		"no config path": {
 			args: []string{tempDir},
 			expectedOptions: &Options{
-				contextPath: tempDir,
-				dryRun:      false,
-				configPath:  "",
+				contextPath:      tempDir,
+				downloadPackages: false,
+				configPath:       "",
 			},
 		},
 	}
@@ -74,7 +74,7 @@ func TestToOptions(t *testing.T) {
 	for testName, testCase := range testCases {
 		t.Run(testName, func(t *testing.T) {
 			flags := Flags{
-				dryRun: testCase.dryRun,
+				downloadPackages: testCase.downloadPackages,
 			}
 			configFlags := util.NewConfigFlags()
 			configFlags.ConfigPath = &testCase.configPath
@@ -104,17 +104,18 @@ func TestRun(t *testing.T) {
 	}{
 		"clone packages": {
 			options: &Options{
-				configPath:  configPath,
-				contextPath: t.TempDir(),
-				filesGetter: git.NewTestFilesGetter(t),
+				configPath:       configPath,
+				contextPath:      t.TempDir(),
+				downloadPackages: true,
+				filesGetter:      git.NewTestFilesGetter(t),
 			},
 			expectedPaths: append(folderStruct, vendorStruct...),
 		},
 		"don't clone packages": {
 			options: &Options{
-				configPath:  configPath,
-				contextPath: t.TempDir(),
-				dryRun:      true,
+				configPath:       configPath,
+				contextPath:      t.TempDir(),
+				downloadPackages: false,
 			},
 			expectedPaths: folderStruct,
 		},

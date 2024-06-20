@@ -17,6 +17,8 @@ package create
 
 import (
 	"context"
+	"errors"
+	"io/fs"
 	"path/filepath"
 
 	"github.com/MakeNowJust/heredoc/v2"
@@ -73,13 +75,13 @@ func NewCommand() *cobra.Command {
 
 // ToOptions transform the command flags in command runtime arguments
 func (f *Flags) ToOptions(args []string) (*Options, error) {
-	contextPat, err := util.ValidateContextPath(args[0])
-	if err != nil {
+	contextPath, err := util.ValidateContextPath(args[0])
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, err
 	}
 
 	return &Options{
-		path: contextPat,
+		path: contextPath,
 	}, nil
 }
 
