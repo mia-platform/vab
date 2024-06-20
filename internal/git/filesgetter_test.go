@@ -19,10 +19,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport"
-	"github.com/go-git/go-git/v5/storage"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"github.com/stretchr/testify/assert"
 )
@@ -107,13 +105,7 @@ func TestGetFiles(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			fg := NewFilesGetter()
-			fg.clonePackage = func(f billy.Filesystem, _ storage.Storer, _ v1alpha1.Package) (billy.Filesystem, error) {
-				t.Helper()
-
-				populateWorktree(t, f)
-				return f, nil
-			}
+			fg := NewTestFilesGetter(t)
 
 			for _, file := range test.expectedFiles {
 				file.fs = fg.fs

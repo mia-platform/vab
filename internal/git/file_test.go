@@ -26,6 +26,8 @@ import (
 )
 
 func TestWriteContent(t *testing.T) {
+	t.Parallel()
+
 	tests := map[string]struct {
 		targetPath    string
 		filePath      string

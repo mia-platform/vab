@@ -83,6 +83,7 @@ func NewCommand(cf *util.ConfigFlags) *cobra.Command {
 		},
 	}
 
+	flags.AddFlags(cmd.Flags())
 	return cmd
 }
 
@@ -123,11 +124,14 @@ func (o *Options) Run(ctx context.Context) error {
 }
 
 func (o *Options) downloadPackages(config *v1alpha1.ClustersConfiguration) error {
-	if err := os.RemoveAll(filepath.Join(o.contextPath, util.VendoredModulePath(""))); err != nil {
-		return fmt.Errorf("removing vendors folder for modules: %w", err)
+	vendorsPath := []string{
+		filepath.Join(o.contextPath, util.VendoredModulePath("")),
+		filepath.Join(o.contextPath, util.VendoredAddOnPath("")),
 	}
-	if err := os.RemoveAll(filepath.Join(o.contextPath, util.VendoredAddOnPath(""))); err != nil {
-		return fmt.Errorf("removing vendors folder for add-ons: %w", err)
+	for _, path := range vendorsPath {
+		if err := os.RemoveAll(path); err != nil {
+			return fmt.Errorf("removing folder: %w", err)
+		}
 	}
 
 	if o.dryRun {
@@ -183,7 +187,9 @@ func (o *Options) clonePackagesLocally(packages map[string]v1alpha1.Package, pat
 // writePackageToDisk writes the files in memory to the target path on disk
 func (o *Options) writePackageToDisk(files []*git.File, targetPath string) error {
 	for _, gitFile := range files {
-		return gitFile.WriteContent(targetPath)
+		if err := gitFile.WriteContent(targetPath); err != nil {
+			return err
+		}
 	}
 
 	return nil

@@ -20,8 +20,25 @@ import (
 	"testing"
 
 	"github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-git/v5/storage"
+	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"github.com/stretchr/testify/assert"
 )
+
+// NewTestFilesGetter return a FilesGetter with a fixed worktree and will not make calls to remote repositories
+func NewTestFilesGetter(t *testing.T) *FilesGetter {
+	t.Helper()
+
+	fg := NewFilesGetter()
+	fg.clonePackage = func(f billy.Filesystem, _ storage.Storer, _ v1alpha1.Package) (billy.Filesystem, error) {
+		t.Helper()
+
+		populateWorktree(t, f)
+		return f, nil
+	}
+
+	return fg
+}
 
 func populateWorktree(t *testing.T, fsys billy.Filesystem) {
 	t.Helper()
