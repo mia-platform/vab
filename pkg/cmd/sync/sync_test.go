@@ -130,10 +130,12 @@ func TestRun(t *testing.T) {
 
 			assert.NoError(t, err)
 
-			fs.WalkDir(os.DirFS(test.options.contextPath), ".", func(path string, _ fs.DirEntry, err error) error {
+			err = fs.WalkDir(os.DirFS(test.options.contextPath), ".", func(path string, _ fs.DirEntry, err error) error {
 				assert.Contains(t, test.expectedPaths, path)
 				return err
 			})
+
+			assert.NoError(t, err)
 		})
 	}
 }
