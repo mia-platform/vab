@@ -116,6 +116,7 @@ func (o *Options) Run(ctx context.Context) error {
 		return fmt.Errorf("reading config file: %w", err)
 	}
 
+	o.logger.V(5).Info("ensuring directories", "path", o.contextPath)
 	if err := util.SyncDirectories(config.Spec, o.contextPath); err != nil {
 		return err
 	}
@@ -130,21 +131,24 @@ func (o *Options) downloadPackages(config *v1alpha1.ClustersConfiguration) error
 	}
 	for _, path := range vendorsPath {
 		if err := os.RemoveAll(path); err != nil {
+			o.logger.V(5).Info("deleting folder", "path", path)
 			return fmt.Errorf("removing folder: %w", err)
 		}
 	}
 
 	if o.dryRun {
+		o.logger.V(10).Info("download-packages set to false, ending process...")
 		return nil
 	}
 
 	mergedPackages := make(map[string]v1alpha1.Package)
-
 	addPackages := func(packages map[string]v1alpha1.Package) {
 		for _, pkg := range packages {
-			if !pkg.Disable {
-				mergedPackages[pkg.GetName()+pkg.GetFlavorName()+"_"+pkg.Version] = pkg
+			if pkg.Disable {
+				o.logger.V(5).Info("skipping disabled package", "package", pkg.GetName(), "type", pkg.PackageType())
+				continue
 			}
+			mergedPackages[pkg.GetName()+pkg.GetFlavorName()+"_"+pkg.Version] = pkg
 		}
 	}
 
@@ -164,10 +168,12 @@ func (o *Options) downloadPackages(config *v1alpha1.ClustersConfiguration) error
 // clonePackagesLocally download packages using filesGetter
 func (o *Options) clonePackagesLocally(packages map[string]v1alpha1.Package, path string, filesGetter *git.FilesGetter) error {
 	for _, pkg := range packages {
+		o.logger.V(0).Info("cloning package", "type", pkg.PackageType(), "name", pkg.GetName())
 		files, err := filesGetter.GetFilesForPackage(pkg)
 		if err != nil {
 			return fmt.Errorf("cloning packages for %s %s: %w", pkg.PackageType(), pkg.GetName(), err)
 		}
+		o.logger.V(10).Info("finish cloning package", "type", pkg.PackageType(), "name", pkg.GetName())
 
 		pkgName := pkg.GetName() + "-" + pkg.Version
 		var pkgPath string
@@ -177,9 +183,11 @@ func (o *Options) clonePackagesLocally(packages map[string]v1alpha1.Package, pat
 			pkgPath = util.VendoredAddOnPath(pkgName)
 		}
 
+		o.logger.V(5).Info("copying package on disk", "type", pkg.PackageType(), "name", pkg.GetName())
 		if err := o.writePackageToDisk(files, filepath.Join(path, pkgPath)); err != nil {
 			return fmt.Errorf("writing %s %s on disk: %w", pkg.PackageType(), pkg.GetName(), err)
 		}
+		o.logger.V(10).Info("finish copying package on disk", "type", pkg.PackageType(), "name", pkg.GetName())
 	}
 	return nil
 }
