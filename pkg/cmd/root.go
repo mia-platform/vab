@@ -17,7 +17,6 @@ package cmd
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"log"
 	"runtime"
@@ -91,11 +90,6 @@ func versionString() string {
 
 	if BuildDate != "" {
 		version = fmt.Sprintf("%s (%s)", version, BuildDate)
-	}
-
-	// don't return GoVersion during a test run for consistent test output
-	if flag.Lookup("test.v") != nil {
-		return version
 	}
 
 	return fmt.Sprintf("%s, Go Version: %s", version, runtime.Version())

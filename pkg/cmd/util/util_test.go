@@ -17,11 +17,13 @@ package util
 
 import (
 	"bytes"
+	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestWriteKustomizationData(t *testing.T) {
@@ -111,6 +113,50 @@ func TestGroupFromConfig(t *testing.T) {
 				assert.NoError(t, err)
 			}
 			assert.Equal(t, test.expectedGroup, group)
+		})
+	}
+}
+
+func TestValidateContextPath(t *testing.T) {
+	t.Parallel()
+
+	tempDir := t.TempDir()
+	tests := map[string]struct {
+		path          string
+		expectedPath  string
+		expectedError string
+	}{
+		"valid path": {
+			path:         tempDir,
+			expectedPath: tempDir,
+		},
+		"path is not a directory": {
+			path: func() string {
+				filePath := filepath.Join(tempDir, "file")
+				_, err := os.Create(filepath.Join(tempDir, "file"))
+				require.NoError(t, err)
+				return filePath
+			}(),
+			expectedPath:  filepath.Join(tempDir, "file"),
+			expectedError: "is not a directory",
+		},
+		"path don't exists": {
+			path:          filepath.Join("/", "invalid", "path"),
+			expectedPath:  filepath.Join("/", "invalid", "path"),
+			expectedError: "no such file or directory",
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			resultPath, err := ValidateContextPath(test.path)
+			switch len(test.expectedError) {
+			case 0:
+				assert.NoError(t, err)
+			default:
+				assert.Error(t, err)
+			}
+			assert.Equal(t, test.expectedPath, resultPath)
 		})
 	}
 }
