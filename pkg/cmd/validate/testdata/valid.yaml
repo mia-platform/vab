@@ -1,0 +1,30 @@
+kind: ClustersConfiguration
+apiVersion: vab.mia-platform.eu/v1alpha1
+name: validate-test
+spec:
+  modules:
+    category/module-0/flavor-0:
+      version: 1.0.0
+    category/module-2/flavor-2:
+      disable: true
+  addOns:
+    category/addon-0:
+      version: 1.0.0
+    # Disabled add-on
+    category/addon-2:
+      disable: true
+  groups:
+  - name: group-1
+    cluster:
+    - name: cluster-2
+      context: context-2
+      modules:
+        category/module-0/flavor-0:
+          version: 1.0.0
+        category/module-2/flavor-2:
+          disable: true
+      addons:
+        category/addon-0:
+          version: 1.0.0
+        category/addon-2:
+          disable: true

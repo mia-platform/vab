@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- update go version to 1.22.3
+### Changed
+
+- update go version to 1.22.4
+- revised all the cli commands to be structured in the same way
+- use new version of jpl for streamlined handling of kubernetes resources
+- reworked `init` and `sync` commands to work with incomplete folder structure
+- mark generated files that will always be overridden by `vab`
 
 ## [v0.9.0] - 2023-02-08
 
