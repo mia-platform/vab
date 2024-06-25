@@ -27,7 +27,6 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport"
-	"github.com/go-git/go-git/v5/storage"
 	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 )
@@ -69,18 +68,16 @@ func cloneOptionsForPackage(pkg v1alpha1.Package) *git.CloneOptions {
 
 // FilesGetter is responsible to download and manage remote git repository in a in memory storage
 type FilesGetter struct {
-	fs           billy.Filesystem
-	storage      *memory.Storage
-	clonePackage func(billy.Filesystem, storage.Storer, v1alpha1.Package) (billy.Filesystem, error)
+	clonePackage func(v1alpha1.Package) (billy.Filesystem, error)
 }
 
 // NewFilesGetter create a new FilesGetter instance configured for downloading from remote repository using
 // an in memory storage
 func NewFilesGetter() *FilesGetter {
 	return &FilesGetter{
-		fs:      memfs.New(),
-		storage: memory.NewStorage(),
-		clonePackage: func(fs billy.Filesystem, storage storage.Storer, pkg v1alpha1.Package) (billy.Filesystem, error) {
+		clonePackage: func(pkg v1alpha1.Package) (billy.Filesystem, error) {
+			fs := memfs.New()
+			storage := memory.NewStorage()
 			cloneOptions := cloneOptionsForPackage(pkg)
 			if _, err := git.Clone(storage, fs, cloneOptions); err != nil {
 				return nil, fmt.Errorf("error cloning repository %w", err)
@@ -94,7 +91,7 @@ func NewFilesGetter() *FilesGetter {
 // GetFilesForPackage clones the pkg from the remote repository and return all the files relative for the package
 // or an error otherwise
 func (r *FilesGetter) GetFilesForPackage(pkg v1alpha1.Package) ([]*File, error) {
-	memFs, err := r.clonePackage(r.fs, r.storage, pkg)
+	memFs, err := r.clonePackage(pkg)
 	if err != nil {
 		return nil, err
 	}

@@ -107,7 +107,10 @@ func TestRun(t *testing.T) {
 				configPath:       configPath,
 				contextPath:      t.TempDir(),
 				downloadPackages: true,
-				filesGetter:      git.NewTestFilesGetter(t),
+				filesGetter: func() *git.FilesGetter {
+					fg, _ := git.NewTestFilesGetter(t)
+					return fg
+				}(),
 			},
 			expectedPaths: append(folderStruct, vendorStruct...),
 		},

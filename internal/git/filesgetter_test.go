@@ -105,10 +105,10 @@ func TestGetFiles(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			fg := NewTestFilesGetter(t)
+			fg, fs := NewTestFilesGetter(t)
 
 			for _, file := range test.expectedFiles {
-				file.fs = fg.fs
+				file.fs = fs
 			}
 
 			files, err := fg.GetFilesForPackage(test.pkgDefinition)
