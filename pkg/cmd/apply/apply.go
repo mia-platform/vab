@@ -261,7 +261,8 @@ func (o *Options) applyManifests(ctx context.Context, factory jplutil.ClientFact
 	}
 
 	clusterLogger.V(2).Info("finish reading manifests", "path", path)
-	inventory, err := inventory.NewConfigMapStore(factory, "vab", metav1.NamespaceSystem, o.fieldManager)
+	inventoryName := "eu.mia-platform.vab.resourcestorage"
+	inventory, err := inventory.NewConfigMapStore(factory, inventoryName, metav1.NamespaceSystem, o.fieldManager)
 	if err != nil {
 		return nil, err
 	}
