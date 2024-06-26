@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.10.1] - 2024-06-26
+
 ### Fixed
 
 - `version` command output in production build
@@ -31,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - apply command: apply generated files to targets clusters
 - validate command: validate the configuration file
 
-[Unreleased]: https://github.com/mia-platform/jpl/compare/v0.10.0...HEAD
-[v0.10.0]: https://github.com/mia-platform/jpl/compare/v0.9.0...v0.10.0
+[Unreleased]: https://github.com/mia-platform/vab/compare/v0.10.1...HEAD
+[v0.10.1]: https://github.com/mia-platform/vab/compare/v0.10.0...v0.10.1
+[v0.10.0]: https://github.com/mia-platform/vab/compare/v0.9.0...v0.10.0
 [v0.9.0]: https://github.com/mia-platform/vab/releases/tag/v0.9.0
