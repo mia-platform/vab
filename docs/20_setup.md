@@ -29,13 +29,13 @@ If you have [Golang] installed with a version >= 1.13 in your system and you hav
 install `vab` like this:
 
 ```sh
-go install github.com/mia-platform/vab/cmd/vab@v0.9.9
+go install github.com/mia-platform/vab@v0.10.0
 ```
 
 Or like this if the `install` command is not available
 
 ```sh
-go get -u github.com/mia-platform/vab/cmd/vab@v0.9.9
+go get -u github.com/mia-platform/vab@v0.10.0
 ```
 
 #### Binary Download
@@ -44,11 +44,11 @@ You can install `vab` with the use of `curl` or `wget` and downloading the lates
 choosing the correct platform and operating system:
 
 ```sh
-curl -fsSL https://github.com/mia-platform/vab/releases/download/v0.9.0/vab-linux-amd64 -o /tmp/vab
+curl -fsSL https://github.com/mia-platform/vab/releases/download/v0.10.0/vab-linux-amd64 -o /tmp/vab
 ```
 
 ```sh
-wget -q https://github.com/mia-platform/vab/releases/download/v0.9.0/vab-linux-amd64 -O /tmp/vab
+wget -q https://github.com/mia-platform/vab/releases/download/v0.10.0/vab-linux-amd64 -O /tmp/vab
 ```
 
 After you have downloaded the file you can validate it against the checksum you can find at this [url] running the
@@ -69,7 +69,7 @@ sudo install -g root -o root /tmp/vab /usr/local/bin
 If you want to run the cli in its environment or you want to test the cli you can use the Docker image:
 
 ```sh
-docker run ghcr.io/mia-platform/vab:0.9.0
+docker run ghcr.io/mia-platform/vab:0.10.0
 ```
 
 ### Windows

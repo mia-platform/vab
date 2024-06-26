@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.10.0] - 2024-06-26
+
 ### Changed
 
 - update go version to 1.22.4
@@ -25,5 +27,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - apply command: apply generated files to targets clusters
 - validate command: validate the configuration file
 
-[Unreleased]: https://github.com/mia-platform/jpl/compare/v0.9.0...HEAD
-[v0.9.0]: https://github.com/mia-platform/vab/releases/tag/v0.1.0
+[Unreleased]: https://github.com/mia-platform/jpl/compare/v0.10.0...HEAD
+[v0.10.0]: https://github.com/mia-platform/jpl/compare/v0.9.0...v0.10.0
+[v0.9.0]: https://github.com/mia-platform/vab/releases/tag/v0.9.0
