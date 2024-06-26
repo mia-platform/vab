@@ -15,7 +15,6 @@ on:
 
 env:
   GORELEASER_VERSION: v2.0.1
-  GOEXPERIMENT: nocoverageredesign
 jobs:
   lint:
     name: Lint Code
@@ -46,6 +45,8 @@ jobs:
       run: make ci-lint GOLANGCI_LINT_MODE="github-actions"
 
   test:
+    env:
+      GOEXPERIMENT: nocoverageredesign
     name: Testing on ${{ matrix.os }}
     strategy:
       matrix:
