@@ -27,7 +27,7 @@ The `vab` CLI functionalities can be summarized within its main subcommands:
 
 ## Guides
 
-Below, you can find additional documentaion for `vab`:
+Below, you can find additional documentation for `vab`:
 
 - [Setup](./20_setup.md)
 - [Configuration Grammar](./30_grammar.md)

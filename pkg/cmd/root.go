@@ -49,7 +49,6 @@ const (
 
 	More information about the Magellano k8s distribution can be found here:
 		https://github.com/mia-platform/distribution`
-	configFlagDescription = "path to the vab config file to use"
 )
 
 // NewVabCommand creates the `vab` command and its nested children.
