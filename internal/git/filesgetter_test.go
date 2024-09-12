@@ -71,6 +71,10 @@ func TestGetFiles(t *testing.T) {
 			pkgDefinition: v1alpha1.NewModule(t, "category/test-module1/test-flavor1", "1.0.0", false),
 			expectedFiles: []*File{
 				{
+					path:         "test-flavor1/file.json",
+					internalPath: "modules/category/test-module1/test-flavor1/file.json",
+				},
+				{
 					path:         "test-flavor1/file1.yaml",
 					internalPath: "modules/category/test-module1/test-flavor1/file1.yaml",
 				},

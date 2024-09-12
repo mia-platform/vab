@@ -175,6 +175,7 @@ var (
 		"vendors/modules/category/test-module1-v1.0.0/test-flavor1",
 		"vendors/modules/category/test-module1-v1.0.0/test-flavor1/file1.yaml",
 		"vendors/modules/category/test-module1-v1.0.0/test-flavor1/file2.yaml",
+		"vendors/modules/category/test-module1-v1.0.0/test-flavor1/file.json",
 		"vendors/modules/category/test-module1-v1.0.0/test-flavor2",
 		"vendors/modules/category/test-module1-v1.0.0/test-flavor2/file1.yaml",
 	}
