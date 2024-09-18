@@ -9,8 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- update go version to 1.22.5
-- update jpl version to 0.4.0
+- update go version to 1.23.1
+- update jpl version to 0.5.0
 
 ## [v0.10.1] - 2024-06-26
 
