@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - update go version to 1.23.3
 - update jpl version to 0.5.1
 - update go-billy to 5.6.0
+- update testify to v1.10.0
 
 ## [v0.11.0] - 2024-09-19
 
