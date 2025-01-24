@@ -107,7 +107,7 @@ ci: test-coverage
 
 ### Put your custom import, define or goals under here ###
 
-KIND_IMAGE_VERSION?= kindest/node:v1.30.4@sha256:976ea815844d5fa93be213437e3ff5754cd599b040946b5cca43ca45c2047114
+KIND_IMAGE_VERSION?= kindest/node:v1.31.4@sha256:2cb39f7295fe7eafee0842b1052a599a4fb0f8bcf3f83d96c7f4864c357c6c30
 KIND_CLUSTER_1_NAME:= vab-cluster-1
 KIND_CLUSTER_2_NAME:= vab-cluster-2
 

@@ -9,12 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- update go version to 1.23.4
-- update jpl version to 0.5.1
-- update go-billy to 5.6.1
-- update go-git 5.13.1
-- update k8s.io libraries to 0.30.8
-- update testify to v1.10.0
+- update go version to 1.23.5
+- update jpl version to 0.6.0
+- update go-billy to 5.6.2
+- update go-git 5.13.2
 
 ## [v0.11.0] - 2024-09-19
 
