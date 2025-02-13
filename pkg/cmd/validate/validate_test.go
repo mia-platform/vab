@@ -17,7 +17,6 @@ package validate
 
 import (
 	"bytes"
-	"context"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -106,7 +105,7 @@ The configuration is valid!
 			buffer := new(bytes.Buffer)
 			test.options.writer = buffer
 
-			err := test.options.Run(context.TODO())
+			err := test.options.Run(t.Context())
 			if len(test.expectedError) > 0 {
 				assert.ErrorContains(t, err, test.expectedError)
 			} else {

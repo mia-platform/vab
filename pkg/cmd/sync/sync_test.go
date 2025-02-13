@@ -16,7 +16,6 @@
 package sync
 
 import (
-	"context"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -126,7 +125,7 @@ func TestRun(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			err := test.options.Run(context.TODO())
+			err := test.options.Run(t.Context())
 			if len(test.expectedError) > 0 {
 				assert.ErrorContains(t, err, test.expectedError)
 				return
