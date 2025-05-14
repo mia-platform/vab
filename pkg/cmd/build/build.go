@@ -128,7 +128,7 @@ func (o *Options) Run(ctx context.Context) error {
 
 		clusterID := util.ClusterID(o.group, clusterName)
 		str.WriteString("---\n")
-		str.WriteString(fmt.Sprintf("### BUILD RESULTS FOR: %q ###\n", clusterID))
+		fmt.Fprintf(str, "### BUILD RESULTS FOR: %q ###\n", clusterID)
 		o.logger.V(5).Info("loading resources", "cluster", clusterID)
 		if err := util.WriteKustomizationData(path, str); err != nil {
 			return fmt.Errorf("building resources for %q: %w", clusterID, err)

@@ -23,7 +23,6 @@ import (
 
 	"github.com/MakeNowJust/heredoc/v2"
 	"github.com/go-logr/logr"
-	"github.com/mia-platform/vab/pkg/cmd/util"
 	cmdutil "github.com/mia-platform/vab/pkg/cmd/util"
 	"github.com/spf13/cobra"
 )
@@ -75,7 +74,7 @@ func NewCommand() *cobra.Command {
 
 // ToOptions transform the command flags in command runtime arguments
 func (f *Flags) ToOptions(args []string) (*Options, error) {
-	contextPath, err := util.ValidateContextPath(args[0])
+	contextPath, err := cmdutil.ValidateContextPath(args[0])
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, err
 	}
