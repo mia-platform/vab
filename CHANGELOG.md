@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- update go version to 1.25.0
+- update pflag to 1.0.10
+- update cobra to 1.10.1
+- update jpl to 0.8.0
+- update k8s.io packages to 0.33.4
+- update kustomize/api to v0.20.1
+- update kyaml to v0.20.1
+- update yaml to v1.5.0
+
 ## [v0.13.0] - 2025-06-12
 
 ### Changed
