@@ -16,7 +16,6 @@
 package util
 
 import (
-	"fmt"
 	"io"
 	"io/fs"
 	"os"
@@ -126,6 +125,8 @@ func TestSyncDirectories(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			err := SyncDirectories(test.config, test.path)
 			require.NoError(t, err)
 			testStructure(t, test.path, test.expectedResultPath)
@@ -197,7 +198,7 @@ func TestReadConfig(t *testing.T) {
 		},
 		"invalid path": {
 			configPath:    filepath.Join(tempDir, "missing.yaml"),
-			expectedError: fmt.Sprintf("open %s", filepath.Join(tempDir, "missing.yaml")),
+			expectedError: "open " + filepath.Join(tempDir, "missing.yaml"),
 		},
 		"invalid yaml": {
 			configPath:    filepath.Join(testdata, "invalid.yaml"),
@@ -205,12 +206,14 @@ func TestReadConfig(t *testing.T) {
 		},
 		"empty path would use default path": {
 			configPath:    "",
-			expectedError: fmt.Sprintf("open %s", defaultConfigFileName),
+			expectedError: "open " + defaultConfigFileName,
 		},
 	}
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			config, err := ReadConfig(test.configPath)
 			if len(test.expectedError) > 0 {
 				assert.ErrorContains(t, err, test.expectedError)
@@ -253,6 +256,8 @@ func TestWriteFile(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			err := writeYamlFile(test.path, test.data)
 			if len(test.expectedError) > 0 {
 				assert.ErrorContains(t, err, test.expectedError)

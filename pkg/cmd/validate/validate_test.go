@@ -102,6 +102,8 @@ The configuration is valid!
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			buffer := new(bytes.Buffer)
 			test.options.writer = buffer
 
@@ -114,7 +116,7 @@ The configuration is valid!
 
 			loggedLines := strings.Split(buffer.String(), "\n")
 			expectedOutputArray := strings.Split(test.expectedString, "\n")
-			assert.Equal(t, len(loggedLines), len(expectedOutputArray), "Wrong log lines founded")
+			assert.Len(t, loggedLines, len(expectedOutputArray), "Wrong log lines founded")
 			for _, line := range loggedLines {
 				assert.Contains(t, expectedOutputArray, line, "Unexpected log line")
 			}

@@ -18,6 +18,7 @@ package apply
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -212,10 +213,10 @@ func (o *Options) Run(ctx context.Context) error {
 func (o *Options) apply(ctx context.Context, cluster v1alpha1.Cluster) (<-chan event.Event, error) {
 	clusterID := util.ClusterID(o.group, cluster.Name)
 	if len(cluster.Context) == 0 {
-		return nil, fmt.Errorf(applyErrorFormat, clusterID, fmt.Errorf("no context found"))
+		return nil, fmt.Errorf(applyErrorFormat, clusterID, errors.New("no context found"))
 	}
 
-	factory, err := o.factoryFor(clusterID, cluster.Context)
+	factory, err := o.factoryFor(ctx, clusterID, cluster.Context)
 	if err != nil {
 		return nil, fmt.Errorf(applyErrorFormat, clusterID, err)
 	}
@@ -224,7 +225,7 @@ func (o *Options) apply(ctx context.Context, cluster v1alpha1.Cluster) (<-chan e
 }
 
 // factoryFor return a rest.Config for connecting to the clusterID with context name
-func (o *Options) factoryFor(clusterID, kubeContext string) (jplutil.ClientFactory, error) {
+func (o *Options) factoryFor(ctx context.Context, clusterID, kubeContext string) (jplutil.ClientFactory, error) {
 	factory, config := o.factoryAndConfigFunc(kubeContext)
 	restConfig, err := factory.ToRESTConfig()
 	if err != nil {
@@ -234,7 +235,7 @@ func (o *Options) factoryFor(clusterID, kubeContext string) (jplutil.ClientFacto
 	clusterLogger := o.logger.WithName(clusterID)
 	var enabled bool
 	clusterLogger.V(5).Info("checking flowcontrol APIs availability")
-	if enabled, err = flowcontrol.IsEnabled(context.Background(), restConfig); err != nil {
+	if enabled, err = flowcontrol.IsEnabled(ctx, restConfig); err != nil {
 		return nil, fmt.Errorf("flowcontrol api: %w", err)
 	}
 

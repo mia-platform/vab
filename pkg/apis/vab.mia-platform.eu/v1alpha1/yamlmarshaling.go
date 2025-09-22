@@ -17,7 +17,7 @@ package v1alpha1
 
 import (
 	"crypto/sha1" //#nosec G505
-	"fmt"
+	"encoding/hex"
 	"strings"
 
 	yaml "sigs.k8s.io/yaml/goyaml.v3"
@@ -40,7 +40,7 @@ func mapKeyForName(name string) string {
 	// using of sha1 is not a problem because we don't use this string for secure operations
 	// but only for generating unique ids for maps
 	sha1 := sha1.Sum([]byte(name)) //#nosec G401
-	return fmt.Sprintf("%x", sha1)[0:7]
+	return hex.EncodeToString(sha1[:])[0:7]
 }
 
 type shadowConfigSpec struct {

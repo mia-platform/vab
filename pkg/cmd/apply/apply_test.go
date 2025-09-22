@@ -44,9 +44,9 @@ func TestCommand(t *testing.T) {
 
 func TestFlagsToOptions(t *testing.T) {
 	t.Parallel()
+
 	tmpDir := t.TempDir()
 	configFile := "path/to/file.yaml"
-
 	tests := map[string]struct {
 		flags           *Flags
 		configFlags     *util.ConfigFlags
@@ -94,6 +94,8 @@ func TestFlagsToOptions(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			opts, err := test.flags.ToOptions(test.configFlags, test.args)
 			if len(test.expectedError) > 0 {
 				assert.ErrorContains(t, err, test.expectedError)
@@ -117,7 +119,6 @@ func TestApplyRun(t *testing.T) {
 
 	testdata := "testdata"
 	configPath := filepath.Join(testdata, "testconfig.yaml")
-
 	tests := map[string]struct {
 		options                  *Options
 		client                   *fake.RESTClient
@@ -195,6 +196,8 @@ func TestApplyRun(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
 			defer cancel()
 

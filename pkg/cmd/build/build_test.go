@@ -134,6 +134,8 @@ spec:
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			buffer := new(bytes.Buffer)
 			test.options.writer = buffer
 

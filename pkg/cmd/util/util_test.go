@@ -57,6 +57,8 @@ spec:
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			buffer := new(bytes.Buffer)
 			err := WriteKustomizationData(test.path, buffer)
 			if test.expectedError {
@@ -106,6 +108,8 @@ func TestGroupFromConfig(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			group, err := GroupFromConfig(test.group, test.path)
 			if len(test.expectedError) > 0 {
 				assert.ErrorContains(t, err, test.expectedError)
@@ -149,6 +153,8 @@ func TestValidateContextPath(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			resultPath, err := ValidateContextPath(test.path)
 			switch len(test.expectedError) {
 			case 0:

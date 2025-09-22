@@ -17,6 +17,7 @@ package validate
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"path/filepath"
@@ -90,7 +91,7 @@ func (o *Options) Run(ctx context.Context) error {
 
 	config, err := util.ReadConfig(o.configPath)
 	if err != nil {
-		return fmt.Errorf("parsing configuration file: %v", err)
+		return fmt.Errorf("parsing configuration file: %w", err)
 	}
 
 	feedbackString := o.checkTypeMeta(&config.TypeMeta, &code)
@@ -104,7 +105,7 @@ func (o *Options) Run(ctx context.Context) error {
 
 	fmt.Fprint(o.writer, feedbackString)
 	if code > 0 {
-		return fmt.Errorf("configuration is invalid")
+		return errors.New("configuration is invalid")
 	}
 
 	fmt.Fprintln(o.writer, "The configuration is valid!")

@@ -51,6 +51,8 @@ func TestCloneOptions(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			options := cloneOptionsForPackage(test.pkgDefinition)
 			assert.Equal(t, test.expectedURL, options.URL)
 			assert.Equal(t, test.expectedAuth, options.Auth)
@@ -109,6 +111,8 @@ func TestGetFiles(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			fg, fs := NewTestFilesGetter(t)
 
 			for _, file := range test.expectedFiles {

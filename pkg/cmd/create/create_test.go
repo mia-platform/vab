@@ -82,6 +82,8 @@ func TestToOptions(t *testing.T) {
 
 	for testName, testCase := range testCases {
 		t.Run(testName, func(t *testing.T) {
+			t.Parallel()
+
 			flags := Flags{}
 			options, err := flags.ToOptions(testCase.args)
 			if testCase.expectedError != "" {
@@ -120,6 +122,8 @@ func TestCreateValidArgs(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			completions, directive := validArgs(nil, test.args, "")
 			assert.Equal(t, test.expectedCompletions, completions)
 			assert.Equal(t, test.expectedDirective, directive)

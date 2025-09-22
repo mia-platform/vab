@@ -72,6 +72,8 @@ func TestToOptions(t *testing.T) {
 
 	for testName, testCase := range testCases {
 		t.Run(testName, func(t *testing.T) {
+			t.Parallel()
+
 			flags := Flags{
 				downloadPackages: testCase.downloadPackages,
 			}
@@ -125,6 +127,8 @@ func TestRun(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			err := test.options.Run(t.Context())
 			if len(test.expectedError) > 0 {
 				assert.ErrorContains(t, err, test.expectedError)
