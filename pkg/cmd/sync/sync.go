@@ -23,11 +23,12 @@ import (
 
 	"github.com/MakeNowJust/heredoc/v2"
 	"github.com/go-logr/logr"
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+
 	"github.com/mia-platform/vab/internal/git"
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"github.com/mia-platform/vab/pkg/cmd/util"
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 )
 
 const (

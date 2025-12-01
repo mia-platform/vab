@@ -18,9 +18,9 @@ package v1alpha1
 import "testing"
 
 const (
-	// Valid value for the kind property of the configuration
+	// Kind Valid value for the kind property of the configuration
 	Kind = "ClustersConfiguration"
-	// Valid value for the apiVersion property of the configuration
+	// Version Valid value for the apiVersion property of the configuration
 	Version = "vab.mia-platform.eu/v1alpha1"
 )
 

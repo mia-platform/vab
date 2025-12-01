@@ -21,12 +21,14 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"strings"
 
 	"github.com/MakeNowJust/heredoc/v2"
 	"github.com/go-logr/logr"
+	"github.com/spf13/cobra"
+
 	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"github.com/mia-platform/vab/pkg/cmd/util"
-	"github.com/spf13/cobra"
 )
 
 const (
@@ -140,18 +142,20 @@ func (o *Options) checkModules(packages *map[string]v1alpha1.Package, scope stri
 		return outString
 	}
 
+	var outStringSb143 strings.Builder
 	for _, pkg := range *packages {
 		// TODO: add check for modules' uniqueness (only one flavor per module is allowed)
 		if pkg.Disable {
-			outString += fmt.Sprintf("[info][%s] disabling %s %s\n", scope, pkg.PackageType(), pkg.GetName())
+			outStringSb143.WriteString(fmt.Sprintf("[info][%s] disabling %s %s\n", scope, pkg.PackageType(), pkg.GetName()))
 			continue
 		}
 
 		if pkg.Version == "" {
-			outString += fmt.Sprintf("[error][%s] missing version of %s %s\n", scope, pkg.PackageType(), pkg.GetName())
+			outStringSb143.WriteString(fmt.Sprintf("[error][%s] missing version of %s %s\n", scope, pkg.PackageType(), pkg.GetName()))
 			*code = 1
 		}
 	}
+	outString += outStringSb143.String()
 
 	return outString
 }
@@ -168,14 +172,16 @@ func (o *Options) checkAddOns(packages *map[string]v1alpha1.Package, scope strin
 		return outString
 	}
 
+	var outStringSb171 strings.Builder
 	for _, pkg := range *packages {
 		if pkg.Disable {
-			outString += fmt.Sprintf("[info][%s] disabling %s %s\n", scope, pkg.PackageType(), pkg.GetName())
+			outStringSb171.WriteString(fmt.Sprintf("[info][%s] disabling %s %s\n", scope, pkg.PackageType(), pkg.GetName()))
 		} else if pkg.Version == "" {
 			outString += fmt.Sprintf("[error][%s] missing version of %s %s\n", scope, pkg.PackageType(), pkg.GetName())
 			*code = 1
 		}
 	}
+	outString += outStringSb171.String()
 	return outString
 }
 
@@ -188,18 +194,20 @@ func (o *Options) checkGroups(groups *[]v1alpha1.Group, code *int) string {
 		return outString
 	}
 
+	var outStringSb191 strings.Builder
 	for _, g := range *groups {
 		groupName := g.Name
 		if groupName == "" {
-			outString += "[error] please specify a valid name for each group\n"
+			outStringSb191.WriteString("[error] please specify a valid name for each group\n")
 			groupName = "undefined"
 			*code = 1
 		}
 
 		group := g
-		outString += o.checkClusters(&group, groupName, code)
+		outStringSb191.WriteString(o.checkClusters(&group, groupName, code))
 		o.logger.V(5).Info(fmt.Sprintf("checking group %s clusters", groupName), "", *code)
 	}
+	outString += outStringSb191.String()
 
 	return outString
 }
@@ -212,25 +220,27 @@ func (o *Options) checkClusters(group *v1alpha1.Group, groupName string, code *i
 		return outString
 	}
 
+	var outStringSb215 strings.Builder
 	for _, cluster := range group.Clusters {
 		clusterName := cluster.Name
 		if clusterName == "" {
-			outString += fmt.Sprintf("[error][%s] missing cluster name in group: please specify a valid name for each cluster\n", groupName)
+			outStringSb215.WriteString(fmt.Sprintf("[error][%s] missing cluster name in group: please specify a valid name for each cluster\n", groupName))
 			*code = 1
 			clusterName = "undefined"
 		}
 
 		clusterID := util.ClusterID(groupName, clusterName)
 		if cluster.Context == "" {
-			outString += fmt.Sprintf("[error][%s] missing cluster context: please specify a valid context for each cluster\n", clusterID)
+			outStringSb215.WriteString(fmt.Sprintf("[error][%s] missing cluster context: please specify a valid context for each cluster\n", clusterID))
 			*code = 1
 		}
 
-		outString += o.checkModules(&cluster.Modules, clusterID, code)
+		outStringSb215.WriteString(o.checkModules(&cluster.Modules, clusterID, code))
 		o.logger.V(5).Info(fmt.Sprintf("checking cluster %s modules", clusterID), "code", *code)
-		outString += o.checkAddOns(&cluster.AddOns, clusterID, code)
+		outStringSb215.WriteString(o.checkAddOns(&cluster.AddOns, clusterID, code))
 		o.logger.V(5).Info(fmt.Sprintf("checking cluster %s addon", clusterID), "code", *code)
 	}
+	outString += outStringSb215.String()
 
 	return outString
 }

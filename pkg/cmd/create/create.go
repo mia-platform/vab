@@ -23,8 +23,9 @@ import (
 
 	"github.com/MakeNowJust/heredoc/v2"
 	"github.com/go-logr/logr"
-	cmdutil "github.com/mia-platform/vab/pkg/cmd/util"
 	"github.com/spf13/cobra"
+
+	cmdutil "github.com/mia-platform/vab/pkg/cmd/util"
 )
 
 const (

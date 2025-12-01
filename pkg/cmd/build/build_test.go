@@ -20,8 +20,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/mia-platform/vab/pkg/cmd/util"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/mia-platform/vab/pkg/cmd/util"
 )
 
 func TestCommand(t *testing.T) {

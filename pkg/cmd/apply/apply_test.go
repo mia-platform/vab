@@ -25,12 +25,13 @@ import (
 
 	jpltesting "github.com/mia-platform/jpl/pkg/testing"
 	jplutil "github.com/mia-platform/jpl/pkg/util"
-	"github.com/mia-platform/vab/pkg/cmd/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	flowcontrolapi "k8s.io/api/flowcontrol/v1beta3"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/rest/fake"
+
+	"github.com/mia-platform/vab/pkg/cmd/util"
 )
 
 func TestCommand(t *testing.T) {

@@ -23,11 +23,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/kustomize/api/konfig"
 	kustomize "sigs.k8s.io/kustomize/api/types"
+
+	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 )
 
 func TestInitializeConfiguration(t *testing.T) {

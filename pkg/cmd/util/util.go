@@ -22,9 +22,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"sigs.k8s.io/kustomize/api/krusty"
 	"sigs.k8s.io/kustomize/kyaml/filesys"
+
+	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 )
 
 // WriteKustomizationData read kustomize configuration file at path and output the kustomize build result to writer
@@ -46,7 +47,7 @@ func WriteKustomizationData(path string, writer io.Writer) error {
 	return err
 }
 
-// groupFromConfig return a Group struct if a group with groupName is found inside the configuration at path.
+// GroupFromConfig return a Group struct if a group with groupName is found inside the configuration at path.
 // Will return an error if the file cannot be read or groupName is not found
 func GroupFromConfig(groupName string, path string) (v1alpha1.Group, error) {
 	var group v1alpha1.Group

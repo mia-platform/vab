@@ -24,13 +24,14 @@ import (
 	"github.com/MakeNowJust/heredoc/v2"
 	"github.com/go-logr/logr"
 	"github.com/go-logr/stdr"
+	"github.com/spf13/cobra"
+
 	"github.com/mia-platform/vab/pkg/cmd/apply"
 	"github.com/mia-platform/vab/pkg/cmd/build"
 	"github.com/mia-platform/vab/pkg/cmd/create"
 	"github.com/mia-platform/vab/pkg/cmd/sync"
 	"github.com/mia-platform/vab/pkg/cmd/util"
 	"github.com/mia-platform/vab/pkg/cmd/validate"
-	"github.com/spf13/cobra"
 )
 
 var (

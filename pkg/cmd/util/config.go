@@ -25,10 +25,11 @@ import (
 	"path/filepath"
 	"slices"
 
-	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"sigs.k8s.io/kustomize/api/konfig"
 	kustomize "sigs.k8s.io/kustomize/api/types"
 	yaml "sigs.k8s.io/yaml/goyaml.v3"
+
+	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 )
 
 const (

@@ -21,9 +21,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/mia-platform/vab/pkg/apis/vab.mia-platform.eu/v1alpha1"
 )
 
 func TestWriteKustomizationData(t *testing.T) {

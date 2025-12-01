@@ -91,7 +91,7 @@ type Cluster struct {
 	AddOns map[string]Package `json:"addOns,omitempty" yaml:"addOns,omitempty"`
 }
 
-// Module contains the module's version and priority
+// Package contains the module's version and status
 type Package struct {
 
 	// name is a private property containing the name of the module
