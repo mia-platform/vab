@@ -10,6 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - update go version to 1.25.6
+- update go-billy to 5.7.0
+- update go-git to 5.16.4
+- update cobra to 1.10.2
+- update jpl to 0.10.0
+- update k8s.io packages to 0.34.3
+- update kustomize/api to v0.21.0
+- update kyaml to v0.21.0
+- update yaml to v1.6.0
 
 ## [v0.14.0] - 2025-09-04
 
