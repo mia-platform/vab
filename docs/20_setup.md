@@ -29,13 +29,13 @@ If you have [Golang] installed with a version >= 1.13 in your system and you hav
 install `vab` like this:
 
 ```sh
-go install github.com/mia-platform/vab@v0.14.0
+go install github.com/mia-platform/vab@v0.15.0
 ```
 
 Or like this if the `install` command is not available
 
 ```sh
-go get -u github.com/mia-platform/vab@v0.14.0
+go get -u github.com/mia-platform/vab@v0.15.0
 ```
 
 #### Binary Download
@@ -44,11 +44,11 @@ You can install `vab` with the use of `curl` or `wget` and downloading the lates
 choosing the correct platform and operating system:
 
 ```sh
-curl -fsSL --proto '=https' --tlsv1.2 https://github.com/mia-platform/vab/releases/download/v0.14.0/vab-linux-amd64 -o /tmp/vab
+curl -fsSL --proto '=https' --tlsv1.2 https://github.com/mia-platform/vab/releases/download/v0.15.0/vab-linux-amd64 -o /tmp/vab
 ```
 
 ```sh
-wget -q --https-only --secure-protocol=TLSv1_2 https://github.com/mia-platform/vab/releases/download/v0.14.0/vab-linux-amd64 -O /tmp/vab
+wget -q --https-only --secure-protocol=TLSv1_2 https://github.com/mia-platform/vab/releases/download/v0.15.0/vab-linux-amd64 -O /tmp/vab
 ```
 
 After you have downloaded the file you can validate it against the checksum you can find at this [url] running the
@@ -147,7 +147,7 @@ enable the autocompletion.
 
 [Homebrew]: https://brew.sh "The Missing Package Manager for macOS (or Linux)"
 [Golang]: https://go.dev "Build simple, secure, scalable systems with Go"
-[url]: https://github.com/mia-platform/vab/releases/download/v0.12.2/checksums.txt "vab checksums"
+[url]: https://github.com/mia-platform/vab/releases/download/v0.15.0/checksums.txt "vab checksums"
 [`bash-completion`]: https://github.com/scop/bash-completion "Programmable completion functions for bash"
 [`oh-my-zsh`]: https://ohmyz.sh "Oh My Zsh is a delightful, open source, community-driven
 	framework for managing your Zsh configuration"
