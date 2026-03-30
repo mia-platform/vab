@@ -4,8 +4,8 @@ go 1.25.6
 
 require (
 	github.com/MakeNowJust/heredoc/v2 v2.0.1
-	github.com/go-git/go-billy/v5 v5.7.0
-	github.com/go-git/go-git/v5 v5.16.5
+	github.com/go-git/go-billy/v5 v5.8.0
+	github.com/go-git/go-git/v5 v5.17.1
 	github.com/go-logr/logr v1.4.3
 	github.com/go-logr/stdr v1.2.2
 	github.com/mia-platform/jpl v0.10.0
@@ -27,7 +27,7 @@ require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.1.6 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
-	github.com/cloudflare/circl v1.6.1 // indirect
+	github.com/cloudflare/circl v1.6.3 // indirect
 	github.com/cyphar/filepath-securejoin v0.4.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/emicklei/go-restful/v3 v3.12.2 // indirect
